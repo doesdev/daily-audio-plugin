@@ -1,0 +1,385 @@
+{
+  "about": "What the best of the field does for each thing the kit does, how the kit compares, and the tests that prove it. docs/benchmarks.md says how this is used; scripts/benchmarks.js holds it to that.",
+  "entries": [
+    {
+      "id": "set-a-value",
+      "what": "Changing one setting precisely",
+      "covers": [
+        "value"
+      ],
+      "leaders": [
+        {
+          "who": "Ableton Live",
+          "does": "Shift for finer resolution while dragging, type a value with the digits, Delete or double-click for the default, Enter and Esc to confirm or cancel",
+          "source": "https://www.ableton.com/en/live-manual/12/live-keyboard-shortcuts/"
+        },
+        {
+          "who": "FabFilter Pro-Q 4",
+          "does": "Double-click text entry of parameter values",
+          "source": "https://www.fabfilter.com/help/pro-q"
+        }
+      ],
+      "ours": "Drag the number or its line; Shift for a tenth the speed, or always fine by preference; wheel and arrows by a step; double-click the number or press Enter to type, with units and k understood; a digit starts a value with no click; Delete or a double-click on the line for the default; the range and the default are shown while it is held.",
+      "verdict": "meets",
+      "proof": [
+        "a slide along a value is one gesture for the host",
+        "a value can be typed, and nonsense leaves it alone",
+        "a typed value is read the way a person writes one",
+        "a digit starts a value with no click first, and Delete is the default",
+        "a setting held is purple, with its range, until it is let go"
+      ]
+    },
+    {
+      "id": "a-values-menu",
+      "what": "What a right-click on a setting offers",
+      "covers": [],
+      "leaders": [
+        {
+          "who": "FabFilter Pro-Q 4",
+          "does": "Copy and paste of bands and presets, also between instances",
+          "source": "https://www.fabfilter.com/help/pro-q"
+        },
+        {
+          "who": "Ableton Live",
+          "does": "A context menu on every parameter with its automation and mapping commands",
+          "source": null
+        }
+      ],
+      "ours": "Type a value, return to the default (named), copy, paste, lock against presets. No automation or mapping commands: those are the host's here.",
+      "verdict": "meets",
+      "proof": [
+        "a value's menu resets, copies, pastes and locks"
+      ]
+    },
+    {
+      "id": "midi-learn",
+      "what": "Binding a hardware control to a setting from inside the plugin",
+      "covers": [],
+      "leaders": [
+        {
+          "who": "FabFilter Pro-Q 4",
+          "does": "MIDI Learn associates any MIDI controller with any parameter",
+          "source": "https://prod.fabfilter.com/help/pro-q/using/overview"
+        }
+      ],
+      "ours": "Nothing.",
+      "verdict": "under",
+      "gap": "The kit does not pass controllers to the page or map them.",
+      "next": "Controller messages through the bridge, then \"Learn\" in a value's menu."
+    },
+    {
+      "id": "undo-and-compare",
+      "what": "Recovering from a change, and hearing two versions",
+      "covers": [
+        "tools",
+        "header"
+      ],
+      "leaders": [
+        {
+          "who": "FabFilter Pro-Q 4",
+          "does": "Undo, redo and A/B comparison in the plugin",
+          "source": "https://www.fabfilter.com/help/pro-q"
+        }
+      ],
+      "ours": "Undo and redo by button and by Ctrl+Z, each step a proper gesture for the host; a preset loaded is one step; A and B, where B starts as a copy of A. Both are forgotten when the editor closes.",
+      "verdict": "meets",
+      "proof": [
+        "undo and redo step through the page's own changes",
+        "compare flips between two sets of settings",
+        "a preset loaded is one step to undo",
+        "a preset loads as one step, names itself, and undoes as one"
+      ]
+    },
+    {
+      "id": "presets",
+      "what": "Finding, trying, keeping and sharing sounds",
+      "covers": [],
+      "leaders": [
+        {
+          "who": "FabFilter Pro-Q 4",
+          "does": "A preset system in every plugin, with copy and paste of presets between instances",
+          "source": "https://www.fabfilter.com/help/pro-q"
+        }
+      ],
+      "ours": "A browser over the sheet: search, the plugin's own and one's own, a four-bar picture of each, hear one by pointing at it, press to keep it, save and delete one's own, lock a setting against them. Better at telling presets apart and trying them; worse at keeping them.",
+      "verdict": "under",
+      "gap": "One's own presets live in the editor's storage: they are not files, do not travel between machines, and the host's own preset list does not see them.",
+      "next": "Presets as files through the bridge, and the factory ones in the host's program list.",
+      "proof": [
+        "a preset names settings in their own terms and leaves the rest",
+        "pointing at a preset tries it, and leaving puts things back",
+        "a preset of one's own is saved, kept, found and deleted"
+      ]
+    },
+    {
+      "id": "explains-itself",
+      "what": "Learning what a control does without a manual",
+      "covers": [
+        "foot"
+      ],
+      "leaders": [
+        {
+          "who": "FabFilter Pro-Q 4",
+          "does": "Interactive help hints, and an extensive help file",
+          "source": "https://www.fabfilter.com/help/pro-q"
+        }
+      ],
+      "ours": "The foot of the sheet names and explains whatever is under the pointer or has the keyboard; with help on it adds the range and the resting place, and names are marked as readable.",
+      "verdict": "meets",
+      "proof": [
+        "the foot of the sheet says what the pointer is over",
+        "with help on, the foot says a setting's range and resting place",
+        "help adds a setting's range and where it rests"
+      ]
+    },
+    {
+      "id": "fits-the-window",
+      "what": "Being the right size on any screen",
+      "covers": [
+        "densitySwitch"
+      ],
+      "leaders": [
+        {
+          "who": "FabFilter Pro-Q 4",
+          "does": "A resize button for interface size and scaling, and a full screen mode",
+          "source": "https://prod.fabfilter.com/help/pro-q/using/overview"
+        }
+      ],
+      "ours": "The whole page scales in proportion to the window the host gives it; three densities trade the size of the numbers for room on the glass. No full screen.",
+      "verdict": "meets",
+      "proof": [
+        "the page scales whole to its window, in proportion",
+        "density steps through three, shrinks the numbers and is remembered",
+        "nothing on the page runs past its edge"
+      ]
+    },
+    {
+      "id": "read-a-level",
+      "what": "Knowing how loud it is, and whether it clipped",
+      "covers": [
+        "meter",
+        "readouts"
+      ],
+      "leaders": [
+        {
+          "who": "FabFilter Pro-Q 4",
+          "does": "A large output level meter with a peak level readout",
+          "source": "https://www.zzounds.com/item--FABPROQ"
+        }
+      ],
+      "ours": "The number is the peak. Six segments break at -24, -12, -6, -3 and 0 dB with the top of the scale stretched; colour by zone; a clip lamp that stays lit until clicked; the hold is the person's to choose.",
+      "verdict": "meets",
+      "proof": [
+        "a level fills six segments, breaking at -24, -12, -6, -3 and 0 dB",
+        "a level is named for the segment it has reached",
+        "a clip lights a lamp that stays lit until clicked",
+        "a meter holds its peak for a moment, then lets go"
+      ]
+    },
+    {
+      "id": "the-picture",
+      "what": "Seeing what the plugin is doing to the sound",
+      "covers": [
+        "picture",
+        "glass",
+        "stage",
+        "sheet",
+        "values"
+      ],
+      "leaders": [
+        {
+          "who": "FabFilter Pro-Q 4",
+          "does": "An interactive display that fills the window: bands are made and adjusted on it with the mouse, over a live spectrum",
+          "source": "https://prod.fabfilter.com/help/pro-q/using/overview"
+        }
+      ],
+      "ours": "A glass a plugin draws on, redrawn as settings and meters move, purple where the held setting shapes it. It shows what the plugin would do, from its settings and levels.",
+      "verdict": "under",
+      "gap": "No live signal reaches the page, and the picture is not itself dragged.",
+      "next": "A signal channel from the audio thread to the page; then handles on the picture, starting with the equaliser on the canvas.",
+      "proof": [
+        "the picture is drawn, and drawn again when a setting moves"
+      ]
+    },
+    {
+      "id": "bypass",
+      "what": "Hearing the sound without the plugin, from the plugin",
+      "covers": [],
+      "leaders": [
+        {
+          "who": "FabFilter Pro-Q 4",
+          "does": "A global bypass in the bottom bar that avoids clicks",
+          "source": null
+        }
+      ],
+      "ours": "An On button in the header when the spec has a setting keyed \"bypass\": filled when on, and the glass dims when bypassed.",
+      "verdict": "under",
+      "gap": "The kit does not provide the setting, mark it as the host's bypass, or crossfade it.",
+      "next": "A bypass in kit-core that both formats flag as theirs, faded in the runner.",
+      "proof": [
+        "the plugin's own bypass is one press, and says which it is"
+      ]
+    },
+    {
+      "id": "light-and-dark",
+      "what": "Suiting the room and the eyes",
+      "covers": [
+        "themeSwitch"
+      ],
+      "leaders": [
+        {
+          "who": "Ableton Live",
+          "does": "Light and dark themes for the whole application, which can follow the system",
+          "source": null
+        }
+      ],
+      "ours": "A light and a dark theme, switched in the header or in settings, able to follow the system, kept for every editor of ours. Every control is looked at in both.",
+      "verdict": "meets",
+      "proof": [
+        "the theme switch flips the page and is remembered",
+        "the theme is the one chosen before, else the system's",
+        "settings are chosen in a panel and kept for every editor"
+      ]
+    },
+    {
+      "id": "pick-from-a-few",
+      "what": "Choosing one of a few",
+      "covers": [
+        "choice"
+      ],
+      "leaders": [
+        {
+          "who": "FabFilter Pro-Q 4",
+          "does": "Shape and slope chosen from buttons and drop-downs beside the band",
+          "source": null
+        }
+      ],
+      "ours": "Pills, the chosen one filled in, each a full-size target.",
+      "verdict": "meets",
+      "proof": [
+        "a click, a key and a double-click are gestures too"
+      ]
+    },
+    {
+      "id": "menu-and-switch",
+      "what": "Choosing one of many, and on or off",
+      "covers": [
+        "menu",
+        "toggle"
+      ],
+      "leaders": [
+        {
+          "who": "Ableton Live",
+          "does": "Choosers that open a list in the application's own style, and toggles that say their state",
+          "source": null
+        }
+      ],
+      "ours": "A native select written large, and a switch with its state in words.",
+      "verdict": "under",
+      "gap": "The menu opens the system's list, not one in the house style, and neither has a test or a picture of its own.",
+      "next": "The list drawn as on the canvas (\"A choice of many\"), with tests and a gallery scene for both."
+    },
+    {
+      "id": "many-settings",
+      "what": "Finding one setting among many",
+      "covers": [
+        "groups"
+      ],
+      "leaders": [
+        {
+          "who": "Xfer Serum",
+          "does": "Tabs for oscillators, effects, matrix and global, one shown at a time",
+          "source": null
+        }
+      ],
+      "ours": "A tab a group, each tab a small live chart of its values, so what is on another tab is still in view.",
+      "verdict": "meets",
+      "proof": [
+        "groups show one at a time, and every group's values in its tab"
+      ]
+    },
+    {
+      "id": "ride-a-level",
+      "what": "A level that is ridden, not set",
+      "covers": [
+        "fader",
+        "faders"
+      ],
+      "leaders": [
+        {
+          "who": "Ableton Live",
+          "does": "Mixer faders with the meter beside the cap and the value typed below",
+          "source": null
+        }
+      ],
+      "ours": "A fader whose cap carries the number, and one whose line is the meter it sets.",
+      "verdict": "meets",
+      "proof": [
+        "a fader is dragged up and down, as one gesture"
+      ]
+    },
+    {
+      "id": "two-as-one",
+      "what": "Two settings that belong together",
+      "covers": [
+        "linked",
+        "mirrored",
+        "opposed",
+        "span",
+        "pairs"
+      ],
+      "leaders": [
+        {
+          "who": "FabFilter Pro-MB",
+          "does": "A band dragged by either edge or whole by its middle; stereo link as an amount",
+          "source": null
+        }
+      ],
+      "ours": "Linked (the gap kept, and a link to let go), mirrored, opposed (one line shared), and a span dragged by either end or its middle. Both settings are one gesture.",
+      "verdict": "meets",
+      "proof": [
+        "a pair moves together, apart, or one against the other",
+        "opposed settings trade: what one gains the other gives up",
+        "linked settings keep their gap, until the link is let go",
+        "a span moves by either end, or whole by its middle"
+      ]
+    },
+    {
+      "id": "two-by-one-point",
+      "what": "Two settings played with one hand",
+      "covers": [
+        "pad"
+      ],
+      "leaders": [
+        {
+          "who": "Ableton Live",
+          "does": "XY pads on devices, with each axis an ordinary parameter",
+          "source": null
+        }
+      ],
+      "ours": "A pad whose point is two ordinary settings; their numbers move as it does.",
+      "verdict": "meets",
+      "proof": [
+        "the pad moves two settings with one point"
+      ]
+    },
+    {
+      "id": "when-something-is-wrong",
+      "what": "Saying what happened and what to do",
+      "covers": [
+        "notice"
+      ],
+      "leaders": [
+        {
+          "who": "FabFilter Pro-Q 4",
+          "does": "Plain dialogs for missing or newer presets",
+          "source": null
+        }
+      ],
+      "ours": "A notice on the glass: what happened, what it means for the sound, and the ways out.",
+      "verdict": "under",
+      "gap": "It is drawn, but nothing in the kit raises one yet: an unknown preset key is dropped in silence.",
+      "next": "Raise it from the preset loader and from a missing input."
+    }
+  ]
+}

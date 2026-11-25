@@ -7,7 +7,8 @@
     "shots": "node scripts/shots.js",
     "docs": "node scripts/docs.js",
     "bundle": "node scripts/bundle.js",
-    "release": "node scripts/release.js"
+    "release": "node scripts/release.js",
+    "gallery": "node scripts/gallery.js"
   },
   "devDependencies": {
     "mvt": "^5.0.0"

@@ -168,6 +168,14 @@ export const STEPS = {
     await mouse(tab, 'mousePressed', point)
     await mouse(tab, 'mouseMoved', { x: point.x + dx, y: point.y })
   },
+  // A right-click: what opens a control's menu.
+  menu: async (tab, [spec]) => {
+    const point = await at(tab, spec)
+    await tab.evaluate(`window.find(${JSON.stringify(spec)}).dispatchEvent(
+      new MouseEvent('contextmenu', {
+        bubbles: true, cancelable: true, clientX: ${point.x}, clientY: ${point.y}
+      })) ?? true`)
+  },
   dblclick: (tab, [spec]) => tab.evaluate(
     `window.find(${JSON.stringify(spec)}).dispatchEvent(
       new MouseEvent('dblclick', { bubbles: true })) ?? true`

@@ -29,10 +29,13 @@ Looking across the makers people pay for, the same things recur:
 6. **A character.** One look at a screenshot says who made it.
 7. **Presets** that show what the plugin is for.
 
-Before a plugin ships, its run names the two or three best plugins of
-its kind in `NOVELTY.md` and says, for each of the seven, how this
-one's editor compares. "Worse, and here is why that is acceptable
-today" is an answer. Silence is not.
+Before a plugin's editor is written, its run names at least two of
+the best plugins of its kind in `benchmark.json` and says, for each
+of the seven, how this one compares. "Under, and here is why that is
+acceptable today" is an answer. Silence is not, and the check fails on
+it. `docs/benchmarks.md` is the rule in full: it applies to every
+interaction in the kit as well, one entry each in
+`kit/benchmarks.json`.
 
 ### What the kit gives every plugin
 
@@ -54,8 +57,8 @@ Be plain about these in `NOVELTY.md` until they are fixed:
   of the level coming in, not the signal itself: no waveform, no
   spectrum, no history of gain reduction. This is the biggest gap and
   the next thing the kit needs.
-- **No presets and no bypass of its own**, though the design has a
-  place for both in the header.
+- **Presets are kept in the editor's storage**, not as files, and the
+  bypass in the header is only a setting the plugin must bring.
 - **A and B and the undo history are forgotten** when the editor is
   closed; only the settings themselves are saved.
 - **No modulation or MIDI learn**, which the leading synths have.
@@ -66,14 +69,20 @@ The look was settled on a design canvas before any of it was built
 (`docs/decisions/0007-direction-c.md`). The canvas holds more than the
 kit has yet. Built: the glass and the sheet, the number as the
 control, pills, a menu, a switch, the segmented level, the header's
-tools, density, both themes. Drawn and agreed but not built: the
-fader and the metering fader, settings in groups with a small chart
-for each, the visual equaliser, gain reduction, the stereo fan,
-linked, opposed, mirrored and span controls, the envelope and
-modulation in blue, the keyboard and the pad, the preset browser, the
-settings panel, a value's menu, help mode, and the empty and error
-states. Each is built from the canvas when a plugin first needs it,
-with its own tests, and not redesigned on the way.
+tools, density, both themes, the fader and the metering fader,
+settings in groups with a small chart for each, linked, opposed,
+mirrored and span controls, the pad, the preset browser, the settings
+panel, a value's menu, help, and the notice for empty and error
+states. `npm run gallery` draws them all, in both themes, into
+`docs/images/kit/`.
+
+Drawn and agreed but not built, because each needs something from
+the audio side the kit does not send yet: the visual equaliser and
+the spectrum behind it, gain reduction over time, the stereo fan (a
+live signal), the keyboard (notes from the page), and the envelope
+with modulation in blue (a modulation system). Each is built from the
+canvas when the kit can feed it, with its own tests, and not
+redesigned on the way.
 
 ## Depth
 

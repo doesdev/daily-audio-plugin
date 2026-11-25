@@ -118,10 +118,17 @@ export const fitScale = ([width, height], [baseW, baseH]) =>
 
 export const NO_HISTORY = { past: [], future: [] }
 
-// A finished gesture: `index` went from `before` to `after`.
-export const recorded = (history, change) => change.before === change.after
-  ? history
-  : { past: [...history.past, change].slice(-100), future: [] }
+// A finished gesture: `index` went from `before` to `after`. Several
+// settings moved as one (a preset loaded) are a `batch` of those, and
+// step back and forward as one.
+export const recorded = (history, change) => {
+  const nothing = change.batch
+    ? !change.batch.length
+    : change.before === change.after
+  return nothing
+    ? history
+    : { past: [...history.past, change].slice(-100), future: [] }
+}
 
 // [the history after stepping back, the change undone] or null.
 export const undone = ({ past, future }) => past.length
@@ -177,11 +184,69 @@ export const zoneOf = (level) => {
   return ZONES.find(({ to }) => db < to)?.name ?? 'red'
 }
 
-export const HOLD_MS = 1400
+export const HOLD_MS = 2000
 
 // The held peak after a reading of `level` at time `now`.
-export const held = (hold, level, now) =>
-  level >= hold.level || now - hold.at > HOLD_MS ? { level, at: now } : hold
+export const held = (hold, level, now, ms = HOLD_MS) =>
+  level >= hold.level || now - hold.at > ms ? { level, at: now } : hold
+
+// ---- two settings that move as one
+
+// Where the other of a pair goes when its lead has moved from where
+// the two were taken hold of: alongside it, against it, or to
+// whatever the lead leaves of the whole.
+export const TIES = {
+  linked: (start, lead) => clamp(start.other + lead - start.lead),
+  mirrored: (start, lead) => clamp(start.other - (lead - start.lead)),
+  opposed: (start, lead) => clamp(1 - lead)
+}
+
+// ---- presets: named sets of settings
+
+// A preset's settings, given by key in their own terms (a number, a
+// choice's name), as a value for every setting: one it does not name
+// stays at its default.
+export const presetValues = (params, values = {}) => params.map((row) => {
+  const given = values[row.key]
+  if (given == null) return row.default
+  if (row.kind !== 'list') return snap(row, normOf(row, given))
+  const at = typeof given === 'number' ? given : row.choices.indexOf(given)
+  return at < 0 ? row.default : normOf(row, at)
+})
+
+// What a preset looks like at a glance: its first four numbers.
+export const fingerprint = (params, values) => params
+  .map((row, i) => [row, values[i]])
+  .filter(([row]) => row.kind !== 'list')
+  .slice(0, 4)
+  .map(([, value]) => value)
+
+// The settings a preset would move from where they are now, leaving
+// the locked ones alone: [index, before, after].
+export const presetMoves = (now, to, locked = []) => to
+  .map((after, index) => [index, now[index], after])
+  .filter(([index, before, after]) =>
+    before !== after && !locked.includes(index))
+
+// ---- what the person has chosen for every editor of ours
+
+export const PREFS = {
+  hold: ['Off', '2 s', 'Until pressed'],
+  motion: ['Full', 'Still'],
+  fine: ['With Shift', 'Always']
+}
+
+export const PREF_DEFAULTS = { hold: '2 s', motion: 'Full', fine: 'With Shift' }
+
+// Saved choices over the defaults, dropping any no longer offered.
+export const prefsFor = (saved) => Object.fromEntries(
+  Object.entries(PREF_DEFAULTS).map(([key, standard]) =>
+    [key, PREFS[key].includes(saved?.[key]) ? saved[key] : standard])
+)
+
+// How long a meter holds its peak, in milliseconds.
+export const holdFor = (choice) =>
+  ({ Off: 0, 'Until pressed': Infinity })[choice] ?? HOLD_MS
 
 // ---- the store: what the host last said, folded message by message
 
@@ -263,9 +328,11 @@ const makeSession = (store) => {
     if (!result) return
     const [next, change] = result
     history = next
-    put(change.index, pick(change))
+    const moves = change.batch ?? [change]
+    moves.forEach((move) => put(move.index, pick(move)))
     tell()
   }
+  const locked = new Set()
   return {
     on: (fn) => { listeners.add(fn); return () => listeners.delete(fn) },
     record: (change) => { history = recorded(history, change); tell() },
@@ -274,6 +341,24 @@ const makeSession = (store) => {
     get canUndo () { return history.past.length > 0 },
     get canRedo () { return history.future.length > 0 },
     get slot () { return slot },
+    put,
+    // Every setting to `to` as one step, but for the locked ones.
+    apply: (to) => {
+      const moves = presetMoves(store.get().values, to, [...locked])
+      moves.forEach(([index, , after]) => put(index, after))
+      history = recorded(history, {
+        batch: moves.map(([index, before, after]) => ({ index, before, after }))
+      })
+      tell()
+    },
+    // A locked setting stays where it is when a preset is loaded.
+    lock: (index, on) => {
+      if (on) locked.add(index)
+      else locked.delete(index)
+      tell()
+    },
+    isLocked: (index) => locked.has(index),
+    get locked () { return [...locked] },
     // Keeps what is set now under this letter and goes to the other,
     // which starts as a copy: the first flip changes nothing.
     flip: () => {
@@ -357,6 +442,39 @@ const startTheme = () => applyTheme(themeFor(
   window.matchMedia('(prefers-color-scheme: light)').matches
 ))
 
+const PREFS_KEY = 'kit-prefs'
+
+const readPrefs = () => {
+  try {
+    return prefsFor(JSON.parse(window.localStorage.getItem(PREFS_KEY)))
+  } catch { return prefsFor(null) }
+}
+
+let prefs = prefsFor(null)
+
+const applyPrefs = () => {
+  document.documentElement.dataset.motion = prefs.motion.toLowerCase()
+}
+
+const setPref = (key, choice) => {
+  prefs = prefsFor({ ...prefs, [key]: choice })
+  try { window.localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)) } catch {}
+  applyPrefs()
+}
+
+// Back to whatever the system is set to, forgetting the choice.
+const matchTheme = () => {
+  try { window.localStorage.removeItem(THEME_KEY) } catch {}
+  startTheme()
+  window.dispatchEvent(new Event('kit-theme'))
+}
+
+const setDensity = (density) => {
+  document.documentElement.dataset.density = density
+  try { window.localStorage.setItem(DENSITY_KEY, density) } catch {}
+  window.dispatchEvent(new Event('kit-density'))
+}
+
 const DENSITY_KEY = 'kit-density'
 
 const currentDensity = () => document.documentElement.dataset.density
@@ -375,13 +493,14 @@ const switchDensity = () => {
   return next
 }
 
-const switchTheme = () => {
-  const next = otherTheme(currentTheme())
-  applyTheme(next)
-  try { window.localStorage.setItem(THEME_KEY, next) } catch {}
+const setTheme = (theme) => {
+  applyTheme(theme)
+  try { window.localStorage.setItem(THEME_KEY, theme) } catch {}
   window.dispatchEvent(new Event('kit-theme'))
-  return next
+  return theme
 }
+
+const switchTheme = () => setTheme(otherTheme(currentTheme()))
 
 // The page is designed at the size the spec gives and scaled whole to
 // whatever window the host makes it, so nothing reflows or gets small.
@@ -398,17 +517,29 @@ const fitTo = (root, base) => {
 
 // Builds the page once the host says hello. `build` gets the handles
 // and returns a node or a list of them. `opts.density` is the density
-// the plugin starts in until the person picks one.
+// the plugin starts in until the person picks one, and `opts.presets`
+// the presets it ships: [{ name, values: { key: value in its own
+// terms } }].
 export const mount = (build, opts = {}) => {
   const root = opts.root ?? document.getElementById('app')
   startTheme()
   startDensity(opts.density)
+  prefs = readPrefs()
+  applyPrefs()
   let touched = null
   const store = makeStore()
   const session = makeSession(store)
   window.kit = {
     receive: store.receive, store, session, touched: () => touched
   }
+  // Escape puts an open panel away, and only that: the keyboard goes
+  // back to the host on the next one.
+  window.addEventListener('keydown', (event) => {
+    const open = document.querySelector('.kit-sheet[data-panel]')
+    if (event.key !== 'Escape' || !open) return
+    event.stopImmediatePropagation()
+    closePanel()
+  })
   let built = false
   store.on((state) => {
     if (built || !state.ready) return
@@ -421,6 +552,7 @@ export const mount = (build, opts = {}) => {
       m: byKey(state.meters, (i) => meterHandle(store, i)),
       store,
       session,
+      presets: makePresets(store, session, state.name, opts.presets ?? []),
       // What the foot of the sheet says about the control under the
       // pointer; `foot` sets it up.
       hint: () => {},
@@ -478,7 +610,21 @@ export const ICONS = {
   roomy: 'M4.5 4.5h11v4.5h-11zM4.5 11h11v4.5h-11z',
   regular: 'M4.5 5.5h11M4.5 10h11M4.5 14.5h11',
   dense: 'M4.5 4.5h11M4.5 8.2h11M4.5 11.8h11M4.5 15.5h11',
-  theme: 'M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12M10 4v12'
+  theme: 'M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12M10 4v12',
+  settings: 'M10 7.8a2.2 2.2 0 1 0 0 4.4a2.2 2.2 0 1 0 0-4.4M10 3.5v2M10 ' +
+    '14.5v2M3.5 10h2M14.5 10h2M5.4 5.4l1.4 1.4M13.2 13.2l1.4 1.4M14.6 ' +
+    '5.4l-1.4 1.4M6.8 13.2l-1.4 1.4',
+  help: 'M7.4 7.6a2.7 2.7 0 1 1 3.9 2.4c-.8.5-1.3 1-1.3 2M10 14.6v.2',
+  power: 'M10 3.5v6M6.2 5.8a5.5 5.5 0 1 0 7.6 0',
+  chevron: 'M6 8l4 4 4-4',
+  close: 'M5.5 5.5l9 9M14.5 5.5l-9 9',
+  type: 'M4 15.5h12M6 12l1-3.5 6-6 2.5 2.5-6 6z',
+  reset: 'M5 10a5 5 0 1 0 1.6-3.7M5 3.5v3h3',
+  copy: 'M7.5 7.5h8v8h-8zM4.5 12.5v-8h8',
+  paste: 'M6 4.5h8v11H6zM8 4.5v-1.5h4v1.5M8.5 9h3M8.5 12h3',
+  lock: 'M5.5 9.5h9v6h-9zM7.5 9.5V7a2.5 2.5 0 0 1 5 0v2.5',
+  link: 'M8.5 11.5l3-3M9 6.5l1.2-1.2a3 3 0 0 1 4.3 4.3L13.3 11M11 ' +
+    '13.5l-1.2 1.2a3 3 0 0 1-4.3-4.3L6.7 9'
 }
 
 export const icon = (name) => h('svg.kit-icon', {
@@ -488,7 +634,7 @@ export const icon = (name) => h('svg.kit-icon', {
 // The page's own hint for a control: what it is and what it does.
 const hinted = (el, ui, handle) => {
   if (!ui) return el
-  const say = () => ui.hint(handle.row.title, handle.row.about)
+  const say = () => ui.hint(handle.row.title, handle.row.about, handle.row)
   el.addEventListener('pointerenter', say)
   el.addEventListener('focusin', say)
   el.addEventListener('pointerleave', () => ui.hint())
@@ -510,11 +656,11 @@ const valueText = (handle) => {
       unit ? h('span.kit-unit', {}, ` ${unit}`) : ''
     )
   }
-  const edit = () => {
+  const edit = (start) => {
     if (out.dataset.editing) return
     out.dataset.editing = 'true'
     const input = h('input.kit-entry', {
-      type: 'text', value: handle.text, 'aria-label': handle.row.title
+      type: 'text', value: start ?? handle.text, 'aria-label': handle.row.title
     })
     const done = (keep) => {
       if (!out.dataset.editing) return
@@ -531,7 +677,10 @@ const valueText = (handle) => {
     input.addEventListener('pointerdown', (event) => event.stopPropagation())
     input.addEventListener('blur', () => done(true))
     out.replaceChildren(input)
-    input.select()
+    if (start == null) return input.select()
+    // What was typed stays, and what is typed next goes after it.
+    input.focus()
+    input.setSelectionRange(start.length, start.length)
   }
   out.addEventListener('dblclick', (event) => {
     event.stopPropagation()
@@ -553,7 +702,8 @@ const shell = (handle, kind, opts, ...children) => hinted(
 // Dragging along it, the wheel, the arrow keys and double-click for
 // the default, on the element that stands for a setting's value.
 // `mark` is the control that wears the purple while it is held.
-const adjustable = (el, handle, mark, ui) => {
+const adjustable = (el, handle, mark, ui, upright = false) => {
+  const along = (event) => (upright ? -event.clientY : event.clientX)
   let from = null
   const hold = (on) => {
     if (on) mark.dataset.held = 'true'
@@ -562,16 +712,18 @@ const adjustable = (el, handle, mark, ui) => {
   }
   el.addEventListener('pointerdown', (event) => {
     if (event.button !== 0) return
-    from = { at: event.clientX, value: handle.value }
+    from = { at: along(event), value: handle.value }
     el.setPointerCapture(event.pointerId)
     hold(true)
     handle.begin()
   })
   el.addEventListener('pointermove', (event) => {
     if (!from) return
-    const span = el.getBoundingClientRect().width
-    const by = event.clientX - from.at
-    handle.move(dragged(handle.row, from.value, by, event.shiftKey, span))
+    const box = el.getBoundingClientRect()
+    const span = upright ? box.height : box.width
+    const fine = event.shiftKey || prefs.fine === 'Always'
+    const by = along(event) - from.at
+    handle.move(dragged(handle.row, from.value, by, fine, span))
   })
   const stop = () => {
     if (!from) return
@@ -588,6 +740,10 @@ const adjustable = (el, handle, mark, ui) => {
     handle.set(nudged(handle.row, handle.value, by, event.shiftKey))
   }, { passive: false })
   el.addEventListener('keydown', (event) => {
+    // Delete is the default, as it is in the hosts people know.
+    if (event.key === 'Delete' || event.key === 'Backspace') {
+      handle.set(handle.row.default)
+    }
     const by = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }
     if (!by[event.key]) return
     event.preventDefault()
@@ -626,8 +782,26 @@ export const value = (handle, opts = {}) => {
     scrub.setAttribute('aria-valuetext', handle.text)
   }
   scrub.addEventListener('keydown', (event) => {
+    const mod = event.ctrlKey || event.metaKey
     if (event.key === 'Enter') out.edit()
+    // A digit, a sign or a point starts a value, with no click first.
+    else if (!mod && /^[\d.+-]$/.test(event.key)) {
+      event.preventDefault()
+      out.edit(event.key)
+    } else if (mod && event.key.toLowerCase() === 'c') copyValue(handle)
+    else if (mod && event.key.toLowerCase() === 'v') pasteValue(handle)
   })
+  el.addEventListener('contextmenu', (event) => {
+    event.preventDefault()
+    valueMenu(el, handle, out, opts.ui, [event.clientX, event.clientY])
+  })
+  if (opts.ui) {
+    const lock = () => {
+      if (opts.ui.session.isLocked(handle.index)) el.dataset.locked = 'true'
+      else delete el.dataset.locked
+    }
+    opts.ui.session.on(lock)
+  }
   handle.on(show)
   show()
   adjustable(scrub, handle, el, opts.ui)
@@ -701,7 +875,11 @@ export const meter = (handle, opts = {}) => {
     'data-key': handle.row.key,
     'data-meter': handle.row.meter,
     title: 'Click to clear the clip lamp',
-    onclick: () => delete el.dataset.clipped
+    onclick: () => {
+      delete el.dataset.clipped
+      hold = { level: 0, at: 0 }
+      show(false)
+    }
   },
   h('span.kit-title', {}, opts.title ?? handle.row.short),
   out,
@@ -710,7 +888,8 @@ export const meter = (handle, opts = {}) => {
   let hold = { level: 0, at: 0 }
   let release = null
   const show = (wait = true) => {
-    hold = held(hold, handle.value, performance.now())
+    const ms = holdFor(prefs.hold)
+    hold = held(hold, handle.value, performance.now(), ms)
     zoneFills(handle.value).forEach((fill, i) => {
       segments[i].style.setProperty('--fill', String(Number(fill.toFixed(3))))
     })
@@ -723,7 +902,9 @@ export const meter = (handle, opts = {}) => {
     if (handle.value >= 0.999) el.dataset.clipped = 'true'
     clearTimeout(release)
     // Let go of the held peak even if no new reading comes.
-    if (wait) release = setTimeout(() => show(false), HOLD_MS + 20)
+    if (wait && ms && ms < Infinity) {
+      release = setTimeout(() => show(false), ms + 20)
+    }
   }
   handle.on(() => show())
   show(false)
@@ -827,10 +1008,8 @@ const capsule = (...children) => h('div.kit-capsule', {}, children)
 // The switch between the light and the dark theme.
 export const themeSwitch = () => {
   const label = () => `Switch to the ${otherTheme(currentTheme())} theme`
-  const button = tool('theme', 'theme', label(), () => {
-    switchTheme()
-    button.say(label())
-  })
+  const button = tool('theme', 'theme', label(), switchTheme)
+  window.addEventListener('kit-theme', () => button.say(label()))
   return button
 }
 
@@ -841,9 +1020,9 @@ export const densitySwitch = () => {
     const now = currentDensity()
     return `Density: ${now}. Switch to ${nextDensity(now)}`
   }
-  const button = tool('density', currentDensity(), label(), () => {
-    const next = switchDensity()
-    button.querySelector('path').setAttribute('d', ICONS[next])
+  const button = tool('density', currentDensity(), label(), switchDensity)
+  window.addEventListener('kit-density', () => {
+    button.querySelector('path').setAttribute('d', ICONS[currentDensity()])
     button.say(label())
   })
   return button
@@ -873,10 +1052,13 @@ export const tools = (ui) => {
   }
   session.on(show)
   show()
+  const settings = tool('settings', 'settings', 'Settings', () =>
+    togglePanel('settings', settingsPanel(ui)))
   return [
     capsule(undo, redo),
     capsule(compare),
-    capsule(densitySwitch(), themeSwitch())
+    capsule(densitySwitch(), themeSwitch(), settings, helpSwitch()),
+    power(ui)
   ]
 }
 
@@ -887,6 +1069,7 @@ export const header = (ui, opts = {}) => h('header.kit-header', {},
   h('div.kit-heading', {},
     h('h1.kit-name', {}, ui.name),
     opts.note ? h('p.kit-note', {}, opts.note) : null),
+  presetPill(ui),
   h('div.kit-tools', {}, tools(ui)))
 
 // The foot of the sheet: whatever the page puts there, then what the
@@ -898,9 +1081,13 @@ const HOW = 'Drag a number to change it. Shift for fine. Double-click it ' +
 export const foot = (ui, ...children) => {
   const what = h('b.kit-hint-what')
   const about = h('span.kit-hint-about', {}, HOW)
-  ui.hint = (title, text) => {
+  ui.hint = (title, text, row) => {
+    const help = document.documentElement.dataset.help === 'true'
     what.textContent = title ?? ''
-    about.textContent = title ? (text || '') : HOW
+    // An about ends without a full stop; with more after it, it needs one.
+    const more = help ? helpFor(row) : ''
+    const stop = more && text && !/[.!?]$/.test(text) ? '.' : ''
+    about.textContent = title ? (text || '') + stop + more : HOW
   }
   return h('footer.kit-foot', {},
     children,
@@ -922,3 +1109,662 @@ export const auto = (ui) => {
       foot(ui, lists.map((handle) => control(handle, { ui }))))
   ]
 }
+
+// ---- a value's menu, and its clipboard
+
+let clip = null
+
+const copyValue = (handle) => {
+  clip = handle.text
+  navigator.clipboard?.writeText(clip).catch(() => {})
+}
+
+// From the system's clipboard if the host lets the page read it, else
+// what was last copied here.
+const pasteValue = (handle) => {
+  const take = (text) => {
+    const norm = text ? parseValue(handle.row, text) : null
+    if (norm !== null) handle.set(norm)
+  }
+  const read = navigator.clipboard?.readText?.()
+  if (!read) return take(clip)
+  read.then((text) => take(text || clip), () => take(clip))
+}
+
+// A menu at a point: [name, icon, key, run] a row. A press anywhere
+// else, or Escape, puts it away.
+const popup = (items, [x, y]) => {
+  const app = document.getElementById('app')
+  const close = () => {
+    menu.remove()
+    window.removeEventListener('pointerdown', away, true)
+    window.removeEventListener('keydown', escape, true)
+  }
+  const away = (event) => { if (!menu.contains(event.target)) close() }
+  const escape = (event) => {
+    if (event.key !== 'Escape') return
+    event.stopPropagation()
+    close()
+  }
+  const menu = h('div.kit-pop', { role: 'menu' },
+    items.filter(Boolean).map(([name, glyph, key, run]) => h('button', {
+      type: 'button', role: 'menuitem', onclick: () => { close(); run() }
+    }, icon(glyph), h('span', {}, name), h('kbd', {}, key))))
+  app.append(menu)
+  const zoom = Number(app.style.zoom) || 1
+  const box = app.getBoundingClientRect()
+  const left = (x - box.left) / zoom
+  const top = (y - box.top) / zoom
+  const mostLeft = app.clientWidth - menu.offsetWidth - 8
+  const mostTop = app.clientHeight - menu.offsetHeight - 8
+  menu.style.left = `${Math.min(left, mostLeft)}px`
+  menu.style.top = `${Math.min(top, mostTop)}px`
+  window.addEventListener('pointerdown', away, true)
+  window.addEventListener('keydown', escape, true)
+  menu.querySelector('button').focus()
+  return menu
+}
+
+// What a right-click on a value offers.
+const valueMenu = (el, handle, out, ui, at) => {
+  const { row } = handle
+  const locked = ui?.session.isLocked(handle.index)
+  return popup([
+    ['Type a value', 'type', 'Enter', () => out.edit()],
+    [`Return to ${describe(row, row.default)}`, 'reset', 'Del',
+      () => handle.set(row.default)],
+    ['Copy', 'copy', 'Ctrl C', () => copyValue(handle)],
+    ['Paste', 'paste', 'Ctrl V', () => pasteValue(handle)],
+    ui && [locked ? 'Unlock' : 'Lock against presets', 'lock', '',
+      () => ui.session.lock(handle.index, !locked)]
+  ], at)
+}
+
+// ---- presets: the plugin's own, and the person's, kept by the page
+
+const makePresets = (store, session, plugin, factory) => {
+  const key = `kit-presets:${plugin}`
+  const params = () => store.get().params
+  const listeners = new Set()
+  const tell = () => listeners.forEach((fn) => fn())
+  const read = () => {
+    try { return JSON.parse(window.localStorage.getItem(key)) ?? [] } catch {
+      return []
+    }
+  }
+  let own = read()
+  let at = 'Init'
+  let before = null
+  const keep = () => {
+    try { window.localStorage.setItem(key, JSON.stringify(own)) } catch {}
+  }
+  // Kept by key, so a preset outlives a setting added or moved.
+  const byKey = (values) => Object.fromEntries(
+    params().map((row, i) => [row.key, values[i]]))
+  const fromKeys = (saved) => params().map((row) =>
+    saved[row.key] ?? row.default)
+  const list = () => [
+    { name: 'Init', by: 'Factory', values: params().map((row) => row.default) },
+    ...factory.map((preset) => ({
+      name: preset.name,
+      by: 'Factory',
+      values: presetValues(params(), preset.values)
+    })),
+    ...own.map((preset) => ({
+      name: preset.name, by: 'Mine', values: fromKeys(preset.values)
+    }))
+  ]
+  const go = (to) => presetMoves(store.get().values, to, session.locked)
+    .forEach(([index, , after]) => session.put(index, after))
+  const endPreview = () => {
+    if (!before) return
+    go(before)
+    before = null
+  }
+  store.on((state, prev) => { if (state.values !== prev.values) tell() })
+  return {
+    on: (fn) => { listeners.add(fn); return () => listeners.delete(fn) },
+    list,
+    get name () { return at },
+    // The settings are no longer what the named preset holds.
+    get changed () {
+      if (before) return false
+      const preset = list().find((p) => p.name === at)
+      const now = store.get().values
+      return !preset || preset.values.some((v, i) =>
+        Math.abs(v - now[i]) > 1e-9 && !session.isLocked(i))
+    },
+    // Hear a preset without keeping it; `endPreview` puts things back.
+    preview: (preset) => {
+      before = before ?? [...store.get().values]
+      go(preset.values)
+    },
+    endPreview,
+    load: (preset) => {
+      endPreview()
+      session.apply(preset.values)
+      at = preset.name
+      tell()
+    },
+    // Keeps what is set now under `name`; a factory name is left alone.
+    save: (name) => {
+      const taken = list().some((p) => p.name === name && p.by === 'Factory')
+      const called = taken ? `${name} (mine)` : name
+      own = [
+        ...own.filter((p) => p.name !== called),
+        { name: called, values: byKey(store.get().values) }
+      ]
+      keep()
+      at = called
+      tell()
+      return called
+    },
+    remove: (name) => {
+      own = own.filter((p) => p.name !== name)
+      keep()
+      if (at === name) at = 'Init'
+      tell()
+    }
+  }
+}
+
+// ---- panels: the sheet turned over to something else for a moment
+
+const closePanel = () => {
+  const sheetEl = document.querySelector('.kit-sheet[data-panel]')
+  if (!sheetEl) return
+  sheetEl.querySelector('.kit-panel')?.remove()
+  sheetEl.style.minHeight = ''
+  delete sheetEl.dataset.panel
+  window.dispatchEvent(new Event('kit-panel'))
+}
+
+// Opens the panel `name` over the sheet, or closes it if it is open.
+// The sheet keeps its height, so the glass does not jump.
+const togglePanel = (name, build) => {
+  const sheetEl = document.querySelector('.kit-sheet')
+  if (!sheetEl) return
+  const same = sheetEl.dataset.panel === name
+  closePanel()
+  if (same) return
+  sheetEl.style.minHeight = `${sheetEl.offsetHeight}px`
+  sheetEl.dataset.panel = name
+  const panel = h('div.kit-panel', { 'data-panel': name }, build())
+  panel.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return
+    event.stopPropagation()
+    closePanel()
+  })
+  sheetEl.append(panel)
+  window.dispatchEvent(new Event('kit-panel'))
+  panel.querySelector('input, button')?.focus()
+}
+
+const pill = (name, on, onclick, kind = '') => h(`button.kit-option${kind}`, {
+  type: 'button', 'aria-pressed': on, onclick
+}, name)
+
+// The preset browser: find one, hear it by pointing at it, press to
+// keep it. Each one's bars are its first four numbers, so two can be
+// told apart before either is tried.
+const presetBrowser = (ui) => () => {
+  const { presets } = ui
+  const params = ui.store.get().params
+  let filter = 'All'
+  let naming = false
+  const find = h('input.kit-find', {
+    type: 'text', placeholder: 'Find a preset', 'aria-label': 'Find a preset'
+  })
+  const bar = h('div.kit-panel-bar')
+  const rows = h('div.kit-preset-list')
+  const row = (preset) => h('div.kit-preset-row', {
+    'data-on': String(preset.name === presets.name)
+  },
+  h('button.kit-preset-pick', {
+    type: 'button',
+    onclick: () => presets.load(preset),
+    onpointerenter: () => presets.preview(preset)
+  },
+  h('span.kit-bars', { 'aria-hidden': 'true' },
+    fingerprint(params, preset.values).map((value) =>
+      h('i', { style: `--at: ${value}` }))),
+  h('span.kit-preset-name', {}, preset.name),
+  h('span.kit-preset-by', {}, preset.by)),
+  preset.by === 'Mine'
+    ? h('button.kit-preset-drop', {
+      type: 'button',
+      'aria-label': `Delete ${preset.name}`,
+      onclick: () => presets.remove(preset.name)
+    }, icon('close'))
+    : null)
+  const save = () => {
+    const name = h('input.kit-find', {
+      type: 'text', placeholder: 'Name it, then Enter', 'aria-label': 'Name'
+    })
+    name.addEventListener('keydown', (event) => {
+      event.stopPropagation()
+      if (event.key === 'Enter' && name.value.trim()) {
+        presets.save(name.value.trim())
+      }
+      if (event.key === 'Enter' || event.key === 'Escape') {
+        naming = false
+        draw()
+      }
+    })
+    return name
+  }
+  const draw = () => {
+    const typed = find.value.trim().toLowerCase()
+    const shown = presets.list()
+      .filter((p) => filter === 'All' || p.by === 'Mine')
+      .filter((p) => p.name.toLowerCase().includes(typed))
+    const entry = naming ? save() : null
+    bar.replaceChildren(
+      find,
+      ...['All', 'Mine'].map((name) => pill(name, filter === name, () => {
+        filter = name
+        draw()
+      })),
+      h('span.kit-space'),
+      entry ?? pill('Save as new', false, () => { naming = true; draw() },
+        '.kit-save'),
+      pill('Done', false, closePanel, '.kit-done'))
+    entry?.focus()
+    rows.replaceChildren(...shown.map(row))
+  }
+  find.addEventListener('input', draw)
+  find.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') event.stopPropagation()
+  })
+  rows.addEventListener('pointerleave', presets.endPreview)
+  // Redrawn when the list or the one chosen changes, not as values move.
+  const listed = () => `${presets.name}|${presets.list().map((p) => p.name)}`
+  let last = listed()
+  const stop = presets.on(() => {
+    if (!rows.isConnected) return stop()
+    if (listed() === last) return
+    last = listed()
+    draw()
+  })
+  window.addEventListener('kit-panel', presets.endPreview, { once: true })
+  draw()
+  return [bar, rows]
+}
+
+// The name of what is loaded, beside the plugin's own: it opens the
+// browser, and wears a dot once the settings are no longer the preset's.
+const presetPill = (ui) => {
+  const name = h('span.kit-preset-at')
+  const button = h('button.kit-preset', {
+    type: 'button',
+    onclick: () => togglePanel('presets', presetBrowser(ui))
+  }, name, icon('chevron'))
+  const show = () => {
+    name.textContent = ui.presets.name
+    button.dataset.changed = String(ui.presets.changed)
+    const edited = ui.presets.changed ? ', changed' : ''
+    button.setAttribute('aria-label',
+      `Preset: ${ui.presets.name}${edited}. Open the presets`)
+  }
+  ui.presets.on(show)
+  show()
+  return button
+}
+
+// Settings: kept for every plugin of ours, not saved with a song.
+const settingsPanel = (ui) => () => {
+  const body = h('div.kit-prefs')
+  const saved = () => {
+    try { return window.localStorage.getItem(THEME_KEY) } catch { return null }
+  }
+  const title = (text) => text[0].toUpperCase() + text.slice(1)
+  const rows = () => [
+    ['Theme', 'Follows the computer unless told', ['Light', 'Dark', 'Match'],
+      saved() ? title(currentTheme()) : 'Match',
+      (pick) => (pick === 'Match'
+        ? matchTheme()
+        : setTheme(pick.toLowerCase()))],
+    ['Density', 'How much is shown at once', DENSITIES.map(title),
+      title(currentDensity()), (pick) => setDensity(pick.toLowerCase())],
+    ['Peak hold', 'How long a peak stays lit', PREFS.hold, prefs.hold,
+      (pick) => setPref('hold', pick)],
+    ['Motion', 'Whether anything eases', PREFS.motion, prefs.motion,
+      (pick) => setPref('motion', pick)],
+    ['Fine drag', 'Hold Shift, or always', PREFS.fine, prefs.fine,
+      (pick) => setPref('fine', pick)]
+  ]
+  const draw = () => body.replaceChildren(...rows().map(
+    ([name, note, options, now, pick]) => h('div.kit-prefs-row', {
+      'data-setting': name.toLowerCase().replace(' ', '-')
+    },
+    h('span.kit-prefs-name', {}, name, h('small', {}, note)),
+    h('div.kit-options', { role: 'group', 'aria-label': name },
+      options.map((option) => pill(option, option === now, () => {
+        pick(option)
+        draw()
+      }))))))
+  draw()
+  return [
+    h('div.kit-panel-bar', {},
+      h('b.kit-panel-title', {}, 'Settings'),
+      h('span.kit-about', {}, `${ui.name} ${ui.build}`),
+      h('span.kit-space'),
+      pill('Done', false, closePanel, '.kit-done')),
+    body
+  ]
+}
+
+// The plugin's own bypass, where the spec has a setting with the key
+// `bypass`: filled when the plugin is on, hollow when it is bypassed.
+const power = (ui) => {
+  const handle = ui.p.bypass
+  if (!handle) return null
+  const button = tool('power', 'power', '', () =>
+    handle.set(handle.value > 0.5 ? 0 : 1))
+  const show = () => {
+    const on = handle.value <= 0.5
+    button.setAttribute('aria-pressed', on)
+    button.say(on ? 'On. Press to bypass' : 'Bypassed. Press to turn on')
+    document.documentElement.dataset.bypassed = String(!on)
+  }
+  handle.on(show)
+  show()
+  return button
+}
+
+// Help: while it is on, names are underlined and the foot of the
+// sheet says more: what a setting does, its range and where it rests.
+const helpSwitch = () => {
+  const root = document.documentElement
+  const button = tool('help', 'help', 'Help', () => {
+    root.dataset.help = String(root.dataset.help !== 'true')
+    show()
+  })
+  const show = () => {
+    const on = root.dataset.help === 'true'
+    button.setAttribute('aria-pressed', on)
+    button.say(on ? 'Help is on. Press to turn it off' : 'Help')
+  }
+  show()
+  return button
+}
+
+// What help adds about a setting: its range and its resting place.
+export const helpFor = (row) => {
+  if (!row) return ''
+  if (row.kind === 'list') return ` One of ${row.choices.join(', ')}.`
+  if (row.kind !== 'range') return ''
+  return ` From ${describe(row, 0)} to ${describe(row, 1)}. ` +
+    `Rests at ${describe(row, row.default)}.`
+}
+
+// ---- settings in groups: a tab each, with a small chart of its values
+
+// `list` is [{ name, handles }]. Every group's values show in its tab
+// as bars, so nothing is hidden by being on another tab.
+export const groups = (ui, list, opts = {}) => {
+  const render = opts.render ?? ((handle) => control(handle, { ui }))
+  let at = opts.start ?? 0
+  const body = h('div.kit-values', { role: 'tabpanel' })
+  const panels = list.map((group) => group.handles.map(render))
+  const tabs = list.map((group, i) => {
+    const charted = group.handles.slice(0, 6)
+    const bars = charted.map(() => h('i'))
+    const draw = () => charted.forEach((handle, n) =>
+      bars[n].style.setProperty('--at', handle.value))
+    charted.forEach((handle) => handle.on(draw))
+    draw()
+    return h('button.kit-tab', {
+      type: 'button', role: 'tab', onclick: () => { at = i; show() }
+    }, h('span.kit-bars', { 'aria-hidden': 'true' }, bars),
+    h('span', {}, group.name))
+  })
+  const show = () => {
+    tabs.forEach((tab, i) => tab.setAttribute('aria-selected', i === at))
+    body.replaceChildren(...panels[at])
+  }
+  show()
+  return [h('div.kit-tabs', { role: 'tablist' }, tabs), body]
+}
+
+// ---- the fader: used sparingly, where a level is ridden
+
+// A line as wide as the meter's and a cap that carries the number.
+// With `opts.meter`, a meter's handle, the line is that meter: the
+// level plays on it in the same segments while the cap sets the gain.
+export const fader = (handle, opts = {}) => {
+  const cap = h('output.kit-fader-cap')
+  const lit = opts.meter
+    ? ZONES.map(({ name }) => h(`i.kit-segment.kit-zone-${name}`))
+    : [h('i.kit-fader-fill')]
+  const kind = opts.meter ? '.kit-fader-meter' : ''
+  const track = h(`div.kit-fader-track${kind}`, {
+    tabindex: 0,
+    role: 'slider',
+    'aria-orientation': 'vertical',
+    'aria-label': handle.row.title
+  }, h('div.kit-fader-line', {}, lit), cap)
+  const el = shell(handle, 'fader', opts, track,
+    h('span.kit-title', {}, opts.title ?? handle.row.short))
+  const show = () => {
+    track.style.setProperty('--at', handle.value)
+    cap.textContent = parts(handle.text)[0]
+    track.setAttribute('aria-valuetext', handle.text)
+  }
+  handle.on(show)
+  show()
+  if (opts.meter) {
+    const level = () => zoneFills(opts.meter.value).forEach((fill, i) =>
+      lit[i].style.setProperty('--fill', String(Number(fill.toFixed(3)))))
+    opts.meter.on(level)
+    level()
+  }
+  adjustable(track, handle, el, opts.ui, true)
+  return el
+}
+
+// ---- two settings that move as one
+
+// A handle on `lead` that takes `other` with it, by `tie`, for as long
+// as `on()` says: both are one gesture for the host.
+const tied = (lead, other, tie, on = () => true) => {
+  let start = null
+  const self = Object.assign(Object.create(lead), {
+    begin: () => {
+      lead.begin()
+      if (!on()) return
+      start = { lead: lead.value, other: other.value }
+      other.begin()
+    },
+    move: (value) => {
+      lead.move(value)
+      if (start) other.move(tie(start, lead.value))
+    },
+    end: () => {
+      lead.end()
+      if (start) other.end()
+      start = null
+    },
+    set: (value) => { self.begin(); self.move(value); self.end() }
+  })
+  return self
+}
+
+// Two settings held together: drag either and both go, keeping the
+// gap between them. The link between them lets go and takes hold.
+// `opts.mirror` moves them apart from a middle instead.
+export const linked = (a, b, opts = {}) => {
+  let on = opts.start ?? true
+  const tie = TIES[opts.mirror ? 'mirrored' : 'linked']
+  const button = h('button.kit-link', {
+    type: 'button', onclick: () => { on = !on; show() }
+  }, icon('link'))
+  const show = () => {
+    button.setAttribute('aria-pressed', on)
+    button.setAttribute('aria-label', on
+      ? `${a.row.title} and ${b.row.title} move together. Press to part them`
+      : `Link ${a.row.title} and ${b.row.title}`)
+  }
+  show()
+  return h(`div.kit-pair${opts.mirror ? '.kit-mirrored' : '.kit-linked'}`, {},
+    value(tied(a, b, tie, () => on), opts),
+    button,
+    value(tied(b, a, tie, () => on), opts))
+}
+
+export const mirrored = (a, b, opts = {}) =>
+  linked(a, b, { ...opts, mirror: true })
+
+const readout = (handle, title) => {
+  const out = h('output.kit-value')
+  const show = () => {
+    const [number, unit] = parts(handle.text)
+    out.replaceChildren(h('span.kit-number', {}, number),
+      unit ? h('span.kit-unit', {}, ` ${unit}`) : '')
+  }
+  handle.on(show)
+  show()
+  return h('div.kit-side', { 'data-key': handle.row.key },
+    h('span.kit-title', {}, title ?? handle.row.short), out)
+}
+
+// One line shared by two: what one gains the other gives up. The
+// place they meet is what is dragged.
+export const opposed = (a, b, opts = {}) => {
+  const bar = h('div.kit-oppose', {
+    tabindex: 0,
+    role: 'slider',
+    'aria-label': `${a.row.title} against ${b.row.title}`
+  }, h('i.kit-oppose-a'), h('i.kit-oppose-grip'), h('i.kit-oppose-b'))
+  const el = shell(a, 'opposed', opts,
+    h('div.kit-sides', {}, readout(a), readout(b)), bar)
+  const show = () => {
+    bar.style.setProperty('--at', a.value)
+    bar.setAttribute('aria-valuetext', `${a.text}, ${b.text}`)
+  }
+  a.on(show)
+  show()
+  adjustable(bar, tied(a, b, TIES.opposed), el, opts.ui)
+  return el
+}
+
+// Two ends of one thing: drag either end, or the stretch between to
+// move both.
+export const span = (lo, hi, opts = {}) => {
+  const bar = h('div.kit-span', {
+    role: 'group', 'aria-label': `${lo.row.title} to ${hi.row.title}`
+  }, h('i.kit-span-fill'), h('i.kit-span-lo'), h('i.kit-span-hi'))
+  const el = shell(lo, 'spanned', opts,
+    h('div.kit-sides', {},
+      readout(lo, opts.from ?? 'From'), readout(hi, opts.to ?? 'To')), bar)
+  const show = () => {
+    bar.style.setProperty('--lo', lo.value)
+    bar.style.setProperty('--hi', hi.value)
+  }
+  lo.on(show)
+  hi.on(show)
+  show()
+  let drag = null
+  bar.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0) return
+    const box = bar.getBoundingClientRect()
+    const at = (event.clientX - box.left) / box.width
+    const near = (v) => Math.abs(at - v) * box.width < 14
+    const inside = at > lo.value && at < hi.value
+    const which = near(lo.value)
+      ? { handle: lo, most: () => hi.value, least: () => 0 }
+      : near(hi.value)
+        ? { handle: hi, most: () => 1, least: () => lo.value }
+        : inside
+          ? { handle: tied(lo, hi, TIES.linked), most: () => 1, least: () => 0 }
+          : null
+    if (!which) return
+    drag = { ...which, x: event.clientX, from: which.handle.value, box }
+    bar.setPointerCapture(event.pointerId)
+    el.dataset.held = 'true'
+    opts.ui?.touch(lo.row.key)
+    drag.handle.begin()
+  })
+  bar.addEventListener('pointermove', (event) => {
+    if (!drag) return
+    const to = dragged(drag.handle.row, drag.from, event.clientX - drag.x,
+      event.shiftKey, drag.box.width)
+    drag.handle.move(clamp(to, drag.least(), drag.most()))
+  })
+  const stop = () => {
+    if (!drag) return
+    drag.handle.end()
+    drag = null
+    delete el.dataset.held
+    opts.ui?.touch(null)
+  }
+  bar.addEventListener('pointerup', stop)
+  bar.addEventListener('pointercancel', stop)
+  return el
+}
+
+// ---- the pad: two settings moved by one point
+
+// `x` runs across and `y` up. They are ordinary settings: their
+// numbers move on the sheet as the point does.
+export const pad = (x, y, opts = {}) => {
+  const el = h('div.kit-pad', {
+    'data-key': `${x.row.key}-${y.row.key}`,
+    role: 'group',
+    'aria-label': `${x.row.title} across, ${y.row.title} up`
+  }, h('i.kit-pad-x'), h('i.kit-pad-y'), h('i.kit-pad-dot'))
+  const show = () => {
+    el.style.setProperty('--x', x.value)
+    el.style.setProperty('--y', y.value)
+  }
+  x.on(show)
+  y.on(show)
+  show()
+  let held = false
+  const place = (event) => {
+    const box = el.getBoundingClientRect()
+    x.move(clamp((event.clientX - box.left) / box.width))
+    y.move(clamp(1 - (event.clientY - box.top) / box.height))
+  }
+  el.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0) return
+    held = true
+    el.setPointerCapture(event.pointerId)
+    el.dataset.held = 'true'
+    opts.ui?.touch(x.row.key)
+    x.begin()
+    y.begin()
+    place(event)
+  })
+  el.addEventListener('pointermove', (event) => { if (held) place(event) })
+  const stop = () => {
+    if (!held) return
+    held = false
+    x.end()
+    y.end()
+    delete el.dataset.held
+    opts.ui?.touch(null)
+  }
+  el.addEventListener('pointerup', stop)
+  el.addEventListener('pointercancel', stop)
+  return el
+}
+
+// ---- a notice on the glass: nothing to show, or something wrong
+
+// Says what happened and what to do about it. `opts.tone` is a short
+// line in orange for when sound is affected; `opts.actions` are
+// [{ name, run, main }], the main one filled in.
+export const notice = (opts) => h('div.kit-notice', { role: 'status' },
+  opts.tone ? h('span.kit-notice-tone', {}, opts.tone) : null,
+  h('b.kit-notice-title', {}, opts.title),
+  opts.text ? h('p', {}, opts.text) : null,
+  opts.actions?.length
+    ? h('div.kit-options', {}, opts.actions.map((action) =>
+      pill(action.name, Boolean(action.main), action.run)))
+    : null)
+
+// Paired controls three across on a sheet, and faders side by side.
+export const pairs = (...children) => h('div.kit-pairs', {}, children)
+
+export const faders = (...children) => h('div.kit-faders', {}, children)

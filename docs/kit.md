@@ -138,7 +138,17 @@ and the picture can tell when it is held.
   is for a setting that rests inside its range.
 - `choice` is pills for up to four choices, `menu` for more, `toggle`
   for Off and On. `control(handle)` picks among them from the spec.
-- `meter` is a level: a number over six segments.
+- `meter` is a level: a number over six segments. `fader` is for a
+  level that is ridden; with `{ meter }` its line is that meter.
+- `groups(ui, [{ name, handles }])` puts many settings on tabs, each
+  tab a small chart of its values.
+- `linked`, `mirrored`, `opposed` and `span` are for two settings
+  that belong together, laid out with `pairs`. `pad(x, y)` moves two
+  with one point. `notice` says on the glass that something is wrong.
+- `mount(build, { presets })` gives the plugin its own presets:
+  `[{ name, values: { key: value in its own terms } }]`. The header
+  then has the preset browser; a person's own are kept by the page.
+- A setting keyed `bypass` (Off, On) puts an On button in the header.
 - `mount(auto)` lays out a whole page from the spec alone: a start,
   never the end. `mount(build, { density: 'regular' })` starts a page
   with many settings smaller.
@@ -203,9 +213,10 @@ settings that show what is new about it.
   waveform, spectrum or history can be drawn from the real signal.
   This is the largest gap against the bar in `docs/design.md` and the
   next thing the kit needs.
-- Presets, and a bypass of the plugin's own.
-- Most of the design canvas beyond the core: `docs/design.md` lists
-  what is drawn and not yet built.
+- Presets as files, and a bypass the host knows as the plugin's.
+- What `kit/benchmarks.json` marks `under`: the check prints the list.
+- The parts of the design canvas that need a live signal or notes
+  from the page: `docs/design.md` lists them.
 - State beyond the settings: A/B and undo are forgotten when the
   editor closes.
 - Sidechain inputs, more than one bus, mono-only or surround layouts.

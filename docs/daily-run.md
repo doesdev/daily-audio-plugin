@@ -91,6 +91,17 @@ npm run new -- NAME "Display Name"      # --instrument if it is played
 8. `examples/demo.rs`: the settings that show what is new.
 9. `npm run check`.
 
+## The benchmark comes first
+
+Before the editor, write `plugins/NAME/benchmark.json`
+(`docs/benchmarks.md`): the kind of plugin this is, at least two of
+the best of that kind and what each does, and a verdict and a note on
+each of the seven points. Look the leaders up; do not describe them
+from memory. Read the tally `npm run check` prints: if this plugin
+needs something the kit is under the bar on, close that in the kit
+first, in its own commit, with its entry in `kit/benchmarks.json`
+and its tests.
+
 ## 5. The rules that keep this honest
 
 - Never weaken a check to pass a plugin. Not a threshold, not an

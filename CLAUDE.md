@@ -15,6 +15,7 @@ cargo test -p NAME                 # one plugin
 npm run new -- NAME "Display Name"
 npm run shots -- NAME
 npm run docs -- NAME
+npm run gallery                    # the kit's own pictures, both themes
 ```
 
 ## Rules
@@ -26,9 +27,14 @@ npm run docs -- NAME
 - `process` never allocates, locks or waits.
 - Kit changes go in their own commit with their own tests.
 - Look at every screenshot before committing it, in both themes.
-- An editor meets or exceeds what the best plugins of its kind ship
-  (`docs/design.md`, "The bar"), and says in `NOVELTY.md` where it
-  does not. It is built round a picture only that plugin has.
+- Every interaction and feature is compared with what the leaders of
+  the field ship and meets or exceeds it, or says plainly where it is
+  under and what is next (`docs/benchmarks.md`). Nothing goes in the
+  kit without an entry in `kit/benchmarks.json`, no "meets" without
+  a test, and every plugin has a `benchmark.json`. The check fails
+  otherwise.
+- An editor is built round a picture only that plugin has, and says
+  in `NOVELTY.md` where it is under the bar.
 - An editor follows `docs/design.md`: mostly one tone with depth,
   purple only for what is being touched, any other colour only when it
   is news, and none of the habits listed under "What it avoids".

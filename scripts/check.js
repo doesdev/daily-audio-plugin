@@ -66,6 +66,9 @@ export const STEPS = [
   ['licences', node('scripts/licences.test.js')],
   ['every licence allows shipping', node('scripts/licences.js')],
   ['the page', node('kit/ui/test.js')],
+  ['the rest of the page, on the gallery', node('kit/ui/gallery.test.js')],
+  ['the benchmark rule', node('scripts/benchmarks.test.js')],
+  ['held to the best of the field', node('scripts/benchmarks.js')],
   ['manuals', docs],
   ['scenes', scenes]
 ]
