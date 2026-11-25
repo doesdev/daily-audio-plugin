@@ -10,20 +10,45 @@ stages, five settings and one meter.
 ## Getting started
 
 Put Template on a track as an insert. At its defaults it adds a gentle
-soft drive and trims the level by 6 dB. Turn **Drive** up until you hear the edge you
-want, pick a **Shape**, then bring **Output** down to match the level
-you started with.
+soft drive and trims the level by 6 dB. Slide **Drive** up until you
+hear the edge you want, pick a **Shape**, then bring **Output** down
+to match the level you started with.
 
-The half-full disc at the top right switches between the dark and
-the light theme. The choice is kept for every plugin of ours in the
-same host.
+### The screen
+
+The screen shows what Template is doing. On the left is the bend it
+puts in the signal: level in runs across, level out runs up, and the
+dashed line is a signal left alone. The stretch of the bend the sound
+is using right now is lit in purple, so you can see how far into the
+bend you are driving it. On the right is what that does to one cycle
+of a wave as loud as the sound coming in: dashed going in, solid
+coming out.
+
+![Fold at 30 dB, mixed in at 70%](images/fold.png)
+
+### Setting things
+
+Slide a rule to set it, or turn the knob by dragging up and down. Hold
+Shift for fine moves, use the mouse wheel or the arrow keys for single
+steps, and double-click a control to put it back to its default, which
+the small mark above the rule shows. Double-click a value to type one:
+`8k` and `8000 Hz` both work for Tone.
+
+The foot of the window says what the control under the pointer does.
+
+![The controls, with the pointer over Drive](images/controls.png)
+
+At the top right, the arrows undo and redo your changes (Ctrl+Z and
+Ctrl+Shift+Z), and **A B** flips between two sets of settings so you
+can hear which is better: B starts as a copy of A. The half-full disc
+switches between the dark and the light theme, for every plugin of
+ours in the same host.
 
 ![The light theme](images/light.png)
 
-Drag a knob up or down to turn it. Hold Shift for fine moves, use the
-mouse wheel or the arrow keys for single steps, and double-click to put
-a setting back to its default. Every setting can be automated by the
-host, and the host saves them with the project.
+Drag the window's corner to make the whole editor bigger or smaller.
+Every setting can be automated by the host, and the host saves them
+with the project. A and B and the undo history are not saved.
 
 ## The settings
 
@@ -42,8 +67,6 @@ the limit:
 | Hard  | Stops flat at the limit | Bright and buzzy |
 | Fold  | Turns back from the limit | Hollow and metallic |
 
-![Hard, driven by 24 dB](images/shape.png)
-
 ### Colour
 
 **Tone** is a low-pass filter after the shaper, from 200 Hz to 16 kHz.
@@ -58,10 +81,11 @@ only the shaped signal, at 0% only the dry.
 Driving a signal makes it louder, so expect to turn this down as Drive
 goes up.
 
-The **Level** meter beside it shows the peak level going out. If it
-sits at the top, bring Output down.
-
-![Fold at 30 dB, mixed in at 70%](images/fold.png)
+The meters beside it show the peak level coming **In** and going
+**Out**, with the peak held as a line for a moment. The top 6 dB of
+each is marked in amber. If the level going out reaches full scale,
+the lamp above the meter lights and stays lit until you click it:
+bring Output down.
 
 ## Troubleshooting
 

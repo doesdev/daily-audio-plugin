@@ -15,6 +15,7 @@ pub const MIX: usize = 3;
 pub const OUTPUT: usize = 4;
 // Indexes into METERS.
 pub const LEVEL: usize = 0;
+pub const INPUT: usize = 1;
 
 pub const SOFT: usize = 0;
 pub const HARD: usize = 1;
@@ -61,8 +62,8 @@ impl Plugin for Template {
         audio_out: 2,
         midi_in: false,
         midi_out: false,
-        size: (640, 240),
-        min_size: (480, 240),
+        size: (720, 400),
+        min_size: (540, 300),
     };
 
     // The ids are fixed for good too. A new setting takes the next id
@@ -92,7 +93,7 @@ impl Plugin for Template {
             .about("Level after everything else"),
     ];
 
-    const METERS: &'static [Param] = &[meter(5, "level", "Level")];
+    const METERS: &'static [Param] = &[meter(5, "level", "Out"), meter(6, "input", "In")];
 
     const ASSETS: &'static [Asset] = &[
         ("/main.js", "text/javascript", include_str!("../ui/main.js")),
@@ -133,6 +134,10 @@ impl Plugin for Template {
         let shape = block.choice(SHAPE);
 
         let mut loudest = 0.0f32;
+        let mut heard = 0.0f32;
+        for ch in 0..block.inputs() {
+            heard = heard.max(peak(block.input(ch)));
+        }
         for i in 0..block.frames() {
             // Each setting eased once a sample, the same for both sides.
             let (drive, mix) = (self.drive.next(drive), self.mix.next(mix));
@@ -150,6 +155,7 @@ impl Plugin for Template {
             loudest = loudest.max(peak(block.output(ch)));
         }
         block.meter(LEVEL, to_fraction(loudest));
+        block.meter(INPUT, to_fraction(heard));
     }
 }
 

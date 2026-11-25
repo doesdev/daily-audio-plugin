@@ -1,10 +1,13 @@
 /* The kit's look (docs/design.md says why it is this way).
 
-   Monotone: an off-white or a dark grey ground, ink a few steps from
-   it, and hairlines. Purple is the one accent and it means one thing:
-   this is the value. Any other colour appears only where it says
-   something a person already knows how to read, as a level meter's
-   green, amber and red do.
+   A body in one tone, off-white or dark grey, built in three depths:
+   things cut into it (slots, the screen), the body itself, and things
+   standing off it (the deck, a grip, a cap). Light comes from above,
+   so a raised edge is bright on top and a cut one is dark on top.
+
+   Purple is the one accent and it means one thing: this is where the
+   setting is. Any other colour appears only when it is news, as a
+   level too hot to leave alone is.
 
    A plugin's own style.css comes after this and may change any token
    below, or anything else. */
@@ -12,45 +15,62 @@
 :root,
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --ground: #1b1b1e;
-  --raised: #26262a;
-  --well: #303035;
-  --line: #3a3a41;
-  --ink: #eaeaed;
-  --ink-soft: #9c9ca6;
+  --ground: #19191c;
+  --body-top: #2b2b30;
+  --body: #232327;
+  --cut: #131316;
+  --edge-light: rgb(255 255 255 / 0.07);
+  --edge-dark: rgb(0 0 0 / 0.55);
+  --lift: 0 14px 28px -16px rgb(0 0 0 / 0.75), 0 2px 4px rgb(0 0 0 / 0.35);
+  --grip-top: #4a4a52;
+  --grip: #36363c;
+  --line: #3b3b42;
+  --ink: #ececef;
+  --ink-soft: #9d9da7;
   --accent: #a690ff;
-  --accent-strong: #c6b8ff;
-  --accent-soft: rgb(166 144 255 / 0.16);
-  --on-accent: #18132c;
-  --ok: #58c48a;
+  --accent-strong: #c9bcff;
+  --accent-soft: rgb(166 144 255 / 0.2);
   --warn: #e3b24f;
   --hot: #f0716a;
+  --ok: #58c48a;
   --cool: #6cb4ec;
 }
 
 :root[data-theme='light'] {
   color-scheme: light;
-  --ground: #ececee;
-  --raised: #f7f7f8;
-  --well: #dcdce0;
-  --line: #cdcdd3;
-  --ink: #1d1d21;
-  --ink-soft: #62626c;
+  --ground: #dfdfe3;
+  --body-top: #fbfbfc;
+  --body: #efeff1;
+  --cut: #d4d4d9;
+  --edge-light: rgb(255 255 255 / 0.95);
+  --edge-dark: rgb(24 24 44 / 0.2);
+  --lift: 0 14px 26px -16px rgb(24 24 44 / 0.4), 0 2px 4px rgb(24 24 44 / 0.1);
+  --grip-top: #ffffff;
+  --grip: #ececef;
+  --line: #c4c4cb;
+  --ink: #1c1c20;
+  --ink-soft: #5f5f69;
   --accent: #6a4ad4;
-  --accent-strong: #4f32b0;
-  --accent-soft: rgb(106 74 212 / 0.12);
-  --on-accent: #ffffff;
-  --ok: #2f9461;
-  --warn: #c0851a;
+  --accent-strong: #5234b4;
+  --accent-soft: rgb(106 74 212 / 0.16);
+  --warn: #b97f14;
   --hot: #cf4a42;
+  --ok: #2f9461;
   --cool: #2e7fbf;
 }
 
 :root {
+  /* The screen is dark glass in either theme, so what is drawn on it
+     has colours of its own. */
+  --screen: #101013;
+  --screen-ink: #e9e9ee;
+  --screen-soft: #6c6c78;
+  --screen-line: rgb(255 255 255 / 0.07);
+  --screen-accent: #a690ff;
   /* What marks a control's value. A control given a tone takes that
      colour instead: see the tones at the end. */
   --tone: var(--accent);
-  --gap: 18px;
+  --pad: 14px;
   --font: 'Archivo', 'Segoe UI Variable Text', 'Segoe UI', system-ui,
     sans-serif;
 }
@@ -73,9 +93,9 @@ body {
 #app {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  padding: 14px var(--gap) var(--gap);
-  gap: 14px;
+  gap: 10px;
+  padding: 10px var(--pad) 8px;
+  transform-origin: 0 0;
 }
 
 :focus { outline: none; }
@@ -85,84 +105,173 @@ body {
   outline-offset: 2px;
 }
 
-/* Header: the name, wide; the build and the theme switch, quiet. */
+/* Header: the name, wide; the tools, small and out of the way. */
 
 .kit-header {
   display: flex;
   align-items: center;
   gap: 12px;
+  height: 26px;
 }
 
 .kit-name {
   margin: 0;
   font-size: 17px;
-  font-weight: 650;
-  font-stretch: 112%;
-  letter-spacing: -0.005em;
+  font-weight: 680;
+  font-stretch: 114%;
+  letter-spacing: -0.01em;
 }
 
-.kit-build {
+.kit-header-end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-left: auto;
-  color: var(--ink-soft);
-  font-size: 11px;
 }
 
-.kit-theme {
+.kit-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.kit-tool {
   display: grid;
   place-items: center;
-  width: 24px;
+  width: 26px;
   height: 24px;
   padding: 0;
   background: none;
   border: 0;
-  border-radius: 50%;
+  border-radius: 6px;
   color: var(--ink-soft);
   cursor: pointer;
 }
 
-.kit-theme:hover { color: var(--ink); background: var(--well); }
-.kit-theme svg { width: 14px; height: 14px; }
-.kit-theme circle { fill: none; stroke: currentColor; stroke-width: 1.6; }
-.kit-theme path { fill: currentColor; }
+.kit-tool:hover:not(:disabled) { color: var(--ink); background: var(--cut); }
+.kit-tool:disabled { opacity: 0.35; cursor: default; }
+.kit-tool svg { width: 15px; height: 15px; }
 
-/* Body: groups side by side with a hairline between, on one ground.
-   No boxes: a group is its title and the space around it. */
+.kit-tool path,
+.kit-tool circle {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
-.kit-body {
+.kit-tool path.kit-fill { fill: currentColor; stroke: none; }
+
+/* Compare: two letters in a slot, the one in use standing up. */
+
+.kit-compare {
+  display: flex;
+  margin-left: 6px;
+  padding: 2px;
+  background: var(--cut);
+  border: 0;
+  border-radius: 8px;
+  box-shadow: inset 0 1px 2px var(--edge-dark), 0 1px 0 var(--edge-light);
+  color: var(--ink-soft);
+  font: 600 11px var(--font);
+  cursor: pointer;
+}
+
+.kit-compare-slot {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 18px;
+  border-radius: 6px;
+}
+
+.kit-compare-slot[data-on='true'] {
+  background: linear-gradient(var(--grip-top), var(--grip));
+  box-shadow: inset 0 1px 0 var(--edge-light), 0 1px 2px var(--edge-dark);
+  color: var(--accent-strong);
+}
+
+/* The stage: the screen, and the rail beside it. */
+
+.kit-stage {
   display: flex;
   flex: 1;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  row-gap: var(--gap);
+  gap: 10px;
   min-height: 0;
-  overflow: auto;
+}
+
+.kit-screen {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  background: var(--screen);
+  border-radius: 12px;
+  box-shadow:
+    inset 0 2px 6px rgb(0 0 0 / 0.7),
+    inset 0 0 0 1px rgb(255 255 255 / 0.04),
+    0 1px 0 var(--edge-light);
+  overflow: hidden;
+}
+
+/* A sheen across the top of the glass: the one gradient that is not a
+   surface, and it is there because glass has one. */
+.kit-screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgb(255 255 255 / 0.045), transparent 38%);
+  pointer-events: none;
+}
+
+.kit-screen-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Raised panels: the deck the controls sit on, and the rail. */
+
+.kit-deck,
+.kit-rail {
+  background: linear-gradient(var(--body-top), var(--body));
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 var(--edge-light), var(--lift);
+}
+
+.kit-deck {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 26px;
+  align-content: start;
+  padding: 12px 16px;
+}
+
+.kit-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
 }
 
 .kit-group {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 2px var(--gap);
-  border-left: 1px solid var(--line);
-}
-
-.kit-group:first-child {
-  padding-left: 0;
-  border-left: 0;
+  gap: 8px;
 }
 
 .kit-group-title {
   margin: 0;
-  color: var(--ink);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 620;
 }
 
 .kit-row {
   display: flex;
-  flex-wrap: wrap;
   align-items: flex-start;
-  gap: 18px;
+  gap: 12px;
 }
 
 .kit-column {
@@ -175,211 +284,360 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  min-width: 60px;
+  gap: 5px;
 }
 
 .kit-title {
   color: var(--ink-soft);
   font-size: 11.5px;
-  font-stretch: 92%;
+  font-stretch: 94%;
   white-space: nowrap;
 }
 
 .kit-value {
-  min-width: 56px;
-  font-size: 12px;
-  font-weight: 550;
+  min-width: 54px;
+  font-size: 12.5px;
+  font-weight: 560;
   text-align: center;
   white-space: nowrap;
+  cursor: text;
 }
 
-/* Knob: a ring of ticks, lit as far as the value, round a flat cap
-   with a pointer. */
-
-.kit-knob-dial {
-  width: 58px;
-  height: 58px;
-  border-radius: 50%;
-  cursor: ns-resize;
-  touch-action: none;
+.kit-entry {
+  width: 64px;
+  padding: 1px 4px;
+  background: var(--cut);
+  border: 0;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 2px var(--edge-dark), 0 0 0 1.5px var(--accent);
+  color: var(--ink);
+  font: inherit;
+  text-align: center;
 }
 
-.kit-knob-tick {
-  stroke: var(--line);
-  stroke-width: 1.5;
-  stroke-linecap: round;
+/* Rule: title, a ruled slot with a grip, the value. One line. */
+
+.kit-rule {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
 }
 
-.kit-knob-tick.kit-lit { stroke: var(--tone); }
+.kit-rule .kit-title { width: 52px; }
+.kit-rule .kit-value { width: 64px; min-width: 0; text-align: right; }
 
-.kit-knob-cap {
-  fill: var(--raised);
-  stroke: var(--line);
-  stroke-width: 1;
-}
-
-.kit-knob-dial:hover .kit-knob-cap { stroke: var(--ink-soft); }
-.kit-knob-dial:active .kit-knob-cap { stroke: var(--tone); }
-
-.kit-knob-pointer {
-  stroke: var(--ink);
-  stroke-width: 2;
-  stroke-linecap: round;
-}
-
-/* Slider */
-
-.kit-slider { align-items: stretch; min-width: 140px; }
-.kit-slider .kit-title { text-align: left; }
-.kit-slider .kit-value { text-align: left; }
-
-.kit-slider-bar {
+.kit-rule-slot {
+  --from: 0;
+  --to: 0;
+  --at: 0;
+  --grip-w: 12px;
   position: relative;
-  height: 16px;
+  flex: 1;
+  min-width: 90px;
+  height: 22px;
   cursor: ew-resize;
   touch-action: none;
 }
 
-.kit-slider-bar::before,
-.kit-slider-fill {
+/* The channel the grip rides in. */
+.kit-rule-slot::before {
+  content: '';
   position: absolute;
-  top: 6px;
-  left: 0;
+  inset: 8px 0;
+  background: var(--cut);
+  border-radius: 3px;
+  box-shadow: inset 0 1px 2px var(--edge-dark), 0 1px 0 var(--edge-light);
+}
+
+/* The rule itself: a mark every tenth of the travel, under the
+   channel, the way a fader's scale is printed on the panel. */
+.kit-rule-marks {
+  position: absolute;
+  left: calc(var(--grip-w) / 2);
+  right: calc(var(--grip-w) / 2);
+  bottom: 1px;
   height: 4px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--line) 0 1px,
+    transparent 1px calc((100% - 1px) / 10)
+  );
+}
+
+.kit-rule-default {
+  position: absolute;
+  top: 0;
+  left: calc(var(--default) * (100% - var(--grip-w)) + var(--grip-w) / 2 - 3px);
+  width: 0;
+  height: 0;
+  border: 3px solid transparent;
+  border-top-color: var(--ink-soft);
+  border-bottom: 0;
+}
+
+.kit-rule-fill {
+  position: absolute;
+  top: 9px;
+  height: 4px;
+  left: calc(var(--from) * (100% - var(--grip-w)) + var(--grip-w) / 2);
+  width: calc((var(--to) - var(--from)) * (100% - var(--grip-w)));
+  background: var(--tone);
   border-radius: 2px;
 }
 
-.kit-slider-bar::before {
-  content: '';
-  right: 0;
-  background: var(--well);
-}
-
-.kit-slider-fill { background: var(--tone); }
-
-.kit-slider-thumb {
+.kit-rule-grip {
   position: absolute;
   top: 2px;
-  width: 12px;
-  height: 12px;
-  margin-left: -6px;
-  background: var(--ink);
-  border-radius: 50%;
+  left: calc(var(--at) * (100% - var(--grip-w)));
+  width: var(--grip-w);
+  height: 18px;
+  background: linear-gradient(var(--grip-top), var(--grip));
+  border-radius: 4px;
+  box-shadow:
+    inset 0 1px 0 var(--edge-light),
+    0 2px 4px var(--edge-dark),
+    0 0 0 0.5px var(--edge-dark);
 }
 
-/* Choices, menu, toggle */
+/* The grip's index: where on the rule the value is read. */
+.kit-rule-grip::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: calc(50% - 1px);
+  width: 2px;
+  background: var(--tone);
+  border-radius: 1px;
+}
+
+.kit-rule-slot[data-held] .kit-rule-grip {
+  box-shadow:
+    inset 0 1px 0 var(--edge-light),
+    0 1px 2px var(--edge-dark),
+    0 0 0 1.5px var(--tone);
+}
+
+/* Knob: a cap standing on a skirt, lit from above. */
+
+.kit-knob-dial {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  cursor: ns-resize;
+  touch-action: none;
+  overflow: visible;
+}
+
+.kit-knob-mark {
+  stroke: var(--line);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+
+.kit-knob-default { stroke: var(--ink-soft); }
+
+.kit-knob-skirt {
+  fill: var(--cut);
+  filter: drop-shadow(0 1px 0 var(--edge-light));
+}
+
+.kit-knob-cap {
+  fill: var(--grip);
+  stroke: var(--edge-dark);
+  stroke-width: 0.5;
+  filter: drop-shadow(0 2.5px 2.5px var(--edge-dark));
+}
+
+.kit-knob-pointer {
+  stroke: var(--tone);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.kit-knob-dial[data-held] .kit-knob-cap { stroke: var(--tone); stroke-width: 1; }
+
+/* Choices: keys in one slot, the chosen one standing up. */
+
+.kit-choice {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.kit-choice .kit-title { width: 52px; }
 
 .kit-choices {
   display: flex;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  overflow: hidden;
+  flex: 1;
+  padding: 2px;
+  background: var(--cut);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 2px var(--edge-dark), 0 1px 0 var(--edge-light);
 }
 
-.kit-option,
+.kit-option {
+  flex: 1;
+  padding: 3px 10px;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  color: var(--ink-soft);
+  font: inherit;
+  cursor: pointer;
+}
+
+.kit-option:hover { color: var(--ink); }
+
+.kit-option[aria-pressed='true'] {
+  background: linear-gradient(var(--grip-top), var(--grip));
+  box-shadow: inset 0 1px 0 var(--edge-light), 0 1px 3px var(--edge-dark);
+  color: var(--accent-strong);
+  font-weight: 620;
+}
+
+.kit-menu,
+.kit-toggle {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
 .kit-select {
+  padding: 4px 8px;
+  background: var(--cut);
+  border: 0;
+  border-radius: 7px;
+  box-shadow: inset 0 1px 2px var(--edge-dark), 0 1px 0 var(--edge-light);
   color: var(--ink);
   font: inherit;
 }
 
-.kit-option {
-  padding: 5px 11px;
-  background: none;
-  border: 0;
-  border-left: 1px solid var(--line);
-  color: var(--ink-soft);
-  cursor: pointer;
-}
-
-.kit-option:first-child { border-left: 0; }
-.kit-option:hover { color: var(--ink); }
-
-.kit-option[aria-pressed='true'] {
-  background: var(--accent-soft);
-  color: var(--accent-strong);
-  font-weight: 600;
-}
-
-.kit-select {
-  padding: 5px 8px;
-  background: var(--ground);
-  border: 1px solid var(--line);
-  border-radius: 7px;
-}
-
-.kit-toggle {
+.kit-switch {
   position: relative;
   width: 36px;
   height: 20px;
   padding: 0;
-  background: var(--well);
+  background: var(--cut);
   border: 0;
   border-radius: 10px;
+  box-shadow: inset 0 1px 2px var(--edge-dark), 0 1px 0 var(--edge-light);
   cursor: pointer;
 }
 
-.kit-toggle-thumb {
+.kit-switch-thumb {
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 14px;
-  height: 14px;
-  background: var(--ink-soft);
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: linear-gradient(var(--grip-top), var(--grip));
   border-radius: 50%;
+  box-shadow: inset 0 1px 0 var(--edge-light), 0 1px 3px var(--edge-dark);
   transition: transform 120ms ease;
 }
 
 .kit-toggle[aria-checked='true'] { background: var(--tone); }
+.kit-toggle[aria-checked='true'] .kit-switch-thumb { transform: translateX(16px); }
 
-.kit-toggle[aria-checked='true'] .kit-toggle-thumb {
-  background: var(--on-accent);
-  transform: translateX(16px);
+/* Meter: a column of ink in a slot against a scale. Ink, not colour:
+   only the top 6 dB warm, and only a clip lights the lamp. */
+
+.kit-meter {
+  gap: 4px;
+  min-width: 30px;
 }
 
-/* Meter: the one place colour is not purple, because a level's
-   colours are already a language: fine, close, too much. The zones
-   sit at -12 dB and -3 dB of a meter that bottoms out at -60. */
+.kit-meter .kit-value {
+  min-width: 0;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  cursor: default;
+}
 
-.kit-meter { align-items: stretch; min-width: 160px; }
+.kit-meter-lamp {
+  width: 12px;
+  height: 3px;
+  background: var(--cut);
+  border-radius: 1.5px;
+  box-shadow: inset 0 1px 1px var(--edge-dark);
+}
 
-.kit-meter-bar {
-  height: 6px;
-  background: var(--well);
+.kit-meter[data-clipped] .kit-meter-lamp {
+  background: var(--hot);
+  box-shadow: 0 0 6px var(--hot);
+}
+
+.kit-meter-slot {
+  --level: 0;
+  --peak: 0;
+  position: relative;
+  flex: 1;
+  width: 12px;
+  min-height: 60px;
+  background: var(--cut);
   border-radius: 3px;
-  overflow: hidden;
+  box-shadow: inset 0 1px 2px var(--edge-dark), 0 1px 0 var(--edge-light);
+}
+
+/* The scale's marks stand outside the slot, on the panel. */
+.kit-meter-mark {
+  position: absolute;
+  left: -5px;
+  bottom: calc(var(--at) * 100%);
+  width: 3px;
+  height: 1px;
+  background: var(--line);
 }
 
 .kit-meter-fill {
-  --level: 0;
-  --zones: var(--ok) 0 80%, var(--warn) 80% 95%, var(--hot) 95%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, var(--zones));
-  clip-path: inset(0 calc((1 - var(--level)) * 100%) 0 0);
-}
-
-/* A meter of anything but level has no zones: it is a value. */
-.kit-meter[data-meter='fraction'] .kit-meter-fill { background: var(--tone); }
-
-.kit-meter.kit-vertical {
-  align-items: center;
-  min-width: 44px;
-}
-
-.kit-vertical .kit-meter-bar {
-  width: 6px;
-  height: 96px;
-}
-
-.kit-vertical .kit-meter-fill {
-  background: linear-gradient(0deg, var(--zones));
+  position: absolute;
+  inset: 1px;
+  border-radius: 2px;
+  background: linear-gradient(0deg, var(--ink) 0 90%, var(--warn) 90%);
   clip-path: inset(calc((1 - var(--level)) * 100%) 0 0 0);
 }
 
-.kit-vertical[data-meter='fraction'] .kit-meter-fill {
-  background: var(--tone);
+.kit-meter-peak {
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  bottom: calc(var(--peak) * (100% - 2px));
+  height: 1.5px;
+  background: var(--ink);
+  opacity: calc(var(--peak) * 1000);
 }
+
+/* A meter of anything but level is a value: purple, with no zones. */
+.kit-meter[data-meter='fraction'] .kit-meter-fill { background: var(--tone); }
+
+/* Footer: what the pointer is over, and the build. */
+
+.kit-footer {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  height: 16px;
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+.kit-hint {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kit-hint-what {
+  margin-right: 6px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.kit-hint-what:empty { margin: 0; }
 
 /* Tones: a control whose meaning has a colour of its own may wear it
    in place of purple. Use one only where the colour says something. */

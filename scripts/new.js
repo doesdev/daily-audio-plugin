@@ -46,6 +46,13 @@ see what was and was not covered.
 ## What would change this
 
 TODO: what, if it turned up, would mean this is not new after all.
+
+## Against the best of its kind
+
+TODO: the two or three best plugins of this kind, and for each of the
+seven things in docs/design.md ("The bar") how this editor compares:
+the picture, precision, compare and recover, explaining itself,
+fitting the screen, character, presets. Say plainly where it is worse.
 `
 
 // The template's file `text`, rewritten for the new plugin.

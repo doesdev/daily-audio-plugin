@@ -1,16 +1,12 @@
 [
   {
     "name": "editor",
-    "values": {
-      "level": 0.72
-    }
+    "values": { "input": 0.78, "level": 0.86 }
   },
   {
     "name": "light",
     "theme": "light",
-    "values": {
-      "level": 0.72
-    }
+    "values": { "input": 0.78, "level": 0.86 }
   },
   {
     "name": "fold",
@@ -19,18 +15,15 @@
       "drive": 30,
       "tone": 8000,
       "mix": 70,
-      "level": 0.9
+      "input": 0.7,
+      "level": 0.93
     }
   },
   {
-    "name": "shape",
-    "values": {
-      "shape": "Hard",
-      "drive": 24
-    },
-    "crop": {
-      "sel": ".kit-group",
-      "text": "Shape"
-    }
+    "name": "controls",
+    "theme": "light",
+    "values": { "shape": "Hard", "drive": 24, "input": 0.8, "level": 1 },
+    "steps": [["hover", "[data-key=\"drive\"] .kit-rule-slot"]],
+    "crop": [".kit-deck", ".kit-footer"]
   }
 ]

@@ -25,3 +25,29 @@ The theme is kept in the page's own storage, which every editor of
 ours in one host shares, so choosing it once chooses it for all. It is
 not a plugin setting: a host does not automate it or save it with a
 project.
+
+## Since
+
+2026-11-25, later the same day. The owner found the first house look
+still generic: flat, with a knob as a ring of lit ticks and a meter in
+green, amber and red, both of them the stock answers. Two things were
+added to the brief: the editor must meet or exceed what the best
+makers in the field ship, in use and in character, without copying
+them; and the look should have depth.
+
+So the look was rebuilt from what those makers get right rather than
+from how plugins usually look (`docs/design.md`, "The bar"):
+
+- a screen every editor is built round, for a picture only that
+  plugin has;
+- the rule, a setting on one line, as the house control instead of a
+  bank of knobs;
+- a meter in ink with a held peak and a clip lamp;
+- three depths with light from above, where standing off means "you
+  can take hold of this";
+- undo, redo and A/B compare in every header, typed values, a line at
+  the foot that says what a control does, and a page that scales
+  whole to its window.
+
+What is still under the bar is written down in the same place. The
+largest is that no live signal reaches the page.

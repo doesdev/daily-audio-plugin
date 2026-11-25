@@ -150,6 +150,24 @@ export const STEPS = {
     await mouse(tab, 'mouseMoved', { x: point.x, y: point.y - dy })
     await mouse(tab, 'mouseReleased', { x: point.x, y: point.y - dy })
   },
+  // Press on an element, move `dx` pixels to the right, and let go.
+  slide: async (tab, [spec, dx]) => {
+    const point = await at(tab, spec)
+    await mouse(tab, 'mouseMoved', point, 'none')
+    await mouse(tab, 'mousePressed', point)
+    await mouse(tab, 'mouseMoved', { x: point.x + dx, y: point.y })
+    await mouse(tab, 'mouseReleased', { x: point.x + dx, y: point.y })
+  },
+  dblclick: (tab, [spec]) => tab.evaluate(
+    `window.find(${JSON.stringify(spec)}).dispatchEvent(
+      new MouseEvent('dblclick', { bubbles: true })) ?? true`
+  ),
+  // Types into whatever has the keyboard, then presses `then` if given.
+  type: async (tab, [text, then]) => {
+    await tab.evaluate('document.activeElement.select?.() ?? true')
+    await tab.send('Input.insertText', { text })
+    if (then) await STEPS.key(tab, [then])
+  },
   hover: async (tab, [spec]) => {
     const point = await at(tab, spec)
     await mouse(tab, 'mouseMoved', { x: point.x - 2, y: point.y - 1 }, 'none')
@@ -160,9 +178,15 @@ export const STEPS = {
   focus: (tab, [spec]) => tab.evaluate(
     `window.find(${JSON.stringify(spec)}).focus() ?? true`
   ),
-  key: async (tab, [key]) => {
-    await tab.send('Input.dispatchKeyEvent', { type: 'keyDown', key })
-    await tab.send('Input.dispatchKeyEvent', { type: 'keyUp', key })
+  // A key by name; `ctrl` and `shift` held with it if asked.
+  key: async (tab, [key, held = {}]) => {
+    const modifiers = (held.ctrl ? 2 : 0) + (held.shift ? 8 : 0)
+    const code = key.length === 1 ? `Key${key.toUpperCase()}` : key
+    const windowsVirtualKeyCode = { Enter: 13, Escape: 27 }[key] ??
+      (key.length === 1 ? key.toUpperCase().charCodeAt(0) : 0)
+    const event = { key, code, modifiers, windowsVirtualKeyCode }
+    await tab.send('Input.dispatchKeyEvent', { type: 'keyDown', ...event })
+    await tab.send('Input.dispatchKeyEvent', { type: 'keyUp', ...event })
   },
   // What the host would say next: a state or meters message.
   tell: (tab, [msg]) => tab.evaluate(

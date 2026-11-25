@@ -106,38 +106,59 @@ fn process(&mut self, block: &mut Block) {
 
 ## 4. The editor
 
-`ui/main.js` composes the page from the kit's controls:
+Read `docs/design.md` first: it is the bar an editor is held to, the
+look, and what to avoid. `ui/main.js` composes the page:
 
 ```js
 import {
-  mount, header, group, row, column, knob, slider, choice, menu, toggle,
-  meter, h
+  mount, header, stage, screen, rail, deck, row, rule, knob, choice,
+  meter, footer
 } from './kit/kit.js'
 
 mount((ui) => [
-  header(ui),
-  h('div.kit-body', {},
-    group('Delay', row(knob(ui.p.time), choice(ui.p.mode))),
-    group('Output', row(knob(ui.p.mix), meter(ui.m.out, { vertical: true }))))
+  header(ui),                       // name, undo, redo, A/B, theme
+  stage(
+    screen(ui, (pen) => { /* the picture: see below */ }),
+    rail(row(meter(ui.m.input), meter(ui.m.out)), knob(ui.p.output, { ui }))),
+  deck(
+    rule(ui.p.time, { ui }),
+    choice(ui.p.mode, { ui }),
+    rule(ui.p.feedback, { ui, bipolar: true })),
+  footer(ui)                        // what the pointer is over
 ])
 ```
 
 `ui.p` has a handle for each setting by key, `ui.m` for each meter.
-`mount(auto)` lays every setting out by group with no more said, which
-is a start and never the end: a plugin's editor should show what the
-plugin does. A handle has `value` (0 to 1), `text`, `row` (its spec),
-`on(fn)`, and `begin()`, `move(v)`, `end()` or `set(v)` for a gesture,
-so a control the kit does not have is a few lines. One a second plugin
-would want goes in `kit/ui/kit.js`, with a test in `kit/ui/test.js`.
+Pass `{ ui }` to a control so the foot of the page can describe it.
 
-How an editor looks is `docs/design.md`: read it before drawing one.
-A control takes `{ tone: 'ok' | 'warn' | 'hot' | 'cool' }` where a
-colour says what it does, and a knob `{ bipolar: true }` where its
-setting rests in the middle. `header(ui)` carries the switch between
-the light and the dark theme. `ui/style.css` comes after the kit's and
-may set its tokens (at the top of `kit/ui/kit.css`) or anything else. Every file the page needs is listed in `ASSETS` in `src/lib.rs`;
-the screenshots are taken from the page as the binary serves it, so a
-file left out shows up as a broken scene.
+- `rule` is the house control; `knob` is for the one or two settings
+  that earn the room. `choice`, `menu`, `toggle` for lists. `control`
+  picks for you.
+- A control takes `{ tone: 'ok' | 'warn' | 'hot' | 'cool' }` where a
+  colour says what it does, and `{ bipolar: true }` where its setting
+  rests in the middle.
+- A handle has `value` (0 to 1), `plain` (in its own terms), `text`,
+  `row` (its spec), `on(fn)`, and `begin()`, `move(v)`, `end()` or
+  `set(v)` for a gesture, so a control the kit lacks is a few lines.
+  One a second plugin would want goes in `kit/ui/kit.js`, with a test
+  in `kit/ui/test.js`.
+
+**The screen is the main job.** `screen(ui, draw)` calls `draw(pen)`
+whenever a setting or a meter moves. `pen.ctx` is a canvas context
+sized in CSS pixels (`pen.width`, `pen.height`), and `pen.ink`,
+`pen.soft`, `pen.line` and `pen.accent` are the screen's colours.
+Draw what only this plugin has, from `ui.p.x.plain` and
+`ui.m.y.value`. The template draws the bend it puts in the signal and
+what that does to a wave as loud as the input.
+
+`mount(auto)` lays out every setting with no more said. It has no
+picture, so it is a place to start and never what ships.
+
+`ui/style.css` comes after the kit's and may set its tokens (at the
+top of `kit/ui/kit.css`) or anything else. Every file the page needs
+is listed in `ASSETS` in `src/lib.rs`; the screenshots are taken from
+the page as the binary serves it, so a file left out shows up as a
+broken scene.
 
 ## 5. Scenes, pictures and the manual
 
@@ -154,7 +175,7 @@ file left out shows up as a broken scene.
 
 Values are by key, in the setting's own terms (a number, a choice's
 name, a meter's fraction). A scene is shot in the dark theme unless it
-says `"theme": "light"`; show the editor in both. `steps` can click, drag, hover and type
+says `"theme": "light"`; show the editor in both. `steps` can click, slide, drag, hover and type
 before the shot (`scripts/shots.js` lists them). `npm run shots --
 NAME` writes `docs/images/NAME.png` for each.
 
@@ -175,9 +196,13 @@ settings that show what is new about it.
 - MIDI controllers into a VST3: notes arrive, CC and pitch bend do not
   (VST3 hands them over as parameters; wispidi's `controls.rs` shows
   how).
-- Anything from the audio thread to the editor but meters: no scope or
-  spectrum data yet.
-- State beyond the settings.
+- Anything from the audio thread to the editor but meters: no
+  waveform, spectrum or history can be drawn from the real signal.
+  This is the largest gap against the bar in `docs/design.md` and the
+  next thing the kit needs.
+- Presets.
+- State beyond the settings: A/B and undo are forgotten when the
+  editor closes.
 - Sidechain inputs, more than one bus, mono-only or surround layouts.
 - macOS and Linux editors. The audio side builds and is tested on
   Linux; the editor is Windows only.

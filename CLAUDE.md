@@ -26,9 +26,12 @@ npm run docs -- NAME
 - `process` never allocates, locks or waits.
 - Kit changes go in their own commit with their own tests.
 - Look at every screenshot before committing it, in both themes.
-- An editor follows `docs/design.md`: monotone, purple only for a
-  value, other colours only where they mean something, and none of
-  the habits it lists under "What it avoids".
+- An editor meets or exceeds what the best plugins of its kind ship
+  (`docs/design.md`, "The bar"), and says in `NOVELTY.md` where it
+  does not. It is built round a picture only that plugin has.
+- An editor follows `docs/design.md`: mostly one tone with depth,
+  purple only for a value, any other colour only when it is news, and
+  none of the habits listed under "What it avoids".
 - Say what was not verified. Off Windows that is the WebView2 editor
   tests and both validators.
 - No em or en dashes in any doc.

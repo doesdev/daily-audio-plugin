@@ -34,7 +34,8 @@ const DASHES = { [EM_DASH]: 'an em dash', [EN_DASH]: 'an en dash' }
 export const NOVELTY_SECTIONS = [
   'What is new',
   'Nearest existing things',
-  'Where I looked'
+  'Where I looked',
+  'Against the best of its kind'
 ]
 
 const fail = (code, message) => Object.assign(new Error(message), { code })

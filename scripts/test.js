@@ -53,7 +53,8 @@ test('the manual must name every setting as a host does', (assert) => {
 
 test('a plugin that ships says what is new about it', (assert) => {
   const full = '# X\n\n## What is new\n\nIt folds time.\n\n' +
-    '## Nearest existing things\n\n- A: differs.\n\n## Where I looked\n\nKVR.\n'
+    '## Nearest existing things\n\n- A: differs.\n\n## Where I looked\n\nKVR.\n' +
+    '\n## Against the best of its kind\n\nWorse on presets.\n'
   const thin = '# X\n\n## What is new\n\nTODO: say\n\n## Where I looked\n\nKVR.'
 
   assert.deepEqual(sectionsOf(full)['What is new'], 'It folds time.')
@@ -61,7 +62,8 @@ test('a plugin that ships says what is new about it', (assert) => {
   assert.deepEqual(checkNovelty(null), ['there is no NOVELTY.md'])
   assert.deepEqual(checkNovelty(thin), [
     'NOVELTY.md says nothing under "What is new"',
-    'NOVELTY.md says nothing under "Nearest existing things"'
+    'NOVELTY.md says nothing under "Nearest existing things"',
+    'NOVELTY.md says nothing under "Against the best of its kind"'
   ])
 })
 
@@ -158,7 +160,7 @@ test('new makes the folder, and refuses a bad or taken name', (assert) => {
 
     assert.true(existsSync(join(dir, 'src', 'lib.rs')))
     assert.false(existsSync(join(dir, 'docs', 'images')))
-    assert.is(checkNovelty(novelty).length, 3)
+    assert.is(checkNovelty(novelty).length, 4)
     assert.throws(() => create('tape-bloom', 'Tape Bloom', { root }))
     assert.throws(() => create('Tape Bloom', 'Tape Bloom', { root }))
     assert.throws(() => create('other', '', { root }))

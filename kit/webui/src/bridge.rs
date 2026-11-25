@@ -103,6 +103,7 @@ pub fn hello(spec: &Spec, values: &[f64]) -> String {
         "name": spec.info.name,
         "vendor": spec.info.vendor,
         "build": spec.info.version,
+        "size": [spec.info.size.0, spec.info.size.1],
         "params": spec.params.iter().map(describe).collect::<Vec<_>>(),
         "meters": spec.meters.iter().map(describe).collect::<Vec<_>>(),
         "values": settings,

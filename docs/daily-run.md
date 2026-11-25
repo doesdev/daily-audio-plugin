@@ -60,7 +60,9 @@ Then look for it, before writing any code:
 
 Write `NOVELTY.md` (`npm run new` makes its outline): what is new, the
 nearest existing things with links and how this differs from each,
-where you looked, and what would change the answer.
+where you looked, what would change the answer, and how its editor
+will stand against the best of its kind (`docs/design.md`, "The
+bar").
 
 - It already exists: write it in the backlog under Dropped with the
   link, and choose again.
@@ -80,8 +82,9 @@ npm run new -- NAME "Display Name"      # --instrument if it is played
 2. The spec in `src/lib.rs`.
 3. `tests/sound.rs`: what it promises, failing.
 4. The sound, until `cargo test -p NAME` passes.
-5. The editor: `ui/main.js`, `ui/style.css`, to `docs/design.md`. It
-   should show what the plugin does, not just list its settings.
+5. The editor: `ui/main.js`, `ui/style.css`, to `docs/design.md`.
+   Start with the screen: the picture only this plugin has. An editor
+   with no picture, or a stock one, is not finished.
 6. `docs/scenes.json`, `npm run shots -- NAME`, and look at every
    picture. A picture that looks wrong is a bug.
 7. `docs/manual.md` and `README.md`.
