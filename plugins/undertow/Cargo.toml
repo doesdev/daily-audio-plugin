@@ -1,0 +1,21 @@
+[package]
+name = "undertow"
+version = "0.1.0"
+description = "The middle's low end biases the sides' valve, sample by sample"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+kit = { workspace = true }
+kit-dsp = { workspace = true }
+kit-vst3 = { workspace = true }
+kit-clap = { workspace = true }
+kit-webui = { workspace = true }
+
+[dev-dependencies]
+kit-test = { workspace = true }

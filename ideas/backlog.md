@@ -7,8 +7,15 @@ made (to the ledger) or dropped (to Dropped, below, with why).
 
 ## Waiting
 
-Nothing yet. The first run fills this in: think of ten, look for each,
-keep the ones that survive.
+Nothing that survived its search yet. The run of 2026-11-25 looked for
+eight and made one (Undertow); the rest are under Dropped. Ideas from
+that day not yet searched, to start from:
+
+- A voice for an instrument made of two coupled strings, one in each
+  channel, so the prompt sound sits in the middle and the slower
+  aftersound spreads into the sides.
+- Hit and body exchanged between notes: each note's attack played
+  with the previous note's body.
 
 A few directions the kit can already carry, to think from rather than
 to build as written:
@@ -68,3 +75,10 @@ what kinds of idea they rated: it is the best guide to the next one.
 
 | Idea | Why | Link |
 |------|-----|------|
+| A delay timed by the gap between the player's own last two hits, followed continuously, no tempo | RhythmEcho (beta, 2026) sets its delay from the detected beat period, updated on each detected beat | https://way.net/rhythmecho/RhythmEchoManual.pdf |
+| Mid and side trade envelopes: each takes the other's dynamics | Imposing one signal's envelope on another is done by envelope imposers; in mid and side it is routing, not new | https://www.kvraudio.com/product/amplitude_imposer_by_ndc_plugs |
+| Harmonics made from the mid put only in the side, so they cancel in mono | Panoramic's Steal derives harmonics from the mid and puts them in the stereo image | https://panoramalabs.com.au/panoramic/ |
+| A delay whose repeats turn through the stereo field, an angle each time | Stereo rotation in a delay's feedback exists (Spiral Delay, Fractal's circular delay, inDelay) | https://www.musehub.com/plugin/spiral-delay |
+| Saturation of the body of a sound only, the hit kept clean | Transient-split saturation exists (Audio Assault TransFreak, Saturator Pro) | https://producerstack.com/products/saturator-pro-max-for-live |
+| Pan a mono line by its own detected pitch, like a piano's spread | Melda's modulators have a pitch mode that can drive pan; frequency panners exist | https://www.meldaproduction.com/tutorials/modulators-pitch-mode |
+| Mid and side wound on one shared transformer core, so the mid's bass saturates the sides | Not found built anywhere, but US 12,425,770 B1, "Magnetic audio distortion device" (2025), could not be read from here; dropped under the patent rule until someone reads its claims | https://patents.justia.com/patent/12425770 |

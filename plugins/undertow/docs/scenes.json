@@ -1,0 +1,119 @@
+[
+  {
+    "name": "editor",
+    "values": {
+      "input": 0.8,
+      "level": 0.79,
+      "lean": 0.42,
+      "swing": 0.16
+    }
+  },
+  {
+    "name": "light",
+    "theme": "light",
+    "values": {
+      "input": 0.8,
+      "level": 0.79,
+      "lean": 0.42,
+      "swing": 0.16
+    }
+  },
+  {
+    "name": "pushed",
+    "values": {
+      "push": 100,
+      "drive": 15,
+      "follow": 120,
+      "input": 0.85,
+      "level": 0.82,
+      "lean": 0.86,
+      "swing": 0.3
+    }
+  },
+  {
+    "name": "held",
+    "theme": "light",
+    "values": {
+      "input": 0.8,
+      "level": 0.79,
+      "lean": 0.63,
+      "swing": 0.16
+    },
+    "steps": [
+      [
+        "press",
+        "[data-key=\"push\"] .kit-scrub",
+        30
+      ]
+    ]
+  },
+  {
+    "name": "held-dark",
+    "values": {
+      "input": 0.8,
+      "level": 0.79,
+      "lean": 0.42,
+      "swing": 0.4
+    },
+    "steps": [
+      [
+        "press",
+        "[data-key=\"drive\"] .kit-scrub",
+        40
+      ]
+    ]
+  },
+  {
+    "name": "steered",
+    "values": {
+      "steer": "Side on mid",
+      "push": 70,
+      "input": 0.8,
+      "level": 0.8,
+      "lean": 0.3,
+      "swing": 0.4
+    }
+  },
+  {
+    "name": "dense",
+    "theme": "light",
+    "values": {
+      "input": 0.8,
+      "level": 0.79,
+      "lean": 0.6,
+      "swing": 0.2
+    },
+    "steps": [
+      [
+        "click",
+        ".kit-density"
+      ],
+      [
+        "click",
+        ".kit-density"
+      ],
+      [
+        "away"
+      ]
+    ]
+  },
+  {
+    "name": "controls",
+    "theme": "light",
+    "values": {
+      "input": 0.8,
+      "level": 0.79,
+      "lean": 0.42,
+      "swing": 0.16
+    },
+    "steps": [
+      [
+        "hover",
+        "[data-key=\"push\"] .kit-scrub"
+      ]
+    ],
+    "crop": [
+      ".kit-sheet"
+    ]
+  }
+]
