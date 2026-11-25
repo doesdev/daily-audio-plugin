@@ -8,7 +8,7 @@ import {
   DENSITIES, EMPTY, HOLD_MS, NO_HISTORY, clamp, densityFor, describe,
   differences, dragged, fitScale, held, nextDensity, normOf, nudged,
   otherTheme, parseValue, parts, plainOf, recorded, redone, reduce, snap,
-  themeFor, undone, zoneFills, zoneOf
+  spectrum, steady, themeFor, undone, zoneFills, zoneOf
 } from './kit.js'
 import { withBrowser } from '../../scripts/lib/browser.js'
 import { openScene, withSite, writeScene } from '../../scripts/shots.js'
@@ -619,5 +619,70 @@ test('the plugin\'s bypass is in the header, not among the settings', async (ass
       'document.querySelectorAll(".kit-power").length'), 1)
     assert.is(await tab.evaluate(
       'document.querySelectorAll(".kit-sheet [data-key=bypass]").length'), 0)
+  })
+})
+
+test('a spectrum finds a tone in its band, at its level', (assert) => {
+  const size = 1024
+  const tone = (band, level) => Array.from({ length: size }, (_, i) =>
+    level * Math.sin(2 * Math.PI * band * i / size))
+  const loudest = (bands) => bands.indexOf(Math.max(...bands))
+  const cases = [[32, 1, 0], [100, 0.5, -6.02], [7, 0.1, -20]]
+
+  cases.forEach(([band, level, db]) => {
+    const bands = spectrum(tone(band, level))
+    assert.is(bands.length, size / 2)
+    assert.is(loudest(bands), band)
+    assert.true(Math.abs(bands[band] - db) < 0.1, `${level} is ${bands[band]} dB`)
+    // Well away from the tone there is nothing.
+    assert.true(bands[(band + 200) % 500] < -100)
+  })
+  // Silence is a floor, not an error, and a ragged length is cut down.
+  assert.true(spectrum(new Array(1000).fill(0)).every((v) => v === -180))
+  assert.is(spectrum(new Array(1000).fill(0)).length, 256)
+})
+
+test('a wave is drawn from where it climbs through zero, so it stands still', (assert) => {
+  const wave = Array.from({ length: 200 }, (_, i) => Math.sin((i - 30) / 10))
+
+  assert.is(steady(wave, 100), 31)
+  // Not from a crossing too late to leave a whole span after it.
+  assert.is(steady(wave, 190), 0)
+  assert.is(steady(new Array(50).fill(0.5), 10), 0)
+})
+
+test('the store keeps the sound the host sends, at full scale', (assert) => {
+  const told = reduce(EMPTY, {
+    type: 'signal', rate: 48000, scale: 16384, input: [8192, -16384], output: [0, 32768]
+  })
+
+  assert.is(EMPTY.signal, null)
+  assert.deepEqual(told.signal, { rate: 48000, input: [0.5, -1], output: [0, 2] })
+})
+
+test('with audio running, the picture is the sound itself', async (assert) => {
+  const row = `(() => {
+    const c = document.querySelector('.kit-picture canvas')
+    const d = c.getContext('2d').getImageData(0, 0, c.width, 6).data
+    let sum = 0
+    for (let i = 3; i < d.length; i += 4) sum += d[i]
+    return sum
+  })()`
+  const frame = 'new Promise((r) => requestAnimationFrame(() => r(true)))'
+  // A square wave at full scale: its top runs along the top of the
+  // glass, where the model wave at its defaults never reaches.
+  const square = Array.from({ length: 1024 }, (_, i) =>
+    (Math.floor(i / 64) % 2 ? 16384 : -16384))
+  const signal = {
+    type: 'signal', rate: 48000, scale: 16384, input: square, output: square
+  }
+  await onPage([], async (tab) => {
+    const { STEPS } = await import('../../scripts/shots.js')
+    assert.is(await tab.evaluate(row), 0)
+
+    await STEPS.tell(tab, [signal])
+    await tab.evaluate(frame)
+    await tab.evaluate(frame)
+    assert.true(await tab.evaluate(row) > 0)
   })
 })

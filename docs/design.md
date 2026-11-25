@@ -52,11 +52,6 @@ interaction in the kit as well, one entry each in
 
 Be plain about these in `NOVELTY.md` until they are fixed:
 
-- **No waveform or spectrum on the glass.** Only settings and meters
-  reach the page. A picture can show the level of the last four
-  seconds as it happened, and what the plugin *would* do to a signal
-  of that level, but not the signal itself. This is the biggest gap
-  and the next thing the kit needs.
 - **A and B and the undo history are forgotten** when the editor is
   closed; only the settings themselves are saved.
 - **No modulation or MIDI learn**, which the leading synths have.
@@ -74,13 +69,13 @@ panel, a value's menu, help, and the notice for empty and error
 states. `npm run gallery` draws them all, in both themes, into
 `docs/images/kit/`.
 
-Drawn and agreed but not built, because each needs something from
-the audio side the kit does not send yet: the visual equaliser and
-the spectrum behind it, gain reduction over time, the stereo fan (a
-live signal), the keyboard (notes from the page), and the envelope
-with modulation in blue (a modulation system). Each is built from the
-canvas when the kit can feed it, with its own tests, and not
-redesigned on the way.
+Drawn and agreed but not built: the visual equaliser, gain reduction
+over time and the stereo fan, which the kit can now feed (the sound
+itself reaches the page, with a spectrum) and which wait for the
+first plugin that needs them; the keyboard, which needs notes from
+the page; and the envelope with modulation in blue, which needs a
+modulation system. Each is built from the canvas with its own tests,
+and not redesigned on the way.
 
 ## Depth
 

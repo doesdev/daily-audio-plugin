@@ -151,7 +151,8 @@ unsafe extern "C" fn activate<P: Plugin>(
         return false;
     };
 
-    let runner = Runner::<P>::new(rate as f32, (max as usize).max(1));
+    let mut runner = Runner::<P>::new(rate as f32, (max as usize).max(1));
+    runner.watch(this.core.shared.scope());
     // The latency may change only here; the host hears of it at once.
     let latency = runner.latency();
     unsafe { *this.runner.get() = Some(runner) };

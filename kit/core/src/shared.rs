@@ -1,7 +1,8 @@
 //! Settings and meters as every thread may read them: the host's
 //! automation, the editor and the audio thread meet here, with no lock.
 
-use crate::Spec;
+use crate::{Scope, Spec};
+use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU64, Ordering};
 
 // What the editor has done to a setting, for the host to hear about.
@@ -14,6 +15,7 @@ pub struct Shared {
     meters: Box<[AtomicU64]>,
     edits: Box<[AtomicU8]>,
     dirty: AtomicBool,
+    scope: Arc<Scope>,
 }
 
 impl Shared {
@@ -27,7 +29,13 @@ impl Shared {
             meters: spec.meters.iter().map(|_| AtomicU64::new(0)).collect(),
             edits: spec.params.iter().map(|_| AtomicU8::new(0)).collect(),
             dirty: AtomicBool::new(true),
+            scope: Arc::default(),
         }
+    }
+
+    /// The sound itself, for the runner to write and an editor to draw.
+    pub fn scope(&self) -> Arc<Scope> {
+        self.scope.clone()
     }
 
     /// Setting `index`, normalized.

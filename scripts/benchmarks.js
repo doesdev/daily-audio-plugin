@@ -113,7 +113,11 @@ export const rustTestNames = (source) =>
 const read = (file) => readFileSync(join(ROOT, file), 'utf8')
 
 // The kit's Rust tests a benchmark may name as proof.
-const RUST = ['kit/core/src/runner.rs', 'kit/webui/src/presets.rs']
+const RUST = [
+  'kit/core/src/runner.rs', 'kit/core/src/scope.rs',
+  'kit/webui/src/presets.rs', 'kit/webui/src/feed.rs',
+  'kit/vst3/src/connect.rs'
+]
 
 export const allProblems = () => {
   const register = JSON.parse(read('kit/benchmarks.json'))

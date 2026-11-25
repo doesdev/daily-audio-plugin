@@ -4,6 +4,7 @@
 
 use crate::controller::{Handler, Values};
 use kit::Spec;
+use kit_webui::feed::ScopeLink;
 use kit_webui::{Action, OnAction, Panel};
 use std::cell::{Cell, RefCell};
 use std::ffi::{CStr, c_void};
@@ -17,6 +18,8 @@ pub struct Editor {
     values: Values,
     handler: Handler,
     panel: RefCell<Option<Panel>>,
+    // Where the sound will be, once the processor has offered it.
+    scope: RefCell<Option<ScopeLink>>,
     // In physical pixels: the spec's logical size times the scale.
     size: Cell<(i32, i32)>,
     scale: Cell<f32>,
@@ -63,10 +66,16 @@ fn gestures(spec: Spec, values: Values, handler: Handler) -> OnAction {
 
 impl Editor {
     /// A new editor as the raw view pointer `createView` hands the host.
-    pub fn create(spec: Spec, values: Values, handler: Handler) -> *mut IPlugView {
-        let Some((_, view)) = Self::wrap(spec, values, handler) else {
+    pub fn create(
+        spec: Spec,
+        values: Values,
+        handler: Handler,
+        scope: ScopeLink,
+    ) -> *mut IPlugView {
+        let Some((editor, view)) = Self::wrap(spec, values, handler) else {
             return std::ptr::null_mut();
         };
+        *editor.scope.borrow_mut() = Some(scope);
 
         view.into_raw()
     }
@@ -82,6 +91,7 @@ impl Editor {
             values,
             handler,
             panel: RefCell::new(None),
+            scope: RefCell::new(None),
             size: Cell::new((w as i32, h as i32)),
             scale: Cell::new(1.0),
             frame: RefCell::new(None),
@@ -103,6 +113,11 @@ impl Editor {
             on_action,
             Box::new(|| {}),
         )?;
+        // The sound itself, from the processor once the host has
+        // connected it; until then the feed has nothing to say.
+        if let Some(scope) = self.scope.borrow().clone() {
+            panel.feed(kit_webui::feed::signal(scope));
+        }
 
         *self.panel.borrow_mut() = Some(panel);
         Some(())

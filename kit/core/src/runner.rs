@@ -3,7 +3,8 @@
 //! so a plugin's input and output never alias, and it cuts a block
 //! longer than the host promised into pieces that fit.
 
-use crate::{Param, Plugin};
+use crate::{Param, Plugin, Scope};
+use std::sync::Arc;
 
 /// MIDI messages a block may carry each way; more are dropped.
 pub const EVENTS: usize = 1024;
@@ -136,6 +137,8 @@ pub struct Runner<P: Plugin> {
     dry: f32,
     /// How far `dry` moves in a sample.
     fade: f32,
+    /// Where the sound is copied for an editor to draw, if anywhere.
+    scope: Option<Arc<Scope>>,
 }
 
 /// How long going into and out of bypass takes: long enough not to
@@ -163,7 +166,26 @@ impl<P: Plugin> Runner<P> {
             bypass: P::PARAMS.iter().position(Param::is_bypass),
             dry: 0.0,
             fade: 1.0 / (BYPASS_FADE_SECONDS * rate).max(1.0),
+            scope: None,
         }
+    }
+
+    /// Has every block copied to `scope`, in and out, as it is heard:
+    /// after the bypass, each mixed to one channel.
+    pub fn watch(&mut self, scope: Arc<Scope>) {
+        scope.set_rate(self.rate);
+        self.scope = Some(scope);
+    }
+
+    fn show(&self, n: usize) {
+        let Some(scope) = &self.scope else {
+            return;
+        };
+        let mixed = |bufs: &[Vec<f32>], k: usize| match bufs.len() {
+            0 => 0.0,
+            count => bufs.iter().map(|buf| buf[k]).sum::<f32>() / count as f32,
+        };
+        (0..n).for_each(|k| scope.push(mixed(&self.ins, k), mixed(&self.outs, k)));
     }
 
     pub fn rate(&self) -> f32 {
@@ -246,6 +268,7 @@ impl<P: Plugin> Runner<P> {
             });
 
             self.fade_to_dry(n);
+            self.show(n);
             for (ch, buf) in self.outs.iter().enumerate() {
                 write(ch, start, &buf[..n]);
             }
@@ -470,6 +493,22 @@ mod tests {
                 .fold(0.0, f32::max);
             assert!(step <= 1.0 / fade as f32 + 1e-6, "{name} steps by {step}");
         }
+    }
+
+    #[test]
+    fn a_watched_runner_copies_what_came_in_and_what_went_out() {
+        let scope = Arc::new(Scope::default());
+        let mut runner = Runner::<Double>::new(48_000.0, 16);
+        runner.watch(scope.clone());
+        // Left and right differ, so the mix to one channel shows.
+        let input = [vec![1.0, 2.0, 3.0, 4.0], vec![3.0, 4.0, 5.0, 6.0]];
+        runner.render(&input, 4, 3);
+
+        let (mut seen_in, mut seen_out) = (Vec::new(), Vec::new());
+        scope.latest(4, &mut seen_in, &mut seen_out);
+        assert_eq!(seen_in, [2.0, 3.0, 4.0, 5.0]);
+        assert_eq!(seen_out, [4.0, 6.0, 8.0, 10.0]);
+        assert_eq!(scope.rate(), 48_000.0);
     }
 
     #[test]

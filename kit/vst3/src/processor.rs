@@ -30,7 +30,32 @@ pub struct Processor<P: Plugin> {
 }
 
 impl<P: Plugin> Class for Processor<P> {
-    type Interfaces = (IComponent, IAudioProcessor, IProcessContextRequirements);
+    type Interfaces = (
+        IComponent,
+        IAudioProcessor,
+        IProcessContextRequirements,
+        IConnectionPoint,
+    );
+}
+
+// When the host connects the controller, it is offered the sound to
+// draw: see `connect`.
+impl<P: Plugin> IConnectionPointTrait for Processor<P> {
+    unsafe fn connect(&self, other: *mut IConnectionPoint) -> tresult {
+        let Some(other) = (unsafe { ComRef::from_raw(other) }) else {
+            return kInvalidArgument;
+        };
+        crate::connect::offer(&other, self.shared.scope());
+        kResultOk
+    }
+
+    unsafe fn disconnect(&self, _other: *mut IConnectionPoint) -> tresult {
+        kResultOk
+    }
+
+    unsafe fn notify(&self, _message: *mut IMessage) -> tresult {
+        kResultFalse
+    }
 }
 
 fn speakers(channels: u32) -> SpeakerArrangement {
@@ -331,7 +356,8 @@ impl<P: Plugin> IAudioProcessorTrait for Processor<P> {
         };
 
         let block = setup.maxSamplesPerBlock.max(1) as usize;
-        let runner = Runner::<P>::new(setup.sampleRate as f32, block);
+        let mut runner = Runner::<P>::new(setup.sampleRate as f32, block);
+        runner.watch(self.shared.scope());
         self.latency.store(runner.latency(), Ordering::Relaxed);
         self.tail.store(runner.tail(), Ordering::Relaxed);
         match self.runner.lock() {

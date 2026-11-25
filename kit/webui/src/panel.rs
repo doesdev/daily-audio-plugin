@@ -3,6 +3,7 @@
 //! when they change; the page's actions go to whoever opened it.
 
 use crate::bridge::{self, Action};
+use crate::feed::Feed;
 use crate::presets;
 use crate::window::{self, Hwnd};
 use kit::Spec;
@@ -44,6 +45,8 @@ struct Link {
     view: RefCell<Option<WebView>>,
     want_hello: Cell<bool>,
     sent: RefCell<Vec<f64>>,
+    // What else there is to tell the page each tick: the sound itself.
+    feed: RefCell<Option<Feed>>,
 }
 
 impl Link {
@@ -82,6 +85,10 @@ impl Link {
             }
         }
         *sent = now;
+        let more = self.feed.borrow().as_ref().and_then(|feed| feed());
+        if let Some(msg) = more {
+            self.send(&msg);
+        }
     }
 }
 
@@ -159,6 +166,7 @@ impl Panel {
             pull,
             view: RefCell::new(None),
             want_hello: Cell::new(false),
+            feed: RefCell::new(None),
         });
 
         // Each tick holds its own count on the link: a host closing the
@@ -201,6 +209,11 @@ impl Panel {
             hwnd,
             _context: context,
         })
+    }
+
+    /// Has `feed` asked each tick for something more to tell the page.
+    pub fn feed(&self, feed: Feed) {
+        *self.link.feed.borrow_mut() = Some(feed);
     }
 
     pub fn resize(&self, size: (i32, i32)) {

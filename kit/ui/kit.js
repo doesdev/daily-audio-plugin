@@ -252,6 +252,54 @@ export const prefsFor = (saved) => Object.fromEntries(
 export const holdFor = (choice) =>
   ({ Off: 0, 'Until pressed': Infinity })[choice] ?? HOLD_MS
 
+// ---- the sound itself, for a picture to draw
+
+// Where to start drawing `samples` so a steady wave stands still: the
+// first place it climbs through zero that leaves `span` samples after
+// it, or the start if it never does.
+export const steady = (samples, span) => {
+  const last = samples.length - span
+  const at = samples.findIndex((v, i) =>
+    i > 0 && i <= last && samples[i - 1] <= 0 && v > 0)
+  return at < 0 ? 0 : at
+}
+
+// The spectrum of `samples`: how loud each band is, in dB against a
+// full-scale sine, for the first half of as many bands as the largest
+// power of two of samples. Band `k` is at `k * rate / size` Hz.
+export const spectrum = (samples) => {
+  const size = 2 ** Math.floor(Math.log2(Math.max(2, samples.length)))
+  const from = samples.length - size
+  // A Hann window, so a tone between two bands does not smear.
+  const re = Float64Array.from({ length: size }, (_, i) =>
+    (samples[from + i] ?? 0) * (0.5 - 0.5 * Math.cos(2 * Math.PI * i / size)))
+  const im = new Float64Array(size)
+  // In place, as the transform is always written: bit-reversed order
+  // first, then butterflies of doubling width.
+  for (let i = 1, j = 0; i < size; i++) {
+    let bit = size >> 1
+    for (; j & bit; bit >>= 1) j ^= bit
+    j ^= bit
+    if (i < j) [re[i], re[j]] = [re[j], re[i]]
+  }
+  for (let width = 2; width <= size; width *= 2) {
+    const turn = -2 * Math.PI / width
+    for (let start = 0; start < size; start += width) {
+      for (let k = 0; k < width / 2; k++) {
+        const [cos, sin] = [Math.cos(turn * k), Math.sin(turn * k)]
+        const [a, b] = [start + k, start + k + width / 2]
+        const [xr, xi] = [re[b] * cos - im[b] * sin, re[b] * sin + im[b] * cos]
+        ;[re[b], im[b]] = [re[a] - xr, im[a] - xi]
+        ;[re[a], im[a]] = [re[a] + xr, im[a] + xi]
+      }
+    }
+  }
+  // A full-scale sine through a Hann window peaks at a quarter of the
+  // size; that is 0 dB.
+  return Array.from({ length: size / 2 }, (_, k) =>
+    20 * Math.log10(Math.max(1e-9, Math.hypot(re[k], im[k]) / (size / 4))))
+}
+
 // ---- the store: what the host last said, folded message by message
 
 export const EMPTY = {
@@ -267,7 +315,10 @@ export const EMPTY = {
   levelTexts: [],
   // The person's own presets as the host keeps them, in files; null
   // until it says, and for a host that keeps none.
-  files: null
+  files: null,
+  // The sound itself, while audio runs: { rate, input, output }, the
+  // latest samples each way, oldest first. Null until the host sends.
+  signal: null
 }
 
 export const reduce = (state, msg) => {
@@ -277,6 +328,15 @@ export const reduce = (state, msg) => {
   }
   if (msg.type === 'state') {
     return { ...state, values: msg.values, texts: msg.texts }
+  }
+  if (msg.type === 'signal') {
+    const real = (samples) => samples.map((v) => v / msg.scale)
+    return {
+      ...state,
+      signal: {
+        rate: msg.rate, input: real(msg.input), output: real(msg.output)
+      }
+    }
   }
   if (msg.type === 'presets') {
     return { ...state, files: msg.list, filesDir: msg.dir }
@@ -1028,6 +1088,10 @@ const inkOf = (el) => {
 // `soft`, `line`, `accent` and `hot`, and `touched`, the key of the
 // setting being dragged now or null: purple is for that alone.
 // `pen.trail(meter)` is that meter's last few seconds, oldest first.
+// `pen.signal` is the sound itself while audio runs, or null: `{ rate,
+// input, output }`, the latest samples each way. `steady` finds where
+// to start drawing one so it stands still, and `spectrum` turns one
+// into bands.
 // `opts.drag` makes the picture itself the control: `{ x, y }` are
 // settings moved by dragging across and up, as one gesture.
 export const picture = (ui, draw, opts = {}) => {
@@ -1050,7 +1114,13 @@ export const picture = (ui, draw, opts = {}) => {
     ctx.setTransform(density, 0, 0, density, 0, 0)
     ctx.clearRect(0, 0, width, height)
     draw({
-      ctx, width, height, touched: ui.touched(), trail: ui.trail, ...inkOf(el)
+      ctx,
+      width,
+      height,
+      touched: ui.touched(),
+      trail: ui.trail,
+      signal: ui.store.get().signal,
+      ...inkOf(el)
     })
   }
   const ask = () => {

@@ -7,10 +7,12 @@ pub mod level;
 mod param;
 mod plugin;
 mod runner;
+mod scope;
 mod shared;
 pub mod state;
 
 pub use param::{BYPASS, Kind, Param, bypass, list, meter, range, toggle};
 pub use plugin::{Asset, Info, Plugin, Role, Spec};
 pub use runner::{Block, EVENTS, Event, Runner, Transport};
+pub use scope::{SCOPE, Scope};
 pub use shared::{BEGIN, END, SET, Shared};

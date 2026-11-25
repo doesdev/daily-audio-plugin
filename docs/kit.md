@@ -169,8 +169,11 @@ whenever a setting or a meter moves or a setting is taken hold of.
 size, `pen.ink`, `pen.soft`, `pen.line` and `pen.accent` the glass's
 colours, and `pen.touched` the key of the setting being dragged now,
 or null. Draw what only this plugin has, from `ui.p.x.plain` and
-`ui.m.y.value`, and `pen.trail(ui.m.y)`, that meter's last four
-seconds: what goes in dashed, what comes out in `pen.ink`, and
+`ui.m.y.value`, `pen.trail(ui.m.y)` (that meter's last four seconds)
+and `pen.signal`, the sound itself while audio runs: `{ rate, input,
+output }`, the last thousand samples each way, or null. `steady`
+finds where to start drawing a wave so it stands still, and
+`spectrum` turns samples into bands in dB. What goes in is dashed, what comes out in `pen.ink`, and
 in `pen.accent` only the part that `pen.touched` shapes. The template
 draws one cycle of a wave before and after its shaper, over the level
 that went out. `picture(ui, draw, { drag: { x, y } })` makes the
@@ -218,8 +221,7 @@ settings that show what is new about it.
 - MIDI controllers into a VST3: notes arrive, CC and pitch bend do not
   (VST3 hands them over as parameters; wispidi's `controls.rs` shows
   how).
-- Anything from the audio thread to the editor but meters: a level
-  over time can be drawn, a waveform or a spectrum cannot.
+- MIDI learn: `kit/benchmarks.json` says what it needs.
   This is the largest gap against the bar in `docs/design.md` and the
   next thing the kit needs.
 - What `kit/benchmarks.json` marks `under`: the check prints the list.

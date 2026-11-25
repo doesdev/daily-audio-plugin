@@ -65,7 +65,7 @@
       "ours": "Nothing.",
       "verdict": "under",
       "gap": "The kit does not pass controllers to the page or map them.",
-      "next": "Controllers into the runner, a map kept with the state, and \"Learn\" in a value's menu. CLAP can hand controllers over as events; VST3 only maps them to parameters through IMidiMapping, so learning there needs a parameter standing in for each controller. It shares the processor-to-controller work the picture needs."
+      "next": "Controllers into the runner, a map kept with the state, and \"Learn\" in a value's menu. CLAP can hand controllers over as events; VST3 only maps them to parameters through IMidiMapping, so learning there needs a parameter standing in for each controller. The connection the picture now uses can carry what was learned back to the editor."
     },
     {
       "id": "undo-and-compare",
@@ -200,14 +200,20 @@
           "source": "https://prod.fabfilter.com/help/pro-q/using/overview"
         }
       ],
-      "ours": "A glass a plugin draws on, redrawn as settings and meters move, purple where the held setting shapes it. It can be the control itself: dragged across and up for two settings, as one gesture. It has the last four seconds of every meter to draw from, which is the sound's own level as it happened.",
-      "verdict": "under",
-      "gap": "Level over time is the only thing it hears of the sound: no waveform and no spectrum.",
-      "next": "A channel for samples from the audio thread to the page. In CLAP the editor can read it directly; in VST3 the controller only hears the processor through the host, so it needs messages between the two.",
+      "ours": "A glass a plugin draws on, redrawn as settings and meters move, purple where the held setting shapes it. It can be the control itself: dragged across and up for two settings, as one gesture. While audio runs it has the sound itself, the last thousand samples that came in and went out, about thirty times a second, with a spectrum of them and a way to hold a wave still; and the last four seconds of every meter. In VST3 the processor hands the sound to the controller when the host connects them, which needs both in one process, as hosts load them. That handover and the webview path are compiled and tested in parts; no test yet watches a waveform arrive in a real host.",
+      "verdict": "meets",
       "proof": [
         "the picture is drawn, and drawn again when a setting moves",
         "the picture is itself dragged: up is more Drive, as one gesture",
-        "the picture keeps the last few seconds of level, and draws them"
+        "the picture keeps the last few seconds of level, and draws them",
+        "with audio running, the picture is the sound itself",
+        "a spectrum finds a tone in its band, at its level",
+        "a wave is drawn from where it climbs through zero, so it stands still",
+        "a_watched_runner_copies_what_came_in_and_what_went_out",
+        "the_latest_samples_come_back_oldest_first",
+        "it_sends_the_sound_while_it_moves_and_nothing_when_it_stops",
+        "the_controller_takes_the_scope_the_processor_offers",
+        "a_message_from_another_process_is_refused"
       ]
     },
     {

@@ -6,6 +6,7 @@
 
 pub mod bridge;
 pub mod docs;
+pub mod feed;
 #[cfg(windows)]
 mod panel;
 pub mod presets;

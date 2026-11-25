@@ -4,6 +4,7 @@
 use crate::processor::read_all;
 use crate::strings::{copy_wstring, read_wstring};
 use kit::{Spec, state};
+use kit_webui::feed::ScopeLink;
 use std::cell::{Cell, RefCell};
 use std::ffi::c_char;
 use std::rc::Rc;
@@ -19,10 +20,34 @@ pub struct Controller {
     spec: Spec,
     values: Values,
     handler: Handler,
+    // The sound, once the host has connected the processor.
+    pub(crate) scope: ScopeLink,
 }
 
 impl Class for Controller {
-    type Interfaces = (IEditController,);
+    type Interfaces = (IEditController, IConnectionPoint);
+}
+
+// The processor offers its scope when the host connects the two; all
+// the controller does is take it.
+impl IConnectionPointTrait for Controller {
+    unsafe fn connect(&self, _other: *mut IConnectionPoint) -> tresult {
+        kResultOk
+    }
+
+    unsafe fn disconnect(&self, _other: *mut IConnectionPoint) -> tresult {
+        kResultOk
+    }
+
+    unsafe fn notify(&self, message: *mut IMessage) -> tresult {
+        match crate::connect::accept(message) {
+            Some(scope) => {
+                *self.scope.borrow_mut() = Some(scope);
+                kResultOk
+            }
+            None => kResultFalse,
+        }
+    }
 }
 
 impl Controller {
@@ -35,6 +60,7 @@ impl Controller {
             spec,
             values: values.into(),
             handler: Rc::default(),
+            scope: Rc::default(),
         }
     }
 
@@ -167,7 +193,12 @@ impl IEditControllerTrait for Controller {
             return std::ptr::null_mut();
         }
 
-        crate::editor::Editor::create(self.spec, self.values.clone(), self.handler.clone())
+        crate::editor::Editor::create(
+            self.spec,
+            self.values.clone(),
+            self.handler.clone(),
+            self.scope.clone(),
+        )
     }
 
     #[cfg(not(windows))]

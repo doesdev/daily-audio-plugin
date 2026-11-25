@@ -6,6 +6,7 @@
 // are needed on one platform and not on the other.
 #![allow(clippy::unnecessary_cast)]
 
+mod connect;
 mod controller;
 #[cfg(windows)]
 mod editor;

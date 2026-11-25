@@ -3,6 +3,7 @@
 //! reaches Rust is an index into the spec.
 //!
 //! To the page: `hello` (the spec and every value, once it is ready),
+//! `signal` (the sound itself, while audio runs), `presets` (the files),
 //! `state` (settings moved outside the page) and `meters`. From the
 //! page: `ready`, `blur`, and a gesture on a setting as `begin`, `set`
 //! and `end`.
@@ -130,6 +131,29 @@ pub fn meters(spec: &Spec, values: &[f64]) -> String {
         "type": "meters",
         "levels": values,
         "levelTexts": texts(spec.meters, values),
+    })
+    .to_string()
+}
+
+/// A sample is sent as a whole number of this many to full scale: it
+/// is shorter to write than a fraction, and fine enough to draw.
+pub const SIGNAL_SCALE: f32 = 16384.0;
+
+/// The sound itself: the latest samples that came in and went out,
+/// oldest first, at `rate`.
+pub fn signal(rate: f32, input: &[f32], output: &[f32]) -> String {
+    let whole = |samples: &[f32]| -> Vec<i32> {
+        samples
+            .iter()
+            .map(|s| (s.clamp(-2.0, 2.0) * SIGNAL_SCALE).round() as i32)
+            .collect()
+    };
+    json!({
+        "type": "signal",
+        "rate": rate,
+        "scale": SIGNAL_SCALE,
+        "input": whole(input),
+        "output": whole(output),
     })
     .to_string()
 }
