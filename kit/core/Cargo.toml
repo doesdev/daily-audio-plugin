@@ -1,0 +1,8 @@
+[package]
+name = "kit"
+version = "0.1.0"
+description = "What a plugin is: its spec, its parameters, its state and one process call"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true

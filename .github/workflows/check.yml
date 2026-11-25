@@ -1,0 +1,157 @@
+name: check
+
+# Everything a change must pass, then, for a daily plugin's pull
+# request, the merge and the release that follow from passing it.
+#
+#   check     npm run check, on Windows: the only place the editor's
+#             WebView2 tests build and run.
+#   validate  each plugin through pluginval and clap-validator. Not yet
+#             required: see docs/decisions/0004.
+#   merge     a pull request labelled `daily` from this repo is squashed
+#             into main once check passes.
+#   release   every plugin on main whose version has no tag yet gets
+#             its zip built and a GitHub release.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Rust
+        run: rustup toolchain install stable --profile minimal -c clippy,rustfmt
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-
+      - run: npm ci
+      - run: npm run check
+
+  validate:
+    needs: check
+    runs-on: windows-latest
+    timeout-minutes: 30
+    continue-on-error: true
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Rust
+        run: rustup toolchain install stable --profile minimal
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-release-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-release-${{ runner.os }}-
+      - run: npm ci
+      - name: Validators
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force tools | Out-Null
+          gh release download --repo Tracktion/pluginval --pattern "*Windows*.zip" --dir tools
+          gh release download --repo free-audio/clap-validator --pattern "*windows*" --dir tools
+          Get-ChildItem tools -Filter *.zip | ForEach-Object { Expand-Archive $_.FullName -DestinationPath tools -Force }
+          Get-ChildItem tools -Recurse -Filter *.exe | ForEach-Object { $_.FullName }
+      - name: Validate every plugin
+        shell: pwsh
+        run: |
+          $pluginval = (Get-ChildItem tools -Recurse -Filter pluginval.exe | Select-Object -First 1).FullName
+          $clap = (Get-ChildItem tools -Recurse -Filter clap-validator.exe | Select-Object -First 1).FullName
+          $failed = $false
+          foreach ($dir in Get-ChildItem plugins -Directory) {
+            npm run bundle -- $dir.Name
+            if ($LASTEXITCODE -ne 0) { $failed = $true; continue }
+            $out = "target/bundle/$($dir.Name)"
+            foreach ($vst3 in Get-ChildItem $out -Filter *.vst3) {
+              & $pluginval --strictness-level 5 --skip-gui-tests --validate $vst3.FullName
+              if ($LASTEXITCODE -ne 0) { $failed = $true }
+            }
+            foreach ($file in Get-ChildItem $out -Filter *.clap) {
+              & $clap validate --only-failed $file.FullName
+              if ($LASTEXITCODE -ne 0) { $failed = $true }
+            }
+          }
+          if ($failed) { exit 1 }
+
+  merge:
+    needs: check
+    if: >-
+      github.event_name == 'pull_request' &&
+      contains(github.event.pull_request.labels.*.name, 'daily') &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Squash into main
+        run: gh pr merge "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --squash --delete-branch
+
+  # A merge made with the workflow's own token does not start another
+  # workflow, so the release that follows it is a job here. A push to
+  # main by a person lands here too.
+  release:
+    needs: [check, merge]
+    if: >-
+      always() && needs.check.result == 'success' &&
+      (needs.merge.result == 'success' ||
+       (github.event_name != 'pull_request' && github.ref == 'refs/heads/main'))
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Rust
+        run: rustup toolchain install stable --profile minimal
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-release-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-release-${{ runner.os }}-
+      - run: npm ci
+      - name: Release what is waiting
+        run: npm run release -- publish

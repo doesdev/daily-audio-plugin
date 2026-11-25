@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node scripts/check.js",
+    "new": "node scripts/new.js",
+    "shots": "node scripts/shots.js",
+    "docs": "node scripts/docs.js",
+    "bundle": "node scripts/bundle.js",
+    "release": "node scripts/release.js"
+  },
+  "devDependencies": {
+    "mvt": "^5.0.0"
+  }
+}

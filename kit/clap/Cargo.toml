@@ -1,0 +1,13 @@
+[package]
+name = "kit-clap"
+version = "0.1.0"
+description = "Any kit plugin as a CLAP, on raw CLAP bindings"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[dependencies]
+kit = { workspace = true }
+kit-webui = { workspace = true }
+clap-sys = "0.5"

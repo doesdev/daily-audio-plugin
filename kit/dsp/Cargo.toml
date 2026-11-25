@@ -1,0 +1,8 @@
+[package]
+name = "kit-dsp"
+version = "0.1.0"
+description = "Tested building blocks for the audio thread: none allocates after it is made"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true

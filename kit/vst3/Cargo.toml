@@ -1,0 +1,13 @@
+[package]
+name = "kit-vst3"
+version = "0.1.0"
+description = "Any kit plugin as a VST3, on raw VST3 bindings"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[dependencies]
+kit = { workspace = true }
+kit-webui = { workspace = true }
+vst3 = "0.3"

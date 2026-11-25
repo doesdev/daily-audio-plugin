@@ -1,0 +1,29 @@
+//! Building blocks for the audio thread. Each is made (and may
+//! allocate) in a plugin's `prepare`, and from then on only does
+//! arithmetic: no allocation, no locks, no waiting.
+//!
+//! The kit ratchets: when a plugin needs a block that is not here and
+//! another plugin could use, it goes in here with its own tests, not
+//! in the plugin.
+
+mod delay;
+mod follower;
+mod smooth;
+mod svf;
+
+pub use delay::Delay;
+pub use follower::Follower;
+pub use smooth::Smooth;
+pub use svf::{Svf, SvfOut};
+
+/// A number so small it is silence, added and taken away again so a
+/// decaying filter never slows to a crawl on denormals.
+pub const TINY: f32 = 1e-20;
+
+/// The one-pole coefficient that covers 63% of a step in `ms`.
+pub fn pole(ms: f32, rate: f32) -> f32 {
+    match ms > 0.0 {
+        true => (-1.0 / (ms * 0.001 * rate)).exp(),
+        false => 0.0,
+    }
+}

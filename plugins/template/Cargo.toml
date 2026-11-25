@@ -1,0 +1,26 @@
+[package]
+name = "template"
+version = "0.1.0"
+description = "Drive, tone and mix: the plugin every new one starts as"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+# Not shipped: it exists to be copied by `npm run new` and to prove the
+# kit end to end.
+[package.metadata.kit]
+release = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+kit = { workspace = true }
+kit-dsp = { workspace = true }
+kit-vst3 = { workspace = true }
+kit-clap = { workspace = true }
+kit-webui = { workspace = true }
+
+[dev-dependencies]
+kit-test = { workspace = true }

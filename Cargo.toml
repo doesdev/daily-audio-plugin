@@ -1,0 +1,27 @@
+[workspace]
+members = ["kit/core", "kit/dsp", "kit/webui", "kit/vst3", "kit/clap", "kit/test", "plugins/*"]
+exclude = ["kit/ui"]
+resolver = "3"
+
+[workspace.package]
+edition = "2024"
+license = "MIT"
+authors = ["Andrew Carpenter"]
+publish = false
+
+[workspace.dependencies]
+kit = { path = "kit/core" }
+kit-dsp = { path = "kit/dsp" }
+kit-vst3 = { path = "kit/vst3" }
+kit-clap = { path = "kit/clap" }
+kit-webui = { path = "kit/webui" }
+kit-test = { path = "kit/test" }
+
+# Audio code runs in tests and in debug hosts; unoptimised it can take
+# longer than real time. Debug assertions stay on.
+[profile.dev]
+opt-level = 2
+
+[profile.release]
+lto = "thin"
+codegen-units = 4

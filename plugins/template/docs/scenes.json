@@ -1,0 +1,21 @@
+[
+  {
+    "name": "editor",
+    "values": { "level": 0.72 }
+  },
+  {
+    "name": "fold",
+    "values": {
+      "shape": "Fold",
+      "drive": 30,
+      "tone": 8000,
+      "mix": 70,
+      "level": 0.9
+    }
+  },
+  {
+    "name": "shape",
+    "values": { "shape": "Hard", "drive": 24 },
+    "crop": { "sel": ".kit-group", "text": "Shape" }
+  }
+]

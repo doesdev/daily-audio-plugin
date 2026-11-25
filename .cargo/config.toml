@@ -1,0 +1,4 @@
+# The C runtime linked in, so a release runs on a machine with no
+# Visual C++ redistributable (0061).
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]

@@ -1,0 +1,8 @@
+/* Template's own look, over the kit's: one accent, nothing else. */
+
+:root {
+  --accent: #f2a65a;
+  --accent-ink: #1d1206;
+}
+
+.kit-vertical .kit-meter-bar { height: 72px; }

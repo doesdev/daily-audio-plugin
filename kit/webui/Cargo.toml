@@ -1,0 +1,16 @@
+[package]
+name = "kit-webui"
+version = "0.1.0"
+description = "A plugin's editor: its page in a system webview, and what the two say to each other"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[dependencies]
+kit = { workspace = true }
+serde_json = "1"
+
+[target.'cfg(windows)'.dependencies]
+wry = "0.57"
+windows-link = "0.2"
