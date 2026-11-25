@@ -10,7 +10,7 @@ mod runner;
 mod shared;
 pub mod state;
 
-pub use param::{Kind, Param, list, meter, range, toggle};
+pub use param::{BYPASS, Kind, Param, bypass, list, meter, range, toggle};
 pub use plugin::{Asset, Info, Plugin, Role, Spec};
 pub use runner::{Block, EVENTS, Event, Runner, Transport};
 pub use shared::{BEGIN, END, SET, Shared};

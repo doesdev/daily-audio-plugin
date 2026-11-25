@@ -52,13 +52,11 @@ interaction in the kit as well, one entry each in
 
 Be plain about these in `NOVELTY.md` until they are fixed:
 
-- **No live signal on the glass.** Only settings and meters reach the
-  page, so a picture can show what the plugin *would* do to a signal
-  of the level coming in, not the signal itself: no waveform, no
-  spectrum, no history of gain reduction. This is the biggest gap and
-  the next thing the kit needs.
-- **Presets are kept in the editor's storage**, not as files, and the
-  bypass in the header is only a setting the plugin must bring.
+- **No waveform or spectrum on the glass.** Only settings and meters
+  reach the page. A picture can show the level of the last four
+  seconds as it happened, and what the plugin *would* do to a signal
+  of that level, but not the signal itself. This is the biggest gap
+  and the next thing the kit needs.
 - **A and B and the undo history are forgotten** when the editor is
   closed; only the settings themselves are saved.
 - **No modulation or MIDI learn**, which the leading synths have.

@@ -129,7 +129,18 @@ pub struct Runner<P: Plugin> {
     piece: Vec<Event>,
     sent: Vec<Event>,
     meters: Vec<f64>,
+    /// The setting that is the bypass, if the plugin has one.
+    bypass: Option<usize>,
+    /// How much of what goes out is the sound that came in: 0 with
+    /// the plugin on, 1 once bypassed, and between while it fades.
+    dry: f32,
+    /// How far `dry` moves in a sample.
+    fade: f32,
 }
+
+/// How long going into and out of bypass takes: long enough not to
+/// click, short enough to feel like a switch.
+pub const BYPASS_FADE_SECONDS: f32 = 0.01;
 
 impl<P: Plugin> Runner<P> {
     /// A prepared plugin. Allocates, so never on the audio thread.
@@ -149,6 +160,9 @@ impl<P: Plugin> Runner<P> {
             piece: Vec::with_capacity(EVENTS),
             sent: Vec::with_capacity(EVENTS),
             meters: vec![0.0; P::METERS.len()],
+            bypass: P::PARAMS.iter().position(Param::is_bypass),
+            dry: 0.0,
+            fade: 1.0 / (BYPASS_FADE_SECONDS * rate).max(1.0),
         }
     }
 
@@ -231,6 +245,7 @@ impl<P: Plugin> Runner<P> {
                 rate: self.rate,
             });
 
+            self.fade_to_dry(n);
             for (ch, buf) in self.outs.iter().enumerate() {
                 write(ch, start, &buf[..n]);
             }
@@ -244,6 +259,38 @@ impl<P: Plugin> Runner<P> {
             start += n;
         }
         self.pending.clear();
+    }
+
+    /// Mixes the sound that came in over what the plugin made, by how
+    /// far into bypass it is. The plugin runs all the while, so its
+    /// tails and smoothers are where they should be when it comes back.
+    /// An instrument, with nothing coming in, fades to silence. The dry
+    /// sound is not delayed, so a plugin with latency will not line up
+    /// with it during the fade.
+    fn fade_to_dry(&mut self, n: usize) {
+        let Some(index) = self.bypass else {
+            return;
+        };
+        let target = if self.params[index] > 0.5 { 1.0 } else { 0.0 };
+        if self.dry == target && target == 0.0 {
+            return;
+        }
+        let (from, fade) = (self.dry, self.fade);
+        let step = |dry: f32| match target > dry {
+            true => (dry + fade).min(1.0),
+            false => (dry - fade).max(target),
+        };
+        let ins = &self.ins;
+        for (ch, out) in self.outs.iter_mut().enumerate() {
+            let input = ins.get(ch).or(ins.last());
+            let mut dry = from;
+            for (k, sample) in out[..n].iter_mut().enumerate() {
+                dry = step(dry);
+                let through = input.map_or(0.0, |buf| buf[k]);
+                *sample = *sample * (1.0 - dry) + through * dry;
+            }
+        }
+        self.dry = (0..n).fold(from, |dry, _| step(dry));
     }
 
     /// Runs interleaved-by-channel buffers, for tests and tools:
@@ -367,5 +414,69 @@ mod tests {
             |_| sent += 1,
         );
         assert_eq!(sent, 0);
+    }
+
+    // Doubles what it hears, and can be bypassed.
+    struct Switched;
+
+    impl Plugin for Switched {
+        const INFO: &'static Info = Double::INFO;
+        const PARAMS: &'static [Param] = &[crate::bypass(0)];
+        const METERS: &'static [Param] = &[];
+
+        fn new() -> Self {
+            Self
+        }
+
+        fn prepare(&mut self, _rate: f32, _max_block: usize) {}
+
+        fn process(&mut self, block: &mut Block) {
+            for ch in 0..block.outputs() {
+                let (input, output) = block.io(ch);
+                output.iter_mut().zip(input).for_each(|(o, i)| *o = i * 2.0);
+            }
+        }
+    }
+
+    #[test]
+    fn bypass_fades_to_the_sound_coming_in_and_back_without_a_step() {
+        let rate = 48_000.0;
+        let fade = (BYPASS_FADE_SECONDS * rate) as usize;
+        let mut runner = Runner::<Switched>::new(rate, 64);
+        let ones = vec![vec![1.0_f32; 2000]];
+        let on = runner.render(&ones, 2000, 64);
+        assert!(on[0].iter().all(|&s| s == 2.0));
+
+        runner.params[0] = 1.0;
+        let going = runner.render(&ones, 2000, 64);
+        runner.params[0] = 0.0;
+        let back = runner.render(&ones, 2000, 64);
+
+        let cases = [("going", &going[0], 2.0, 1.0), ("back", &back[0], 1.0, 2.0)];
+        for (name, heard, from, to) in cases {
+            // It starts where it was, ends where it is going, takes the
+            // whole fade to get there, and never moves by more than a
+            // sample's share of the way.
+            assert!(
+                (heard[0] - from).abs() < 0.01,
+                "{name} starts at {}",
+                heard[0]
+            );
+            assert!(heard[fade + 1..].iter().all(|&s| s == to), "{name} arrives");
+            assert!((heard[fade / 2] - 1.5).abs() < 0.05, "{name} is half way");
+            let step = heard
+                .windows(2)
+                .map(|w| (w[1] - w[0]).abs())
+                .fold(0.0, f32::max);
+            assert!(step <= 1.0 / fade as f32 + 1e-6, "{name} steps by {step}");
+        }
+    }
+
+    #[test]
+    fn a_plugin_without_a_bypass_is_left_alone() {
+        let mut runner = Runner::<Double>::new(48_000.0, 16);
+        let out = runner.render(&[vec![1.0; 64]], 64, 16);
+
+        assert!(out[0].iter().all(|&s| s == 2.0));
     }
 }

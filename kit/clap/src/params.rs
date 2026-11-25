@@ -18,7 +18,13 @@ fn flags(p: &Param) -> clap_param_info_flags {
         0
     };
     let list = if p.is_list() { CLAP_PARAM_IS_ENUM } else { 0 };
-    CLAP_PARAM_IS_AUTOMATABLE | stepped | list
+    // The host's own bypass button and the plugin's are then one.
+    let bypass = if p.is_bypass() {
+        CLAP_PARAM_IS_BYPASS
+    } else {
+        0
+    };
+    CLAP_PARAM_IS_AUTOMATABLE | stepped | list | bypass
 }
 
 // Into a fixed C string, cut short if need be, always terminated.

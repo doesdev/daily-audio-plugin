@@ -8,6 +8,7 @@ pub mod bridge;
 pub mod docs;
 #[cfg(windows)]
 mod panel;
+pub mod presets;
 #[cfg(windows)]
 #[doc(hidden)]
 pub mod testing;

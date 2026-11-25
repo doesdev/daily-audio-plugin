@@ -105,6 +105,16 @@ pub const fn toggle(
     list(id, key, title, group, &OFF_ON, on as usize)
 }
 
+/// The key of the setting that is the plugin's own bypass.
+pub const BYPASS: &str = "bypass";
+
+/// The plugin's own bypass: Off, On. While it is on the runner fades
+/// to the sound coming in, and both formats tell the host that this is
+/// the bypass, so the host's own button and the plugin's are one.
+pub const fn bypass(id: u32) -> Param {
+    toggle(id, BYPASS, "Bypass", "", false).about("Passes the sound through unchanged")
+}
+
 /// A level meter.
 pub const fn meter(id: u32, key: &'static str, title: &'static str) -> Param {
     Param {
@@ -210,6 +220,11 @@ impl Param {
             Kind::Range { lo, hi, step, .. } if step > 0.0 => ((hi - lo) / step).round() as i32,
             Kind::Range { .. } | Kind::Level | Kind::Fraction => 0,
         }
+    }
+
+    /// Whether this is the plugin's own bypass.
+    pub fn is_bypass(&self) -> bool {
+        self.key == BYPASS && self.is_list()
     }
 
     pub fn is_list(&self) -> bool {

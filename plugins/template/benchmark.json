@@ -16,7 +16,7 @@
   "points": {
     "picture": {
       "verdict": "under",
-      "note": "One cycle of a model wave before and after, not the signal: the kit has no live signal yet."
+      "note": "One cycle of a model wave before and after, over the level that really went out, and dragged for Drive. Not the waveform itself: the kit has no channel for it yet."
     },
     "precision": {
       "verdict": "meets",
@@ -39,8 +39,8 @@
       "note": "The house look; the wave turns purple with Drive and Mix."
     },
     "presets": {
-      "verdict": "under",
-      "note": "Three of its own, kept in the editor's storage, not as files."
+      "verdict": "meets",
+      "note": "Three of its own; a person's are files they can copy and share."
     }
   }
 }

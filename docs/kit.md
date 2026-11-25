@@ -148,7 +148,13 @@ and the picture can tell when it is held.
 - `mount(build, { presets })` gives the plugin its own presets:
   `[{ name, values: { key: value in its own terms } }]`. The header
   then has the preset browser; a person's own are kept by the page.
-- A setting keyed `bypass` (Off, On) puts an On button in the header.
+- `kit::bypass(id)` in `PARAMS` is the plugin's own bypass: the host
+  is told it is the bypass, the runner fades to the sound coming in
+  and back, and the header gets an On button. The plugin writes
+  nothing for it.
+- A person's own presets are files, one JSON file each, under
+  `%APPDATA%\VENDOR\NAME\Presets`. The plugin writes nothing for
+  that either.
 - `mount(auto)` lays out a whole page from the spec alone: a start,
   never the end. `mount(build, { density: 'regular' })` starts a page
   with many settings smaller.
@@ -163,9 +169,12 @@ whenever a setting or a meter moves or a setting is taken hold of.
 size, `pen.ink`, `pen.soft`, `pen.line` and `pen.accent` the glass's
 colours, and `pen.touched` the key of the setting being dragged now,
 or null. Draw what only this plugin has, from `ui.p.x.plain` and
-`ui.m.y.value`: what goes in dashed, what comes out in `pen.ink`, and
+`ui.m.y.value`, and `pen.trail(ui.m.y)`, that meter's last four
+seconds: what goes in dashed, what comes out in `pen.ink`, and
 in `pen.accent` only the part that `pen.touched` shapes. The template
-draws one cycle of a wave before and after its shaper.
+draws one cycle of a wave before and after its shaper, over the level
+that went out. `picture(ui, draw, { drag: { x, y } })` makes the
+picture the control: dragging across moves `x` and up moves `y`.
 
 `ui/style.css` comes after the kit's and may set its tokens (at the
 top of `kit/ui/kit.css`) or anything else. Every file the page needs
@@ -209,11 +218,10 @@ settings that show what is new about it.
 - MIDI controllers into a VST3: notes arrive, CC and pitch bend do not
   (VST3 hands them over as parameters; wispidi's `controls.rs` shows
   how).
-- Anything from the audio thread to the editor but meters: no
-  waveform, spectrum or history can be drawn from the real signal.
+- Anything from the audio thread to the editor but meters: a level
+  over time can be drawn, a waveform or a spectrum cannot.
   This is the largest gap against the bar in `docs/design.md` and the
   next thing the kit needs.
-- Presets as files, and a bypass the host knows as the plugin's.
 - What `kit/benchmarks.json` marks `under`: the check prints the list.
 - The parts of the design canvas that need a live signal or notes
   from the page: `docs/design.md` lists them.

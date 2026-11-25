@@ -65,7 +65,7 @@
       "ours": "Nothing.",
       "verdict": "under",
       "gap": "The kit does not pass controllers to the page or map them.",
-      "next": "Controller messages through the bridge, then \"Learn\" in a value's menu."
+      "next": "Controllers into the runner, a map kept with the state, and \"Learn\" in a value's menu. CLAP can hand controllers over as events; VST3 only maps them to parameters through IMidiMapping, so learning there needs a parameter standing in for each controller. It shares the processor-to-controller work the picture needs."
     },
     {
       "id": "undo-and-compare",
@@ -99,16 +99,23 @@
           "who": "FabFilter Pro-Q 4",
           "does": "A preset system in every plugin, with copy and paste of presets between instances",
           "source": "https://www.fabfilter.com/help/pro-q"
+        },
+        {
+          "who": "FabFilter Pro-Q 4",
+          "does": "Presets kept as files in a folder of the person's own, which can be copied to another machine",
+          "source": null
         }
       ],
-      "ours": "A browser over the sheet: search, the plugin's own and one's own, a four-bar picture of each, hear one by pointing at it, press to keep it, save and delete one's own, lock a setting against them. Better at telling presets apart and trying them; worse at keeping them.",
-      "verdict": "under",
-      "gap": "One's own presets live in the editor's storage: they are not files, do not travel between machines, and the host's own preset list does not see them.",
-      "next": "Presets as files through the bridge, and the factory ones in the host's program list.",
+      "ours": "A browser over the sheet: search, the plugin's own and one's own, a four-bar picture of each, hear one by pointing at it, press to keep it, save and delete one's own, lock a setting against them. One's own are files, one JSON file a preset, in a folder under the application data, so they can be copied and shared; where a host keeps none the page keeps them, and hands them over when it can. A preset naming settings this version lacks asks first. The path through the real webview is compiled in CI but has no test of its own there.",
+      "verdict": "meets",
       "proof": [
         "a preset names settings in their own terms and leaves the rest",
         "pointing at a preset tries it, and leaving puts things back",
-        "a preset of one's own is saved, kept, found and deleted"
+        "a preset of one's own is saved, kept, found and deleted",
+        "where the host keeps presets as files, the page asks it to",
+        "a_preset_saved_is_listed_and_one_deleted_is_gone",
+        "presets_come_back_by_name_and_other_files_are_skipped",
+        "a_name_becomes_a_file_a_file_system_will_take"
       ]
     },
     {
@@ -193,12 +200,14 @@
           "source": "https://prod.fabfilter.com/help/pro-q/using/overview"
         }
       ],
-      "ours": "A glass a plugin draws on, redrawn as settings and meters move, purple where the held setting shapes it. It shows what the plugin would do, from its settings and levels.",
+      "ours": "A glass a plugin draws on, redrawn as settings and meters move, purple where the held setting shapes it. It can be the control itself: dragged across and up for two settings, as one gesture. It has the last four seconds of every meter to draw from, which is the sound's own level as it happened.",
       "verdict": "under",
-      "gap": "No live signal reaches the page, and the picture is not itself dragged.",
-      "next": "A signal channel from the audio thread to the page; then handles on the picture, starting with the equaliser on the canvas.",
+      "gap": "Level over time is the only thing it hears of the sound: no waveform and no spectrum.",
+      "next": "A channel for samples from the audio thread to the page. In CLAP the editor can read it directly; in VST3 the controller only hears the processor through the host, so it needs messages between the two.",
       "proof": [
-        "the picture is drawn, and drawn again when a setting moves"
+        "the picture is drawn, and drawn again when a setting moves",
+        "the picture is itself dragged: up is more Drive, as one gesture",
+        "the picture keeps the last few seconds of level, and draws them"
       ]
     },
     {
@@ -212,12 +221,13 @@
           "source": null
         }
       ],
-      "ours": "An On button in the header when the spec has a setting keyed \"bypass\": filled when on, and the glass dims when bypassed.",
-      "verdict": "under",
-      "gap": "The kit does not provide the setting, mark it as the host's bypass, or crossfade it.",
-      "next": "A bypass in kit-core that both formats flag as theirs, faded in the runner.",
+      "ours": "kit::bypass(id) gives a plugin its own bypass. Both formats tell the host it is the bypass, so the host's button and the plugin's are one; the runner fades to the sound coming in over 10 ms and back, with the plugin still running so its tails are right on return. The header shows it as an On button and the glass dims. The dry sound is not delayed, so a plugin with latency will not line up during the fade.",
+      "verdict": "meets",
       "proof": [
-        "the plugin's own bypass is one press, and says which it is"
+        "the plugin's own bypass is one press, and says which it is",
+        "the plugin's bypass is in the header, not among the settings",
+        "bypass_fades_to_the_sound_coming_in_and_back_without_a_step",
+        "a_plugin_without_a_bypass_is_left_alone"
       ]
     },
     {

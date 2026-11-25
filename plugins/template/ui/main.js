@@ -4,7 +4,7 @@
 
 import {
   mount, glass, header, stage, readouts, meter, picture, sheet, values,
-  value, choice, foot, h
+  value, choice, foot, h, TRAIL
 } from './kit/kit.js'
 
 // One sample through the shaper, as src/lib.rs has it.
@@ -45,6 +45,17 @@ const wave = (ui) => (pen) => {
   const sine = (t) => reach * Math.sin(t * Math.PI * 2)
   ctx.lineJoin = 'round'
   ctx.lineCap = 'round'
+
+  // Behind the wave, the last few seconds of what went out: a column
+  // a reading, the newest at the right.
+  const past = pen.trail(ui.m.level)
+  const wide = width / TRAIL
+  ctx.fillStyle = pen.line
+  past.forEach((level, i) => {
+    const tall = level * height * 0.5
+    const left = width - (past.length - i) * wide
+    ctx.fillRect(left + 1, height - tall, Math.max(1, wide - 2), tall)
+  })
 
   ctx.strokeStyle = pen.line
   ctx.lineWidth = 1
@@ -87,7 +98,10 @@ mount((ui) => [
         meter(ui.m.input, { title: 'In' }),
         meter(ui.m.level, { title: 'Out' })),
       picture(ui, wave(ui), {
-        label: 'One cycle of a wave: going in dashed, coming out solid'
+        label: 'One cycle of a wave: going in dashed, coming out solid. ' +
+          'Drag up and down for Drive',
+        // The wave is the control: pull it up to drive it harder.
+        drag: { y: ui.p.drive }
       }))),
   sheet(
     values(

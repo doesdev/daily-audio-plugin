@@ -186,6 +186,10 @@ export const zoneOf = (level) => {
 
 export const HOLD_MS = 2000
 
+// How many readings of the meters are kept: about four seconds' worth
+// at the 30 a second the host sends.
+export const TRAIL = 120
+
 // The held peak after a reading of `level` at time `now`.
 export const held = (hold, level, now, ms = HOLD_MS) =>
   level >= hold.level || now - hold.at > ms ? { level, at: now } : hold
@@ -260,7 +264,10 @@ export const EMPTY = {
   values: [],
   texts: [],
   levels: [],
-  levelTexts: []
+  levelTexts: [],
+  // The person's own presets as the host keeps them, in files; null
+  // until it says, and for a host that keeps none.
+  files: null
 }
 
 export const reduce = (state, msg) => {
@@ -270,6 +277,9 @@ export const reduce = (state, msg) => {
   }
   if (msg.type === 'state') {
     return { ...state, values: msg.values, texts: msg.texts }
+  }
+  if (msg.type === 'presets') {
+    return { ...state, files: msg.list, filesDir: msg.dir }
   }
   if (msg.type === 'meters') {
     return { ...state, levels: msg.levels, levelTexts: msg.levelTexts }
@@ -527,11 +537,18 @@ export const mount = (build, opts = {}) => {
   prefs = readPrefs()
   applyPrefs()
   let touched = null
+  // The last few seconds of every meter, a reading a tick.
+  const trail = []
   const store = makeStore()
   const session = makeSession(store)
   window.kit = {
-    receive: store.receive, store, session, touched: () => touched
+    receive: store.receive, store, session, touched: () => touched, trail
   }
+  store.on((state, prev) => {
+    if (state.levels === prev.levels || !prev.ready) return
+    trail.push(state.levels)
+    if (trail.length > TRAIL) trail.shift()
+  })
   // Escape puts an open panel away, and only that: the keyboard goes
   // back to the host on the next one.
   window.addEventListener('keydown', (event) => {
@@ -559,6 +576,9 @@ export const mount = (build, opts = {}) => {
       // The key of the setting being dragged now, for the picture to
       // show in purple; a control says when it is taken and let go.
       touched: () => touched,
+      // A meter's readings over the last few seconds, oldest first:
+      // the one live thing the page hears of the sound itself.
+      trail: (handle) => trail.map((levels) => levels[handle.index] ?? 0),
       touch: (key) => {
         touched = key
         window.dispatchEvent(new Event('kit-touch'))
@@ -1007,6 +1027,9 @@ const inkOf = (el) => {
 // in CSS pixels as `width` and `height`, the glass's colours as `ink`,
 // `soft`, `line`, `accent` and `hot`, and `touched`, the key of the
 // setting being dragged now or null: purple is for that alone.
+// `pen.trail(meter)` is that meter's last few seconds, oldest first.
+// `opts.drag` makes the picture itself the control: `{ x, y }` are
+// settings moved by dragging across and up, as one gesture.
 export const picture = (ui, draw, opts = {}) => {
   const canvas = h('canvas')
   const el = h('div.kit-picture', {
@@ -1026,7 +1049,9 @@ export const picture = (ui, draw, opts = {}) => {
     const ctx = canvas.getContext('2d')
     ctx.setTransform(density, 0, 0, density, 0, 0)
     ctx.clearRect(0, 0, width, height)
-    draw({ ctx, width, height, touched: ui.touched(), ...inkOf(el) })
+    draw({
+      ctx, width, height, touched: ui.touched(), trail: ui.trail, ...inkOf(el)
+    })
   }
   const ask = () => {
     if (queued) return
@@ -1034,10 +1059,44 @@ export const picture = (ui, draw, opts = {}) => {
     requestAnimationFrame(paint)
   }
   ui.store.on(ask)
+  if (opts.drag) draggable(el, ui, opts.drag)
   ;['resize', 'kit-theme', 'kit-touch', 'kit-density'].forEach((name) =>
     window.addEventListener(name, ask))
   requestAnimationFrame(paint)
   return el
+}
+
+// The picture as the control: across moves `x`, up moves `y`, from
+// where each was when it was taken hold of. A double-click puts both
+// back to their defaults.
+const draggable = (el, ui, { x, y }) => {
+  const moved = [x, y].filter(Boolean)
+  let from = null
+  el.dataset.drag = 'true'
+  el.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0) return
+    from = { px: event.clientX, py: event.clientY, x: x?.value, y: y?.value }
+    el.setPointerCapture(event.pointerId)
+    moved.forEach((handle) => handle.begin())
+    ui.touch((y ?? x).row.key)
+  })
+  el.addEventListener('pointermove', (event) => {
+    if (!from) return
+    const box = el.getBoundingClientRect()
+    const fine = event.shiftKey || prefs.fine === 'Always'
+    x?.move(dragged(x.row, from.x, event.clientX - from.px, fine, box.width))
+    y?.move(dragged(y.row, from.y, from.py - event.clientY, fine, box.height))
+  })
+  const stop = () => {
+    if (!from) return
+    from = null
+    moved.forEach((handle) => handle.end())
+    ui.touch(null)
+  }
+  el.addEventListener('pointerup', stop)
+  el.addEventListener('pointercancel', stop)
+  el.addEventListener('dblclick', () =>
+    moved.forEach((handle) => handle.set(handle.row.default)))
 }
 
 // A tool in the header: an icon in a round target, named for a reader.
@@ -1149,7 +1208,9 @@ export const foot = (ui, ...children) => {
 // a plugin's page should show what the plugin does.
 export const auto = (ui) => {
   const handles = Object.values(ui.p)
-  const lists = handles.filter((handle) => handle.row.kind === 'list')
+  // The bypass has its place in the header.
+  const lists = handles.filter((handle) =>
+    handle.row.kind === 'list' && handle.row.key !== 'bypass')
   const ranges = handles.filter((handle) => handle.row.kind !== 'list')
   const meters = Object.values(ui.m).map((handle) => meter(handle))
   return [
@@ -1243,6 +1304,12 @@ const makePresets = (store, session, plugin, factory) => {
     }
   }
   let own = read()
+  const hosted = () => store.get().files != null
+  const mine = () => (hosted() ? store.get().files : own)
+  // Told again as they now are, without waiting for the host to say.
+  const filed = (list) => store.receive({
+    type: 'presets', list, dir: store.get().filesDir
+  })
   let at = 'Init'
   let before = null
   const keep = () => {
@@ -1264,7 +1331,7 @@ const makePresets = (store, session, plugin, factory) => {
       values: presetValues(params(), preset.values),
       unknown: unknown(preset.values)
     })),
-    ...own.map((preset) => ({
+    ...mine().map((preset) => ({
       name: preset.name,
       by: 'Mine',
       values: fromKeys(preset.values),
@@ -1279,7 +1346,19 @@ const makePresets = (store, session, plugin, factory) => {
     go(before)
     before = null
   }
-  store.on((state, prev) => { if (state.values !== prev.values) tell() })
+  store.on((state, prev) => {
+    // The first time the host says it keeps presets, those the page
+    // had been keeping go to it, and the page keeps none.
+    if (state.files && !prev.files && own.length) {
+      own.filter((p) => !state.files.some((f) => f.name === p.name))
+        .forEach((p) => post({ type: 'preset-save', ...p }))
+      filed([...own, ...state.files.filter((f) =>
+        !own.some((p) => p.name === f.name))])
+      own = []
+      keep()
+    }
+    if (state.values !== prev.values || state.files !== prev.files) tell()
+  })
   return {
     on: (fn) => { listeners.add(fn); return () => listeners.delete(fn) },
     list,
@@ -1315,18 +1394,27 @@ const makePresets = (store, session, plugin, factory) => {
     save: (name) => {
       const taken = list().some((p) => p.name === name && p.by === 'Factory')
       const called = taken ? `${name} (mine)` : name
-      own = [
-        ...own.filter((p) => p.name !== called),
-        { name: called, values: byKey(store.get().values) }
-      ]
-      keep()
+      const preset = { name: called, values: byKey(store.get().values) }
+      const rest = mine().filter((p) => p.name !== called)
+      if (hosted()) {
+        post({ type: 'preset-save', ...preset })
+        filed([...rest, preset])
+      } else {
+        own = [...rest, preset]
+        keep()
+      }
       at = called
       tell()
       return called
     },
     remove: (name) => {
-      own = own.filter((p) => p.name !== name)
-      keep()
+      if (hosted()) {
+        post({ type: 'preset-delete', name })
+        filed(mine().filter((p) => p.name !== name))
+      } else {
+        own = own.filter((p) => p.name !== name)
+        keep()
+      }
       if (at === name) at = 'Init'
       tell()
     }
@@ -1377,6 +1465,7 @@ const presetBrowser = (ui) => () => {
   const params = ui.store.get().params
   let filter = 'All'
   let naming = false
+  let trying = null
   const find = h('input.kit-find', {
     type: 'text', placeholder: 'Find a preset', 'aria-label': 'Find a preset'
   })
@@ -1388,7 +1477,14 @@ const presetBrowser = (ui) => () => {
   h('button.kit-preset-pick', {
     type: 'button',
     onclick: () => presets.load(preset),
-    onpointerenter: () => presets.preview(preset)
+    // Only a pointer that is really moving tries a preset: a list
+    // redrawn under a still pointer must not change the sound.
+    onpointermove: (event) => {
+      if (!event.movementX && !event.movementY) return
+      if (trying === preset.name) return
+      trying = preset.name
+      presets.preview(preset)
+    }
   },
   h('span.kit-bars', { 'aria-hidden': 'true' },
     fingerprint(params, preset.values).map((value) =>
@@ -1441,7 +1537,10 @@ const presetBrowser = (ui) => () => {
   find.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') event.stopPropagation()
   })
-  rows.addEventListener('pointerleave', presets.endPreview)
+  rows.addEventListener('pointerleave', () => {
+    trying = null
+    presets.endPreview()
+  })
   // Redrawn when the list or the one chosen changes, not as values move.
   const listed = () => `${presets.name}|${presets.list().map((p) => p.name)}`
   let last = listed()

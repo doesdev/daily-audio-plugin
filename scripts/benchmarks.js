@@ -105,12 +105,23 @@ export const pluginProblems = (name, sheet) => {
   ]
 }
 
+// The names of the tests in a Rust source file.
+export const rustTestNames = (source) =>
+  [...source.matchAll(/#\[test\]\s+(?:#\[[^\]]*\]\s+)*fn (\w+)/g)]
+    .map((match) => match[1])
+
 const read = (file) => readFileSync(join(ROOT, file), 'utf8')
+
+// The kit's Rust tests a benchmark may name as proof.
+const RUST = ['kit/core/src/runner.rs', 'kit/webui/src/presets.rs']
 
 export const allProblems = () => {
   const register = JSON.parse(read('kit/benchmarks.json'))
-  const tests = ['kit/ui/test.js', 'kit/ui/gallery.test.js']
-    .flatMap((file) => testNames(read(file)))
+  const tests = [
+    ...['kit/ui/test.js', 'kit/ui/gallery.test.js']
+      .flatMap((file) => testNames(read(file))),
+    ...RUST.flatMap((file) => rustTestNames(read(file)))
+  ]
   const sheets = plugins().flatMap((name) => {
     const file = join(pluginDir(name), 'benchmark.json')
     const sheet = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null

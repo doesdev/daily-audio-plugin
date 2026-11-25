@@ -133,7 +133,7 @@ test('pointing at a preset tries it, and leaving puts things back', async (asser
     const before = await tab.evaluate(drive)
     await tab.evaluate(`[...document.querySelectorAll('.kit-preset-pick')]
       .find((el) => el.textContent.includes('Warm tape'))
-      .dispatchEvent(new PointerEvent('pointerenter')) ?? true`)
+      .dispatchEvent(new PointerEvent('pointermove', { movementX: 1 })) ?? true`)
     assert.is(await tab.evaluate(drive), 0.5)
 
     await tab.evaluate(`document.querySelector('.kit-preset-list')
@@ -410,5 +410,33 @@ test('a notice cancelled leaves everything as it was', async (assert) => {
     assert.is(await tab.evaluate(
       'getComputedStyle(document.querySelector(".kit-picture")).display'),
     'block')
+  })
+})
+
+test('where the host keeps presets as files, the page asks it to', async (assert) => {
+  const files = {
+    type: 'presets',
+    list: [{ name: 'From disk', values: { drive: 0.75 } }],
+    dir: 'C:/Presets'
+  }
+  const steps = [['tell', files], ['click', '.kit-preset'], ['click', '.kit-save']]
+  const names = `[...document.querySelectorAll('.kit-preset-name')]
+    .map((el) => el.textContent)`
+  await onGallery('main', steps, async (tab) => {
+    assert.true((await tab.evaluate(names)).includes('From disk'))
+    await tab.send('Input.insertText', { text: 'Kept' })
+    await STEPS.key(tab, ['Enter'])
+    const saved = (await posted(tab)).at(-1)
+
+    assert.is(saved.type, 'preset-save')
+    assert.is(saved.name, 'Kept')
+    assert.is(saved.values.drive, PARAMS[0].default)
+    // Shown at once, and nothing is kept by the page itself.
+    assert.true((await tab.evaluate(names)).includes('Kept'))
+    assert.is(await tab.evaluate('localStorage.getItem("kit-presets:Gallery")'), null)
+
+    await click(tab, '.kit-preset-drop')
+    const dropped = (await posted(tab)).at(-1)
+    assert.is(dropped.type, 'preset-delete')
   })
 })

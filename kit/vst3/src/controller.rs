@@ -100,9 +100,11 @@ impl IEditControllerTrait for Controller {
         info.stepCount = p.steps();
         info.defaultNormalizedValue = p.default_norm();
         info.unitId = 0;
-        use ParameterInfo_::ParameterFlags_::{kCanAutomate, kIsList, kIsReadOnly};
+        use ParameterInfo_::ParameterFlags_::{kCanAutomate, kIsBypass, kIsList, kIsReadOnly};
         info.flags = match (p.read_only(), p.is_list()) {
             (true, _) => kIsReadOnly as i32,
+            // The host's own bypass button and the plugin's are then one.
+            (false, true) if p.is_bypass() => (kCanAutomate | kIsList | kIsBypass) as i32,
             (false, true) => (kCanAutomate | kIsList) as i32,
             (false, false) => kCanAutomate as i32,
         };

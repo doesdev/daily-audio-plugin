@@ -3,6 +3,7 @@
 //! when they change; the page's actions go to whoever opened it.
 
 use crate::bridge::{self, Action};
+use crate::presets;
 use crate::window::{self, Hwnd};
 use kit::Spec;
 use std::borrow::Cow;
@@ -68,6 +69,10 @@ impl Link {
 
         if self.want_hello.replace(false) {
             self.send(&bridge::hello(&self.spec, &now));
+            // The person's own presets, from their files.
+            if let Some(dir) = presets::dir(&self.spec) {
+                self.send(&presets::message(&dir));
+            }
         } else {
             if now[..count] != sent[..count] {
                 self.send(&bridge::state(&self.spec, &now[..count]));
@@ -176,7 +181,11 @@ impl Panel {
                 let Some(link) = ipc.upgrade() else {
                     return;
                 };
-                if let Some(action) = bridge::parse(&link.spec, req.body()) {
+                let kept = presets::dir(&link.spec)
+                    .and_then(|dir| presets::handle(&link.spec, &dir, req.body()));
+                if let Some(now) = kept {
+                    link.send(&now);
+                } else if let Some(action) = bridge::parse(&link.spec, req.body()) {
                     link.act(action);
                 }
             })

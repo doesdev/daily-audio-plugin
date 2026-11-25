@@ -2,7 +2,8 @@
 
 import test from 'mvt'
 import {
-  POINTS, builders, pluginProblems, registerProblems, testNames
+  POINTS, builders, pluginProblems, registerProblems, rustTestNames,
+  testNames
 } from './benchmarks.js'
 
 const leader = { who: 'The best one', does: 'It well', source: null }
@@ -58,6 +59,13 @@ test('it\\'s fine', async () => {})`
 
   assert.deepEqual(builders(source), ['value', 'pad'])
   assert.deepEqual(testNames(tests), ['a thing works', "it's fine"])
+  assert.deepEqual(rustTestNames(`
+    #[test]
+    fn it_fades() {}
+    #[test]
+    #[ignore = "slow"]
+    fn it_waits() {}
+    fn helper() {}`), ['it_fades', 'it_waits'])
 })
 
 test('a plugin answers on all seven points against two leaders', (assert) => {

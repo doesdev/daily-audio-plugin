@@ -514,8 +514,8 @@ test('the page carries its own typeface', async (assert) => {
 test('what the host says replaces what the page shows', async (assert) => {
   const state = {
     type: 'state',
-    values: [1, 0.5, 0, 0, 0.5],
-    texts: ['36.0 dB', 'Hard', '200 Hz', '0 %', '-6.0 dB']
+    values: [1, 0.5, 0, 0, 0.5, 0],
+    texts: ['36.0 dB', 'Hard', '200 Hz', '0 %', '-6.0 dB', 'Off']
   }
   const meters = {
     type: 'meters', levels: [0.5, 0.25], levelTexts: ['-30 dB', '-45 dB']
@@ -561,13 +561,63 @@ test('a setting that rests inside its range fills from its default', async (asse
     .getBoundingClientRect().width`
   const state = {
     type: 'state',
-    values: [0.33, 0, 0.7, 1, 0.75],
-    texts: ['12.0 dB', 'Soft', '6000 Hz', '100 %', '3.0 dB']
+    values: [0.33, 0, 0.7, 1, 0.75, 0],
+    texts: ['12.0 dB', 'Soft', '6000 Hz', '100 %', '3.0 dB', 'Off']
   }
   await onPage([], async (tab) => {
     assert.is(await tab.evaluate(fill), 0)
     const { STEPS } = await import('../../scripts/shots.js')
     await STEPS.tell(tab, [state])
     assert.true(await tab.evaluate(fill) > 20)
+  })
+})
+
+test('the picture is itself dragged: up is more Drive, as one gesture', async (assert) => {
+  await onPage([], async (tab) => {
+    const { STEPS } = await import('../../scripts/shots.js')
+    await STEPS.drag(tab, ['.kit-picture', 40])
+    const sent = await posted(tab)
+
+    assert.is(types(sent), 'begin set end')
+    assert.is(sent[1].id, 0)
+    assert.true(sent[1].value > 1 / 3)
+    assert.is(await tab.evaluate('window.kit.touched()'), null)
+
+    await STEPS.dblclick(tab, ['.kit-picture'])
+    assert.is(await text(tab, `${DRIVE} .kit-value`), '12.0 dB')
+  })
+})
+
+test('the picture keeps the last few seconds of level, and draws them', async (assert) => {
+  const corner = `(() => {
+    const c = document.querySelector('.kit-picture canvas')
+    const scale = c.width / c.clientWidth
+    const [x, y] = [c.width - 3 * scale, c.height - 3 * scale]
+    return c.getContext('2d').getImageData(x, y, 1, 1).data[3]
+  })()`
+  const frame = 'new Promise((r) => requestAnimationFrame(() => r(true)))'
+  const reading = (level) => ['tell', {
+    type: 'meters', levels: [level, 0.5], levelTexts: ['-6 dB', '-30 dB']
+  }]
+  await onPage([], async (tab) => {
+    const { STEPS } = await import('../../scripts/shots.js')
+    assert.is(await tab.evaluate(corner), 0)
+    for (const level of [0.5, 0.7, 0.9]) await STEPS.tell(tab, reading(level).slice(1))
+    await tab.evaluate(frame)
+    await tab.evaluate(frame)
+
+    assert.deepEqual(await tab.evaluate('window.kit.trail.map((l) => l[0])'),
+      [0.5, 0.7, 0.9])
+    // The newest reading is a column at the right, standing on the foot.
+    assert.true(await tab.evaluate(corner) > 0)
+  })
+})
+
+test('the plugin\'s bypass is in the header, not among the settings', async (assert) => {
+  await onPage([], async (tab) => {
+    assert.is(await tab.evaluate(
+      'document.querySelectorAll(".kit-power").length'), 1)
+    assert.is(await tab.evaluate(
+      'document.querySelectorAll(".kit-sheet [data-key=bypass]").length'), 0)
   })
 })

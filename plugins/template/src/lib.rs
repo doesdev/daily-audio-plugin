@@ -13,6 +13,7 @@ pub const SHAPE: usize = 1;
 pub const TONE: usize = 2;
 pub const MIX: usize = 3;
 pub const OUTPUT: usize = 4;
+pub const BYPASS: usize = 5;
 // Indexes into METERS.
 pub const LEVEL: usize = 0;
 pub const INPUT: usize = 1;
@@ -91,6 +92,8 @@ impl Plugin for Template {
         range(4, "output", "Output", "Output", (-24.0, 12.0, -6.0), "dB")
             .decimals(1)
             .about("Level after everything else"),
+        // Ids 5 and 6 are the meters'.
+        kit::bypass(7),
     ];
 
     const METERS: &'static [Param] = &[meter(5, "level", "Out"), meter(6, "input", "In")];

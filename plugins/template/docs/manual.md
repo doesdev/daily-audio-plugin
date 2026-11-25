@@ -3,7 +3,7 @@
 Template pushes a signal into a shaper, takes the top off what comes
 out, and mixes it back against the dry signal. It is the plugin every
 new one in this repo starts as, so it is small on purpose: three
-stages, five settings and one meter.
+stages, five settings, a bypass and two meters.
 
 ![The editor at its defaults](images/editor.png)
 
@@ -22,6 +22,11 @@ the name it says which bend is on. At the foot of the glass, **In**
 and **Out** are the levels before and after: each number is the peak,
 and the segments under it break at -24, -12, -6, -3 and 0 dB. The last
 segment lights if the level clips, and stays lit until you click it.
+Behind the wave, faint columns show the level that went out over the
+last four seconds, the newest at the right.
+
+The wave is also a control: drag it up to drive harder and down to
+ease off, and double-click it to put Drive back.
 
 ![Fold at 30 dB, mixed in at 70%](images/fold.png)
 
@@ -51,9 +56,16 @@ default, copy, paste, or lock it so a preset leaves it alone. With a
 number selected you can also just start typing digits, and Delete
 puts it back to its default.
 
+At the far right of the top row is **On**. Press it to hear the
+sound without Template: it fades across in a hundredth of a second,
+so it does not click, and it is the same bypass your host's own
+button works.
+
 Beside the name is the preset that is loaded. Press it to open the
 presets: point at one to hear it, press it to keep it, and **Save as
-new** keeps your own. A dot beside the name means you have changed
+new** keeps your own, as a file under
+`%APPDATA%\doesdev\Template\Presets` that you can copy to another
+machine. A dot beside the name means you have changed
 something since.
 
 At the top right, the arrows undo and redo your changes (Ctrl+Z and
@@ -106,11 +118,14 @@ only the shaped signal, at 0% only the dry.
 Driving a signal makes it louder, so expect to turn this down as Drive
 goes up.
 
-The meters beside it show the peak level coming **In** and going
-**Out**, with the peak held as a line for a moment. The top 6 dB of
-each is marked in amber. If the level going out reaches full scale,
-the lamp above the meter lights and stays lit until you click it:
-bring Output down.
+**In** and **Out** on the glass show the peak level before and after.
+If the level going out reaches full scale, the last segment lights
+and stays lit until you click it: bring Output down.
+
+**Bypass** passes the sound through unchanged. It is the On button at
+the top right, and your host's own bypass for the plugin: the two are
+the same setting. Going in and out takes a hundredth of a second, so
+it can be automated without a click.
 
 ## Troubleshooting
 
