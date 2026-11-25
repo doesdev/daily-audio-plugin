@@ -4,7 +4,7 @@
 
 import {
   mount, glass, header, stage, readouts, meter, picture, sheet, values,
-  value, choice, foot, h, TRAIL
+  value, choice, foot, h, steady, TRAIL
 } from './kit/kit.js'
 
 // One sample through the shaper, as src/lib.rs has it.
@@ -23,6 +23,9 @@ const peakOf = (fraction) => (fraction <= 0 ? 0 : gain(fraction * 60 - 60))
 // The settings whose own shape is the one drawn: taking hold of one
 // turns the wave purple, since the wave is then what is being touched.
 const DRAWN = ['drive', 'mix']
+
+// How many samples of the sound are drawn across the glass.
+const SEEN = 480
 
 // One cycle of a wave as loud as the sound coming in, before and
 // after. With nothing coming in it is drawn at a level to show the
@@ -43,6 +46,12 @@ const wave = (ui) => (pen) => {
     ctx.stroke()
   }
   const sine = (t) => reach * Math.sin(t * Math.PI * 2)
+  // With audio running, the wave is the sound itself: what came in and
+  // what went out, held still on a rising crossing of the input.
+  const heard = pen.signal?.input.length >= SEEN * 2 ? pen.signal : null
+  const from = heard ? steady(heard.input, SEEN) : 0
+  const real = (samples) => Array.from({ length: SEEN }, (_, i) =>
+    [2 + i / (SEEN - 1) * (width - 4), mid - samples[from + i] * tall])
   ctx.lineJoin = 'round'
   ctx.lineCap = 'round'
 
@@ -64,12 +73,16 @@ const wave = (ui) => (pen) => {
   ctx.strokeStyle = pen.soft
   ctx.lineWidth = 1.5
   ctx.setLineDash([2, 5])
-  path(steps(160).map((t) => [2 + t * (width - 4), mid - sine(t) * tall]))
+  path(heard
+    ? real(heard.input)
+    : steps(160).map((t) => [2 + t * (width - 4), mid - sine(t) * tall]))
 
   ctx.setLineDash([])
   ctx.strokeStyle = DRAWN.includes(pen.touched) ? pen.accent : pen.ink
   ctx.lineWidth = 2.5
-  path(steps(480).map((t) => [2 + t * (width - 4), mid - out(sine(t)) * tall]))
+  path(heard
+    ? real(heard.output)
+    : steps(480).map((t) => [2 + t * (width - 4), mid - out(sine(t)) * tall]))
 }
 
 // What it ships with: enough to show what the three bends are for.

@@ -16,8 +16,10 @@ to match the level you started with.
 
 ### The picture
 
-The dark glass shows what Template is doing to one cycle of a wave as
-loud as the sound coming in: dashed going in, solid coming out. Under
+The dark glass shows what Template is doing to the sound: dashed
+going in, solid coming out. While sound is running it is the sound
+itself, held still so you can read its shape; with nothing playing it
+is one cycle of a wave, to show the bend by. Under
 the name it says which bend is on. At the foot of the glass, **In**
 and **Out** are the levels before and after: each number is the peak,
 and the segments under it break at -24, -12, -6, -3 and 0 dB. The last
