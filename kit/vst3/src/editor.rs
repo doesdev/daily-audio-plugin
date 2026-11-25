@@ -113,6 +113,7 @@ impl Editor {
     }
 
     /// Runs `js` in the open page, for tests.
+    #[cfg(test)]
     pub fn eval(&self, js: &str, done: impl Fn(String) + Send + 'static) -> bool {
         self.panel
             .borrow()
