@@ -12,7 +12,8 @@ import {
 } from './docs.js'
 import { browserPath, readActivePort } from './lib/browser.js'
 import {
-  KEBAB, ROOT, displayName, pascal, pending, ships, snake, tagOf, versionOf
+  KEBAB, ROOT, displayName, exampleOf, exampleProblems, examplesIn, manifest,
+  pascal, pending, plugins, ships, snake, tagOf, versionOf
 } from './lib/plugins.js'
 import { classId, create, rewrite } from './new.js'
 import { notes, releaseArgs, zipName } from './release.js'
@@ -110,6 +111,36 @@ test('names: kebab for folders, snake and Pascal for code', (assert) => {
   assert.is(displayName('  name: "Tape Bloom",\n  vendor: "x"'), 'Tape Bloom')
 })
 
+test('each plugin names its examples after itself, so none overwrite another', (assert) => {
+  const own = (name) => ['spec', 'demo'].map((kind) =>
+    `[[example]]\nname = "${exampleOf(name, kind)}"\npath = "examples/${kind}.rs"\n`
+  ).join('\n')
+  const bare = '[[example]]\nname = "spec"\npath = "examples/spec.rs"\n'
+
+  assert.deepEqual(examplesIn(own('a')), ['a-spec', 'a-demo'])
+  assert.deepEqual(exampleProblems({ a: own('a'), b: own('b') }), [])
+  assert.deepEqual(exampleProblems({ a: bare, b: bare }), [
+    'a: declares no example "a-spec"',
+    'a: declares no example "a-demo"',
+    'b: declares no example "b-spec"',
+    'b: declares no example "b-demo"',
+    'example "spec" is declared by more than one plugin'
+  ])
+  assert.deepEqual(exampleProblems({ a: own('a'), b: own('a') }), [
+    'b: declares no example "b-spec"',
+    'b: declares no example "b-demo"',
+    'example "a-spec" is declared by more than one plugin',
+    'example "a-demo" is declared by more than one plugin'
+  ])
+})
+
+test('no two plugins in the repo share an example', (assert) => {
+  const manifests = Object.fromEntries(
+    plugins().map((name) => [name, manifest(name)]))
+
+  assert.deepEqual(exampleProblems(manifests), [])
+})
+
 test('a class id is four words as the spec writes them', (assert) => {
   const bytes = Buffer.from('9c1e52a74b3d4f108e6a2d915c07b3f4', 'hex')
 
@@ -139,6 +170,7 @@ test('a new plugin is the template under its own names', (assert) => {
 
   const toml = rewrite(manifestOf('template'), about)
   assert.contains(toml, 'name = "tape-bloom"')
+  assert.deepEqual(examplesIn(toml), ['tape-bloom-spec', 'tape-bloom-demo'])
   assert.true(ships(toml))
   const suite = rewrite('kit_test::suite!(template::Template);', about)
   assert.is(suite, 'kit_test::suite!(tape_bloom::TapeBloom);')

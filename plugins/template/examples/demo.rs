@@ -1,5 +1,5 @@
 //! Renders the demos someone listens to before trusting the tests:
-//! `cargo run -p template --example demo -- OUT_DIR` writes one WAV a
+//! `cargo run -p template --example template-demo -- OUT_DIR` writes one WAV a
 //! setting worth hearing, each the dry signal then the same through
 //! the plugin.
 

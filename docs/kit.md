@@ -216,7 +216,10 @@ no picture without a scene.
 ## 6. The demos
 
 `examples/demo.rs` renders a few WAVs worth hearing, dry then through
-the plugin. They ship in the release zip. Nobody has listened to a
+the plugin. It runs as `cargo run -p NAME --example NAME-demo`: each
+plugin's Cargo.toml names its examples after the plugin, because cargo
+puts every package's examples in one folder and two called `demo`
+would overwrite each other. `npm run new` does the naming. They ship in the release zip. Nobody has listened to a
 plugin the daily run made until a person plays these, so pick the
 settings that show what is new about it.
 

@@ -44,6 +44,38 @@ export const pending = (names, manifests, tagged) => names
   .map(({ name, toml }) => ({ name, version: versionOf(toml) }))
   .filter(({ name, version }) => !tagged.includes(tagOf(name, version)))
 
+// The examples every plugin has: `spec`, which the docs tools run, and
+// `demo`, which renders what a release ships to listen to. Cargo puts
+// every package's examples in one folder, so each is named after its
+// plugin: two plugins with an example of the same name overwrite each
+// other's binary, and the wrong plugin's runs.
+export const EXAMPLES = ['spec', 'demo']
+
+export const exampleOf = (plugin, kind) => `${plugin}-${kind}`
+
+// The example names a manifest declares.
+export const examplesIn = (cargoToml) =>
+  [...cargoToml.matchAll(/\[\[example\]\][^[]*?^name\s*=\s*"([^"]+)"/gm)]
+    .map((match) => match[1])
+
+// What is wrong with the examples across plugins, in words: a plugin
+// missing its own, or a name declared by more than one.
+export const exampleProblems = (manifests) => {
+  const named = Object.entries(manifests)
+    .flatMap(([plugin, toml]) => examplesIn(toml)
+      .map((example) => ({ plugin, example })))
+  const missing = Object.entries(manifests).flatMap(([plugin, toml]) =>
+    EXAMPLES.map((kind) => exampleOf(plugin, kind))
+      .filter((want) => !examplesIn(toml).includes(want))
+      .map((want) => `${plugin}: declares no example "${want}"`))
+  const shared = [...new Set(named.map(({ example }) => example))]
+    .filter((example) =>
+      named.filter((n) => n.example === example).length > 1)
+    .map((example) => `example "${example}" is declared by more than ` +
+      'one plugin')
+  return [...missing, ...shared]
+}
+
 export const snake = (name) => name.replace(/-/g, '_')
 
 export const pascal = (name) => name.split('-')

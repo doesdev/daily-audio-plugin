@@ -65,7 +65,7 @@ plugin drawn with no error.
 npm run shots -- tape-bloom        # docs/images/*.png from scenes.json
 npm run docs -- tape-bloom --pdf   # the manual, checked and printed
 npm run bundle -- tape-bloom --install
-cargo run -p tape-bloom --example demo
+cargo run -p tape-bloom --example tape-bloom-demo
 ```
 
 `bundle` builds the plugin in release and lays it out under

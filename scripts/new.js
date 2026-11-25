@@ -72,6 +72,7 @@ export const rewrite = (text, { name, display, instrument, ids }) => {
     .replace(/audio_in: 2/, `audio_in: ${instrument ? 0 : 2}`)
     .replace(/\btemplate::/g, `${snake(name)}::`)
     .replace(/-p template\b/g, `-p ${name}`)
+    .replace(/\btemplate-(spec|demo)\b/g, `${name}-$1`)
     .replace(/target\/demos\/template/g, `target/demos/${name}`)
     .replace(/name: "Template"/, `name: "${display.replace(/"/g, '')}"`)
     .replace(/\bTemplate\b/g, pascal(name))

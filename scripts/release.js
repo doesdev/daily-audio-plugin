@@ -22,7 +22,8 @@ import { pathToFileURL } from 'node:url'
 import { bundle } from './bundle.js'
 import { buildPdf, checkDocs, sectionsOf } from './docs.js'
 import {
-  ROOT, manifest, pending, pluginDir, plugins, tagOf, tags, versionOf
+  ROOT, exampleOf, manifest, pending, pluginDir, plugins, tagOf, tags,
+  versionOf
 } from './lib/plugins.js'
 
 const fail = (code, message) => Object.assign(new Error(message), { code })
@@ -84,7 +85,8 @@ export const dist = async (plugin) => {
   cpSync(manual, join(stage, `${name} manual.pdf`))
   execFileSync(
     process.env.CARGO || 'cargo',
-    ['run', '-q', '--release', '-p', plugin, '--example', 'demo', '--',
+    ['run', '-q', '--release', '-p', plugin, '--example',
+      exampleOf(plugin, 'demo'), '--',
       join(stage, 'demos')],
     { cwd: ROOT, stdio: 'inherit' }
   )
