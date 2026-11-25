@@ -20,10 +20,27 @@
     }
   },
   {
+    "name": "held",
+    "theme": "light",
+    "values": { "input": 0.78, "level": 0.86 },
+    "steps": [["press", "[data-key=\"drive\"] .kit-scrub", 30]]
+  },
+  {
+    "name": "held-dark",
+    "values": { "shape": "Fold", "input": 0.78, "level": 1 },
+    "steps": [["press", "[data-key=\"output\"] .kit-scrub", 40]]
+  },
+  {
+    "name": "dense",
+    "theme": "light",
+    "values": { "shape": "Fold", "drive": 30, "input": 0.7, "level": 0.93 },
+    "steps": [["click", ".kit-density"], ["click", ".kit-density"], ["away"]]
+  },
+  {
     "name": "controls",
     "theme": "light",
     "values": { "shape": "Hard", "drive": 24, "input": 0.8, "level": 1 },
-    "steps": [["hover", "[data-key=\"drive\"] .kit-rule-slot"]],
-    "crop": [".kit-deck", ".kit-footer"]
+    "steps": [["hover", "[data-key=\"drive\"] .kit-scrub"]],
+    "crop": [".kit-sheet"]
   }
 ]

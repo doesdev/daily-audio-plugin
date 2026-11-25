@@ -14,35 +14,47 @@ soft drive and trims the level by 6 dB. Slide **Drive** up until you
 hear the edge you want, pick a **Shape**, then bring **Output** down
 to match the level you started with.
 
-### The screen
+### The picture
 
-The screen shows what Template is doing. On the left is the bend it
-puts in the signal: level in runs across, level out runs up, and the
-dashed line is a signal left alone. The stretch of the bend the sound
-is using right now is lit in purple, so you can see how far into the
-bend you are driving it. On the right is what that does to one cycle
-of a wave as loud as the sound coming in: dashed going in, solid
-coming out.
+The dark glass shows what Template is doing to one cycle of a wave as
+loud as the sound coming in: dashed going in, solid coming out. Under
+the name it says which bend is on. At the foot of the glass, **In**
+and **Out** are the levels before and after: each number is the peak,
+and the segments under it break at -24, -12, -6, -3 and 0 dB. The last
+segment lights if the level clips, and stays lit until you click it.
 
 ![Fold at 30 dB, mixed in at 70%](images/fold.png)
 
 ### Setting things
 
-Slide a rule to set it, or turn the knob by dragging up and down. Hold
-Shift for fine moves, use the mouse wheel or the arrow keys for single
-steps, and double-click a control to put it back to its default, which
-the small mark above the rule shows. Double-click a value to type one:
-`8k` and `8000 Hz` both work for Tone.
+The numbers are the controls. Drag a number, or the line under it,
+left and right. While you hold it, it turns purple, the ends of its
+range and a mark at its default appear, and the wave on the glass
+turns purple with it if it is one that shapes the wave.
 
-The foot of the window says what the control under the pointer does.
+![Drive being dragged](images/held.png)
+
+Hold Shift for fine moves, use the mouse wheel or the arrow keys for
+single steps, and double-click a line to put it back to its default.
+Double-click a number to type one: `8k` and `8000 Hz` both work for
+Tone. **Output** rests in the middle of its range, so its line fills
+from its default, not from the left.
+
+![Output being dragged, in the dark theme](images/held-dark.png)
+
+The foot of the sheet says what the control under the pointer does.
 
 ![The controls, with the pointer over Drive](images/controls.png)
 
 At the top right, the arrows undo and redo your changes (Ctrl+Z and
 Ctrl+Shift+Z), and **A B** flips between two sets of settings so you
-can hear which is better: B starts as a copy of A. The half-full disc
-switches between the dark and the light theme, for every plugin of
-ours in the same host.
+can hear which is better: B starts as a copy of A. The stacked bars
+step through three densities, Roomy, Regular and Dense, which trade
+the size of the numbers for room on the glass. The split disc switches
+between the dark and the light theme. Both are kept for every plugin
+of ours in the same host.
+
+![Dense: smaller numbers, more glass](images/dense.png)
 
 ![The light theme](images/light.png)
 
