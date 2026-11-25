@@ -341,3 +341,74 @@ test('the pad moves two settings with one point', async (assert) => {
     assert.true(await tab.evaluate('window.kit.store.get().values[12]') > 0.6)
   })
 })
+
+test('a choice of many opens a list in the house style', async (assert) => {
+  const chosen = `${key('mode')} .kit-chosen`
+  await onGallery('lists', [['click', '.kit-chooser']], async (tab) => {
+    assert.is(await tab.evaluate(
+      'document.querySelectorAll(".kit-pop button").length'), 6)
+    await click(tab, { sel: '.kit-pop button', text: 'Lydian' })
+    const sent = await posted(tab)
+
+    assert.is(types(sent), 'begin set end')
+    assert.deepEqual([sent[1].id, sent[1].value], [15, 0.6])
+    assert.is(await text(tab, chosen), 'Lydian')
+    assert.false(await has(tab, '.kit-pop'))
+
+    // The arrows step through it without opening it.
+    await STEPS.focus(tab, ['.kit-chooser'])
+    await STEPS.key(tab, ['ArrowDown'])
+    assert.is(await text(tab, chosen), 'Mixolydian')
+    assert.deepEqual(await tab.evaluate(spills), [])
+  })
+})
+
+test('a switch says what it is and which way it is', async (assert) => {
+  await onGallery('lists', [], async (tab) => {
+    assert.is(await text(tab, '.kit-switch-said'), 'Freeze off')
+    await click(tab, '.kit-switch')
+    const sent = await posted(tab)
+
+    assert.deepEqual([sent[1].id, sent[1].value], [16, 1])
+    assert.is(await text(tab, '.kit-switch-said'), 'Freeze on')
+    assert.is(await tab.evaluate(
+      'document.querySelector(".kit-switch").ariaChecked'), 'true')
+  })
+})
+
+test('a preset from a newer version asks before it loads what fits', async (assert) => {
+  const steps = [
+    ['click', '.kit-preset'],
+    ['click', { sel: '.kit-preset-pick', text: 'From the future' }]
+  ]
+  const pick = (name) => ({ sel: '.kit-notice .kit-option', text: name })
+  await onGallery('main', steps, async (tab) => {
+    assert.contains(await text(tab, '.kit-notice-title'), 'From the future')
+    assert.contains(await text(tab, '.kit-notice p'),
+      '2 of its settings are not known here: sparkle, air.')
+    // Nothing has moved, and the name is still the old one.
+    assert.is(await text(tab, `${key('drive')} .kit-value`), '12.0 dB')
+    assert.is(await text(tab, '.kit-preset-at'), 'Init')
+
+    await click(tab, pick('Load what fits'))
+    assert.false(await has(tab, '.kit-notice'))
+    assert.is(await text(tab, `${key('drive')} .kit-value`), '20.0 dB')
+    assert.is(await text(tab, '.kit-preset-at'), 'From the future')
+  })
+})
+
+test('a notice cancelled leaves everything as it was', async (assert) => {
+  const steps = [
+    ['click', '.kit-preset'],
+    ['click', { sel: '.kit-preset-pick', text: 'From the future' }],
+    ['click', { sel: '.kit-notice .kit-option', text: 'Cancel' }]
+  ]
+  await onGallery('main', steps, async (tab) => {
+    assert.false(await has(tab, '.kit-notice'))
+    assert.is(await text(tab, `${key('drive')} .kit-value`), '12.0 dB')
+    assert.true(await tab.evaluate('document.querySelector(".kit-undo").disabled'))
+    assert.is(await tab.evaluate(
+      'getComputedStyle(document.querySelector(".kit-picture")).display'),
+    'block')
+  })
+})

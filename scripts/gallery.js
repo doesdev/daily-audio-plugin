@@ -67,7 +67,11 @@ export const PARAMS = [
   range(11, 'right', 'Attack, right', [0, 100, 14], 'ms', 'Right attack'),
   range(12, 'cutoff', 'Cutoff', [0, 100, 60], '%', 'Where the filter closes'),
   range(13, 'resonance', 'Resonance', [0, 100, 35], '%', 'The bump there'),
-  range(14, 'send', 'Send', [-60, 0, -18], 'dB', 'How much goes to the echo')
+  range(14, 'send', 'Send', [-60, 0, -18], 'dB', 'How much goes to the echo'),
+  list(15, 'mode', 'Mode', [
+    'Ionian', 'Dorian', 'Phrygian', 'Lydian', 'Mixolydian', 'Aeolian'
+  ], 'The scale notes are held to'),
+  list(16, 'freeze', 'Freeze', ['Off', 'On'], 'Holds what is sounding')
 ]
 
 const text = (row, norm) => row.kind === 'list'
@@ -127,6 +131,15 @@ export const SCENES = [
   },
   { name: 'bypassed', steps: [['click', '.kit-power'], ['away']] },
   { name: 'groups', page: 'groups' },
+  { name: 'lists', page: 'lists', steps: [['click', '.kit-chooser']] },
+  {
+    name: 'unknown',
+    steps: [
+      ['click', '.kit-preset'],
+      ['click', { sel: '.kit-preset-pick', text: 'From the future' }],
+      ['away']
+    ]
+  },
   { name: 'pairs', page: 'pairs', levels: [0.92, 0.6] },
   {
     name: 'pairs-held',

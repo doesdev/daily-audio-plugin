@@ -562,7 +562,37 @@ export const mount = (build, opts = {}) => {
       touch: (key) => {
         touched = key
         window.dispatchEvent(new Event('kit-touch'))
+      },
+      // Says something on the glass in place of the picture, until it
+      // is answered: `notice`'s options, or nothing to take it away.
+      notify: (said) => {
+        const stageEl = document.querySelector('.kit-stage')
+        stageEl?.querySelector(':scope > .kit-notice')?.remove()
+        if (stageEl) delete stageEl.dataset.noticed
+        if (!said || !stageEl) return
+        stageEl.dataset.noticed = 'true'
+        stageEl.append(notice({
+          ...said,
+          actions: (said.actions ?? []).map((action) => ({
+            ...action, run: () => { ui.notify(null); action.run?.() }
+          }))
+        }))
       }
+    }
+    ui.presets.ask = (preset, go) => {
+      closePanel()
+      const names = preset.unknown.join(', ')
+      const count = preset.unknown.length
+      ui.notify({
+        tone: 'Nothing has changed yet',
+        title: `${preset.name} was made by a newer version`,
+        text: `${count} of its settings ${count === 1 ? 'is' : 'are'} ` +
+          `not known here: ${names}.`,
+        actions: [
+          { name: 'Load what fits', main: true, run: go },
+          { name: 'Cancel' }
+        ]
+      })
     }
     root.replaceChildren(...[build(ui)].flat(Infinity).filter(Boolean))
     fitTo(root, state.size)
@@ -617,6 +647,8 @@ export const ICONS = {
   help: 'M7.4 7.6a2.7 2.7 0 1 1 3.9 2.4c-.8.5-1.3 1-1.3 2M10 14.6v.2',
   power: 'M10 3.5v6M6.2 5.8a5.5 5.5 0 1 0 7.6 0',
   chevron: 'M6 8l4 4 4-4',
+  chosen: 'M5 10.5l3.2 3.2L15 7',
+  blank: '',
   close: 'M5.5 5.5l9 9M14.5 5.5l-9 9',
   type: 'M4 15.5h12M6 12l1-3.5 6-6 2.5 2.5-6 6z',
   reset: 'M5 10a5 5 0 1 0 1.6-3.7M5 3.5v3h3',
@@ -832,15 +864,33 @@ export const choice = (handle, opts = {}) => {
 export const menu = (handle, opts = {}) => {
   const { choices } = handle.row
   const last = Math.max(1, choices.length - 1)
-  const select = h('select.kit-select', {
+  const at = () => Math.round(handle.value * last)
+  const said = h('span.kit-chosen')
+  const open = () => {
+    const box = button.getBoundingClientRect()
+    const list = popup(choices.map((name, i) => [
+      name, i === at() ? 'chosen' : 'blank', '', () => handle.set(i / last)
+    ]), [box.left, box.bottom + 6])
+    list.querySelectorAll('button')[at()].focus()
+  }
+  const button = h('button.kit-chooser', {
+    type: 'button',
+    'aria-haspopup': 'menu',
     'aria-label': handle.row.title,
-    onchange: (event) => handle.set(event.target.selectedIndex / last)
-  }, choices.map((name) => h('option', {}, name)))
-  const show = () => { select.selectedIndex = Math.round(handle.value * last) }
+    onclick: open
+  }, said, icon('chevron'))
+  // The arrows step through the list without opening it.
+  button.addEventListener('keydown', (event) => {
+    const by = { ArrowUp: -1, ArrowLeft: -1, ArrowDown: 1, ArrowRight: 1 }
+    if (!by[event.key]) return
+    event.preventDefault()
+    handle.set(clamp(at() + by[event.key], 0, last) / last)
+  })
+  const show = () => { said.textContent = choices[at()] }
   handle.on(show)
   show()
   return shell(handle, 'menu', opts,
-    h('span.kit-title', {}, opts.title ?? handle.row.short), select)
+    h('span.kit-title', {}, opts.title ?? handle.row.short), button)
 }
 
 // On or off: a switch, and beside it what it is and which it is.
@@ -1203,17 +1253,25 @@ const makePresets = (store, session, plugin, factory) => {
     params().map((row, i) => [row.key, values[i]]))
   const fromKeys = (saved) => params().map((row) =>
     saved[row.key] ?? row.default)
+  // The settings a preset names that this version does not have.
+  const unknown = (values) => Object.keys(values ?? {})
+    .filter((name) => !params().some((row) => row.key === name))
   const list = () => [
     { name: 'Init', by: 'Factory', values: params().map((row) => row.default) },
     ...factory.map((preset) => ({
       name: preset.name,
       by: 'Factory',
-      values: presetValues(params(), preset.values)
+      values: presetValues(params(), preset.values),
+      unknown: unknown(preset.values)
     })),
     ...own.map((preset) => ({
-      name: preset.name, by: 'Mine', values: fromKeys(preset.values)
+      name: preset.name,
+      by: 'Mine',
+      values: fromKeys(preset.values),
+      unknown: unknown(preset.values)
     }))
   ]
+  let ask = null
   const go = (to) => presetMoves(store.get().values, to, session.locked)
     .forEach(([index, , after]) => session.put(index, after))
   const endPreview = () => {
@@ -1240,11 +1298,18 @@ const makePresets = (store, session, plugin, factory) => {
       go(preset.values)
     },
     endPreview,
+    // `fn(preset, go)` is asked before a preset with settings this
+    // version does not know is loaded; `go` loads what fits.
+    set ask (fn) { ask = fn },
     load: (preset) => {
       endPreview()
-      session.apply(preset.values)
-      at = preset.name
-      tell()
+      const go = () => {
+        session.apply(preset.values)
+        at = preset.name
+        tell()
+      }
+      if (preset.unknown?.length && ask) ask(preset, go)
+      else go()
     },
     // Keeps what is set now under `name`; a factory name is left alone.
     save: (name) => {
@@ -1386,7 +1451,13 @@ const presetBrowser = (ui) => () => {
     last = listed()
     draw()
   })
-  window.addEventListener('kit-panel', presets.endPreview, { once: true })
+  // Put away with one still being tried: things go back as they were.
+  const gone = () => {
+    if (rows.isConnected) return
+    presets.endPreview()
+    window.removeEventListener('kit-panel', gone)
+  }
+  window.addEventListener('kit-panel', gone)
   draw()
   return [bar, rows]
 }

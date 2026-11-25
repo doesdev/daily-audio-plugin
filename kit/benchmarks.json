@@ -274,10 +274,12 @@
           "source": null
         }
       ],
-      "ours": "A native select written large, and a switch with its state in words.",
-      "verdict": "under",
-      "gap": "The menu opens the system's list, not one in the house style, and neither has a test or a picture of its own.",
-      "next": "The list drawn as on the canvas (\"A choice of many\"), with tests and a gallery scene for both."
+      "ours": "A choice of many is written large over a line and opens a list in the house style, the chosen one ticked; the arrows step through it without opening it. A switch says what it is and which way it is, in words.",
+      "verdict": "meets",
+      "proof": [
+        "a choice of many opens a list in the house style",
+        "a switch says what it is and which way it is"
+      ]
     },
     {
       "id": "many-settings",
@@ -376,10 +378,12 @@
           "source": null
         }
       ],
-      "ours": "A notice on the glass: what happened, what it means for the sound, and the ways out.",
-      "verdict": "under",
-      "gap": "It is drawn, but nothing in the kit raises one yet: an unknown preset key is dropped in silence.",
-      "next": "Raise it from the preset loader and from a missing input."
+      "ours": "A notice takes the place of the picture: what happened, what it means, and the ways out. A preset that names settings this version does not have raises one before anything moves, and loads what fits only when told to.",
+      "verdict": "meets",
+      "proof": [
+        "a preset from a newer version asks before it loads what fits",
+        "a notice cancelled leaves everything as it was"
+      ]
     }
   ]
 }

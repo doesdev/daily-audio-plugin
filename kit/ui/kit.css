@@ -516,17 +516,28 @@ button { cursor: pointer; }
   gap: 4px;
 }
 
-.kit-select {
-  appearance: none;
+.kit-chooser {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: var(--target);
   padding: 0 0 6px;
   border: 0;
   border-bottom: 3px solid var(--ink);
   border-radius: 0;
   background: transparent;
-  font-size: 26px;
+  font-size: calc(var(--num) * 0.72);
   font-weight: 500;
   letter-spacing: -0.03em;
+  line-height: 1;
+  text-align: left;
 }
+
+.kit-chooser .kit-icon { align-self: center; flex: none; }
+
+/* Something said on the glass stands in for what was there. */
+.kit-stage[data-noticed] > :not(.kit-notice) { display: none; }
 
 .kit-toggle {
   display: flex;

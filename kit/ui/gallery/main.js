@@ -5,7 +5,7 @@
 import {
   mount, glass, header, stage, readouts, meter, picture, sheet, values,
   value, choice, foot, groups, fader, faders, linked, mirrored, opposed,
-  span, pairs, pad, notice
+  span, pairs, pad, notice, menu, toggle
 } from './kit/kit.js'
 
 const page = new URLSearchParams(window.location.search).get('page') ?? 'main'
@@ -13,7 +13,8 @@ const page = new URLSearchParams(window.location.search).get('page') ?? 'main'
 const PRESETS = [
   { name: 'Warm tape', values: { drive: 18, tone: 3200, mix: 80 } },
   { name: 'Broken radio', values: { drive: 34, tone: 1800, shape: 'Fold' } },
-  { name: 'Glue', values: { drive: 6, mix: 40, output: 0 } }
+  { name: 'Glue', values: { drive: 6, mix: 40, output: 0 } },
+  { name: 'From the future', values: { drive: 20, sparkle: 3, air: 1 } }
 ]
 
 // A flat line with a bump where Cutoff is: enough to show the glass
@@ -85,6 +86,12 @@ const PAGES = {
         opposed(ui.p.mid, ui.p.side, { ui }),
         span(ui.p.low, ui.p.high, { ui })),
       foot(ui))
+  ],
+  lists: (ui) => [
+    glass(header(ui), stage(picture(ui, curve(ui)))),
+    sheet(
+      values(menu(ui.p.mode, { ui }), value(ui.p.drive, { ui })),
+      foot(ui, toggle(ui.p.freeze, { ui })))
   ],
   mirror: (ui) => [
     glass(header(ui), stage(picture(ui, curve(ui)))),
