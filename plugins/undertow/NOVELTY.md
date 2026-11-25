@@ -85,9 +85,10 @@ timed by the gap between hits (RhythmEcho), a mid and side envelope
 trade (envelope imposers), harmonics of the mid put in the side
 (Panoramic), a delay whose repeats turn through the stereo field
 (Spiral Delay and others), saturation of the body only
-(TransFreak), pan by pitch (Melda's pitch modulators), and a shared
-transformer core for mid and side (held back by a patent that could
-not be read).
+(TransFreak) and pan by pitch (Melda's pitch modulators). A shared
+transformer core for mid and side was set aside while US 12,425,770
+could not be read; read since, its claims need physical hardware, and
+the idea is back in the backlog.
 
 ## What would change this
 
