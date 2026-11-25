@@ -71,6 +71,17 @@ export const readActivePort = (text) => {
   return ok ? `ws://127.0.0.1:${port}${path}` : null
 }
 
+// The same from the file, or null while the browser still has it open
+// to write: on Windows a read then fails as busy, and the next try,
+// a moment later, does not.
+const activePort = (file) => {
+  try {
+    return readActivePort(readFileSync(file, 'utf8'))
+  } catch {
+    return null
+  }
+}
+
 const waitFor = async (fn, ms, what) => {
   const until = Date.now() + ms
   while (Date.now() < until) {
@@ -241,8 +252,7 @@ export const withBrowser = async (fn) => {
   try {
     const portFile = join(profile, 'DevToolsActivePort')
     const url = await waitFor(() => {
-      const ready = existsSync(portFile) &&
-        readActivePort(readFileSync(portFile, 'utf8'))
+      const ready = existsSync(portFile) && activePort(portFile)
       // The launcher can hand off to a new process and exit 0 at once,
       // so its exit only counts if nothing opens soon after.
       if (!ready && exited && Date.now() - gone > HANDOFF_MS) {
