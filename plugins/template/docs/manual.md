@@ -46,13 +46,26 @@ The foot of the sheet says what the control under the pointer does.
 
 ![The controls, with the pointer over Drive](images/controls.png)
 
+Right-click a number for its menu: type a value, return to the
+default, copy, paste, or lock it so a preset leaves it alone. With a
+number selected you can also just start typing digits, and Delete
+puts it back to its default.
+
+Beside the name is the preset that is loaded. Press it to open the
+presets: point at one to hear it, press it to keep it, and **Save as
+new** keeps your own. A dot beside the name means you have changed
+something since.
+
 At the top right, the arrows undo and redo your changes (Ctrl+Z and
 Ctrl+Shift+Z), and **A B** flips between two sets of settings so you
 can hear which is better: B starts as a copy of A. The stacked bars
 step through three densities, Roomy, Regular and Dense, which trade
 the size of the numbers for room on the glass. The split disc switches
-between the dark and the light theme. Both are kept for every plugin
-of ours in the same host.
+between the dark and the light theme. The sun opens the settings
+(theme, density, how long a meter holds its peak, motion, fine drag),
+and the question mark turns help on: the foot of the sheet then also
+says each setting's range and where it rests. All of these are kept
+for every plugin of ours in the same host.
 
 ![Dense: smaller numbers, more glass](images/dense.png)
 

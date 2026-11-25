@@ -61,6 +61,13 @@ const wave = (ui) => (pen) => {
   path(steps(480).map((t) => [2 + t * (width - 4), mid - out(sine(t)) * tall]))
 }
 
+// What it ships with: enough to show what the three bends are for.
+const PRESETS = [
+  { name: 'Warm edge', values: { drive: 9, tone: 4500, mix: 100 } },
+  { name: 'Brick', values: { shape: 'Hard', drive: 24, tone: 9000 } },
+  { name: 'Broken radio', values: { shape: 'Fold', drive: 32, tone: 2400 } }
+]
+
 const BENDS = ['Soft bend', 'Hard clip', 'Folded back']
 
 // The note under the name says which bend is on.
@@ -89,4 +96,4 @@ mount((ui) => [
       value(ui.p.mix, { ui }),
       value(ui.p.output, { ui, bipolar: true })),
     foot(ui, choice(ui.p.shape, { ui })))
-])
+], { presets: PRESETS })

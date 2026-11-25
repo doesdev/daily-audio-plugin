@@ -1,0 +1,46 @@
+{
+  "plugin": "template",
+  "kind": "Saturation and waveshaping",
+  "leaders": [
+    {
+      "who": "FabFilter Saturn 2",
+      "does": "Many distortion styles in bands, with a live display and modulation",
+      "source": null
+    },
+    {
+      "who": "Soundtoys Decapitator",
+      "does": "Five analog styles, one big Drive, a Punish switch, a mix and tone",
+      "source": null
+    }
+  ],
+  "points": {
+    "picture": {
+      "verdict": "under",
+      "note": "One cycle of a model wave before and after, not the signal: the kit has no live signal yet."
+    },
+    "precision": {
+      "verdict": "meets",
+      "note": "Every setting is a kit value."
+    },
+    "compare": {
+      "verdict": "meets",
+      "note": "Undo, redo and A/B from the kit."
+    },
+    "explains": {
+      "verdict": "meets",
+      "note": "Every setting has an about; help adds ranges."
+    },
+    "fits": {
+      "verdict": "meets",
+      "note": "Scales whole; three densities."
+    },
+    "character": {
+      "verdict": "meets",
+      "note": "The house look; the wave turns purple with Drive and Mix."
+    },
+    "presets": {
+      "verdict": "under",
+      "note": "Three of its own, kept in the editor's storage, not as files."
+    }
+  }
+}
