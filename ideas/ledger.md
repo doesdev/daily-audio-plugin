@@ -7,4 +7,4 @@ which ideas come next.
 
 | Date | Plugin | The idea, in a sentence | Outcome | Verdict |
 |------|--------|-------------------------|---------|---------|
-| 2026-11-25 | (kit) | The kit, extracted from wispidi, and the template plugin | Built; Windows CI not yet run | |
+| 2026-11-25 | (kit) | The kit, extracted from wispidi, and the template plugin | Built; CI green on Windows, both validators pass | |

@@ -3,7 +3,7 @@
 2026-11-25
 
 A pull request labelled `daily` is merged by CI as soon as the check
-passes on Windows, and every plugin on main whose version has no tag
+and both validators pass on Windows, and every plugin on main whose version has no tag
 is then built and released. Nobody reviews or listens first. That was
 the owner's choice.
 

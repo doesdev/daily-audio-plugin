@@ -5,10 +5,9 @@ name: check
 #
 #   check     npm run check, on Windows: the only place the editor's
 #             WebView2 tests build and run.
-#   validate  each plugin through pluginval and clap-validator. Not yet
-#             required: see docs/decisions/0004.
+#   validate  each plugin through pluginval and clap-validator.
 #   merge     a pull request labelled `daily` from this repo is squashed
-#             into main once check passes.
+#             into main once check and validate pass.
 #   release   every plugin on main whose version has no tag yet gets
 #             its zip built and a GitHub release.
 
@@ -61,7 +60,6 @@ jobs:
     needs: check
     runs-on: windows-latest
     timeout-minutes: 30
-    continue-on-error: true
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -113,7 +111,7 @@ jobs:
           if ($failed) { exit 1 }
 
   merge:
-    needs: check
+    needs: [check, validate]
     if: >-
       github.event_name == 'pull_request' &&
       contains(github.event.pull_request.labels.*.name, 'daily') &&
@@ -132,9 +130,10 @@ jobs:
   # workflow, so the release that follows it is a job here. A push to
   # main by a person lands here too.
   release:
-    needs: [check, merge]
+    needs: [check, validate, merge]
     if: >-
       always() && needs.check.result == 'success' &&
+      needs.validate.result == 'success' &&
       (needs.merge.result == 'success' ||
        (github.event_name != 'pull_request' && github.ref == 'refs/heads/main'))
     runs-on: windows-latest

@@ -14,3 +14,10 @@ and may be wrong.
 Make it required once it has been seen green on the template: remove
 `continue-on-error` and add `validate` to the `needs` of `merge` and
 `release`. That is the point at which 0001's guard is really in place.
+
+## Since
+
+2026-11-25, the same day: the job ran green on the template (pluginval
+at strictness 5 passed; clap-validator ran 44 tests, 32 passed, none
+failed, 12 skipped), so it is now required. `continue-on-error` is
+gone and `merge` and `release` both need `validate`.
