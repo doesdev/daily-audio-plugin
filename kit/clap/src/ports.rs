@@ -63,9 +63,11 @@ static AUDIO: clap_plugin_audio_ports = clap_plugin_audio_ports {
     get: Some(audio_get),
 };
 
+// Every plugin takes MIDI in, even one that plays no notes: it is how
+// a controller reaches a setting that has learned it.
 fn notes(core: &Core, is_input: bool) -> bool {
     match is_input {
-        true => core.spec.info.midi_in,
+        true => true,
         false => core.spec.info.midi_out,
     }
 }

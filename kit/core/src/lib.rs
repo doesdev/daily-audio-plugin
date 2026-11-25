@@ -3,6 +3,7 @@
 //! format crates (`kit-vst3`, `kit-clap`) turn a `Plugin` into something
 //! a host loads; nothing here knows about a host.
 
+mod learn;
 pub mod level;
 mod param;
 mod plugin;
@@ -11,6 +12,7 @@ mod scope;
 mod shared;
 pub mod state;
 
+pub use learn::{LEARNABLE, Learn};
 pub use param::{BYPASS, Kind, Param, bypass, list, meter, range, toggle};
 pub use plugin::{Asset, Info, Plugin, Role, Spec};
 pub use runner::{Block, EVENTS, Event, Runner, Transport};

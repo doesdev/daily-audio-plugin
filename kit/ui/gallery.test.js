@@ -5,8 +5,8 @@
 
 import test from 'mvt'
 import {
-  NO_HISTORY, TIES, fingerprint, helpFor, holdFor, prefsFor, presetMoves,
-  presetValues, recorded, redone, undone
+  EMPTY, NO_HISTORY, TIES, fingerprint, helpFor, holdFor, prefsFor,
+  presetMoves, presetValues, recorded, redone, reduce, tagFor, undone
 } from './kit.js'
 import { withBrowser } from '../../scripts/lib/browser.js'
 import { PARAMS, openGallery, withGallery } from '../../scripts/gallery.js'
@@ -438,5 +438,55 @@ test('where the host keeps presets as files, the page asks it to', async (assert
     await click(tab, '.kit-preset-drop')
     const dropped = (await posted(tab)).at(-1)
     assert.is(dropped.type, 'preset-delete')
+  })
+})
+
+test('a setting says what it has learned, is waiting for, or is locked against', (assert) => {
+  const learn = { waiting: 4, map: { 9: 74, 4: 1 } }
+  const cases = [
+    [9, learn, false, ' (CC 74)'],
+    [9, learn, true, ' (CC 74, locked)'],
+    [4, learn, false, ' (move a controller, CC 1)'],
+    [2, learn, false, ''],
+    [2, null, true, ' (locked)'],
+    [2, null, false, '']
+  ]
+
+  cases.forEach(([id, told, locked, want]) =>
+    assert.is(tagFor(id, told, locked), want))
+  assert.is(EMPTY.learn, null)
+  assert.deepEqual(reduce(EMPTY, { type: 'learn', waiting: null }).learn,
+    { waiting: null, map: {} })
+})
+
+test('a setting learns a controller from its menu, and says so', async (assert) => {
+  const item = (name) => ({ sel: '.kit-pop button', text: name })
+  const tag = `${key('drive')} .kit-tag`
+  const told = (waiting, map) => ['tell', { type: 'learn', waiting, map }]
+  const items = `[...document.querySelectorAll('.kit-pop button')]
+    .map((el) => el.querySelector('span').textContent)`
+  await onGallery('main', [['menu', `${key('drive')} .kit-scrub`]], async (tab) => {
+    // A host that has said nothing of learning is not offered it.
+    assert.false((await tab.evaluate(items)).some((name) => /controller/.test(name)))
+    await STEPS.key(tab, ['Escape'])
+
+    await STEPS.tell(tab, told(null, {}).slice(1))
+    await STEPS.menu(tab, [`${key('drive')} .kit-scrub`])
+    await click(tab, item('Learn a controller'))
+    assert.deepEqual((await posted(tab)).at(-1), { type: 'learn', id: 0 })
+
+    // The host says it is waiting, then that controller 74 was moved.
+    await STEPS.tell(tab, told(0, {}).slice(1))
+    assert.is(await text(tab, tag), ' (move a controller)')
+    assert.is(await tab.evaluate(
+      `document.querySelector('${key('drive')}').dataset.learning`), 'true')
+    await STEPS.key(tab, ['Escape'])
+    assert.deepEqual((await posted(tab)).at(-1), { type: 'learn', id: null })
+
+    await STEPS.tell(tab, told(null, { 0: 74 }).slice(1))
+    assert.is(await text(tab, tag), ' (CC 74)')
+    await STEPS.menu(tab, [`${key('drive')} .kit-scrub`])
+    await click(tab, item('Forget controller 74'))
+    assert.deepEqual((await posted(tab)).at(-1), { type: 'forget', id: 0 })
   })
 })

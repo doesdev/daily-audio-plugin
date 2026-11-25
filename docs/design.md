@@ -54,7 +54,7 @@ Be plain about these in `NOVELTY.md` until they are fixed:
 
 - **A and B and the undo history are forgotten** when the editor is
   closed; only the settings themselves are saved.
-- **No modulation or MIDI learn**, which the leading synths have.
+- **No modulation**, which the leading synths have.
 
 ## The design, and what of it is built
 

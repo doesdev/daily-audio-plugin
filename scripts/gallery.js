@@ -131,6 +131,13 @@ export const SCENES = [
   },
   { name: 'bypassed', steps: [['click', '.kit-power'], ['away']] },
   { name: 'groups', page: 'groups' },
+  {
+    name: 'learn',
+    steps: [
+      ['tell', { type: 'learn', waiting: 1, map: { 0: 74 } }],
+      ['menu', '[data-key="drive"] .kit-scrub']
+    ]
+  },
   { name: 'lists', page: 'lists', steps: [['click', '.kit-chooser']] },
   {
     name: 'unknown',

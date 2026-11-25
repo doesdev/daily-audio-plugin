@@ -360,9 +360,15 @@ unsafe extern "C" fn process<P: Plugin>(
     };
 
     let core = &this.core;
+    // A controller moves the setting that has learned it, before the
+    // host is told what moved and the block reads its settings.
+    for midi in keys(process.in_events).filter(|m| m.data[0] & 0xF0 == 0xB0) {
+        core.shared.controller(midi.data[1], midi.data[2]);
+    }
     exchange(core, process.in_events, process.out_events);
     core.shared.snapshot(&mut runner.params);
-    for midi in keys(process.in_events) {
+    // Notes are only for a plugin that asked for them.
+    for midi in keys(process.in_events).filter(|_| core.spec.info.midi_in) {
         runner.push(midi);
     }
 

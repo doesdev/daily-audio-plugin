@@ -235,7 +235,8 @@ unsafe extern "C" fn set_parent(plugin: *const clap_plugin, window: *const clap_
     // The sound itself: here the editor and the audio thread share it.
     if let Some(panel) = &gui.panel {
         let scope = std::rc::Rc::new(std::cell::RefCell::new(Some(core.shared.scope())));
-        panel.feed(kit_webui::feed::signal(scope));
+        panel.feed(kit_webui::feed::live(core.spec, scope.clone()));
+        panel.hear(kit_webui::feed::learner(core.spec, scope));
     }
     gui.panel.is_some()
 }

@@ -71,6 +71,35 @@ impl Shared {
         }
     }
 
+    /// From the audio thread: MIDI controller `cc` moved to `value`, 0
+    /// to 127. The setting that has learned it, if any, follows, and
+    /// the host hears of it as it would of a move in the editor.
+    pub fn controller(&self, cc: u8, value: u8) {
+        if let Some(index) = self
+            .scope
+            .learn
+            .heard(cc)
+            .filter(|&i| i < self.values.len())
+        {
+            self.set(index, f64::from(value.min(127)) / 127.0);
+            self.edit(index, BEGIN | SET | END);
+        }
+    }
+
+    /// The controller each setting has learned, for saving.
+    pub fn learnt(&self) -> Vec<Option<u8>> {
+        (0..self.values.len())
+            .map(|i| self.scope.learn.cc(i))
+            .collect()
+    }
+
+    /// Puts back what was saved.
+    pub fn set_learnt(&self, ccs: &[Option<u8>]) {
+        for (index, &cc) in ccs.iter().enumerate() {
+            self.scope.learn.bind(index, cc);
+        }
+    }
+
     /// Whether a setting moved since this was last asked.
     pub fn take_dirty(&self) -> bool {
         self.dirty.swap(false, Ordering::Acquire)

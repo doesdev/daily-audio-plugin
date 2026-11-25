@@ -72,7 +72,9 @@ fn bus(spec: &Spec, media: MediaTypes, input: bool) -> Option<(i32, &'static str
     match (media, input) {
         (MediaTypes_::kAudio, true) if info.audio_in > 0 => Some((info.audio_in as i32, "Input")),
         (MediaTypes_::kAudio, false) => Some((info.audio_out as i32, "Output")),
-        (MediaTypes_::kEvent, true) if info.midi_in => Some((16, "MIDI In")),
+        // Every plugin takes MIDI in, even one that plays no notes: it
+        // is how a controller reaches a setting that has learned it.
+        (MediaTypes_::kEvent, true) => Some((16, "MIDI In")),
         (MediaTypes_::kEvent, false) if info.midi_out => Some((16, "MIDI Out")),
         _ => None,
     }
@@ -111,20 +113,42 @@ impl<P: Plugin> Processor<P> {
             }
 
             let (mut offset, mut value) = (0, 0.0);
-            let index = self.spec.setting_of(unsafe { queue.getParameterId() });
-            if let Some(index) = index
-                && unsafe { queue.getPoint(points - 1, &mut offset, &mut value) } == kResultTrue
-            {
+            let id = unsafe { queue.getParameterId() };
+            if unsafe { queue.getPoint(points - 1, &mut offset, &mut value) } != kResultTrue {
+                continue;
+            }
+            // A MIDI controller reaches a VST3 as the parameter that
+            // stands in for it: see the controller's `IMidiMapping`.
+            if let Some(cc) = crate::controller::cc_of(id) {
+                self.shared
+                    .controller(cc, (value.clamp(0.0, 1.0) * 127.0).round() as u8);
+            } else if let Some(index) = self.spec.setting_of(id) {
                 self.shared.set(index, value);
             }
         }
     }
 
-    // Sends each meter to the host only when it moved enough to see.
+    // Sends each meter to the host only when it moved enough to see,
+    // and each setting a MIDI controller moved, so the controller and
+    // its editor show where it now is.
     unsafe fn report(&self, changes: *mut IParameterChanges, offset: i32, meters: &[f64]) {
         let Some(changes) = (unsafe { ComRef::from_raw(changes) }) else {
             return;
         };
+
+        for (i, row) in self.spec.params.iter().enumerate() {
+            if self.shared.take_edit(i) == 0 {
+                continue;
+            }
+            let mut index = 0;
+            let queue = unsafe { changes.addParameterData(&row.id, &mut index) };
+            if let (Some(queue), Some(value)) =
+                (unsafe { ComRef::from_raw(queue) }, self.shared.value(i))
+            {
+                let mut point = 0;
+                unsafe { queue.addPoint(offset, value, &mut point) };
+            }
+        }
 
         for ((slot, row), &value) in self.reported.iter().zip(self.spec.meters).zip(meters) {
             let last = f64::from_bits(slot.load(Ordering::Relaxed));
@@ -254,6 +278,7 @@ impl<P: Plugin> IComponentTrait for Processor<P> {
             return kResultFalse;
         };
         self.shared.set_all(&values);
+        self.shared.set_learnt(&state::learnt(&self.spec, &bytes));
         kResultOk
     }
 
@@ -262,7 +287,8 @@ impl<P: Plugin> IComponentTrait for Processor<P> {
             return kInvalidArgument;
         };
 
-        let mut bytes = state::encode(&self.spec, &self.shared.values());
+        let mut bytes =
+            state::encode_learnt(&self.spec, &self.shared.values(), &self.shared.learnt());
         let mut written = 0;
         unsafe { stream.write(bytes.as_mut_ptr().cast(), bytes.len() as i32, &mut written) }
     }
@@ -392,7 +418,9 @@ impl<P: Plugin> IAudioProcessorTrait for Processor<P> {
         };
 
         self.shared.snapshot(&mut runner.params);
-        if let Some(events) = unsafe { ComRef::from_raw(data.inputEvents) } {
+        // Notes are only for a plugin that asked for them.
+        let notes = unsafe { ComRef::from_raw(data.inputEvents) };
+        if let Some(events) = notes.filter(|_| self.spec.info.midi_in) {
             for i in 0..unsafe { events.getEventCount() } {
                 let mut ev: Event = unsafe { std::mem::zeroed() };
                 if unsafe { events.getEvent(i, &mut ev) } == kResultOk

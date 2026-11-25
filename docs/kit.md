@@ -152,6 +152,11 @@ and the picture can tell when it is held.
   is told it is the bypass, the runner fades to the sound coming in
   and back, and the header gets an On button. The plugin writes
   nothing for it.
+- Every setting can learn a MIDI controller from its menu, and what it
+  learned is saved with the project. The plugin writes nothing for it.
+  Every plugin takes MIDI in for this; notes still reach only one
+  with `midi_in`. `docs/decisions/0008-reaching-across-vst3.md` says
+  how it gets there.
 - A person's own presets are files, one JSON file each, under
   `%APPDATA%\VENDOR\NAME\Presets`. The plugin writes nothing for
   that either.
@@ -221,7 +226,6 @@ settings that show what is new about it.
 - MIDI controllers into a VST3: notes arrive, CC and pitch bend do not
   (VST3 hands them over as parameters; wispidi's `controls.rs` shows
   how).
-- MIDI learn: `kit/benchmarks.json` says what it needs.
   This is the largest gap against the bar in `docs/design.md` and the
   next thing the kit needs.
 - What `kit/benchmarks.json` marks `under`: the check prints the list.

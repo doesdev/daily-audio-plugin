@@ -62,10 +62,20 @@
           "source": "https://prod.fabfilter.com/help/pro-q/using/overview"
         }
       ],
-      "ours": "Nothing.",
-      "verdict": "under",
-      "gap": "The kit does not pass controllers to the page or map them.",
-      "next": "Controllers into the runner, a map kept with the state, and \"Learn\" in a value's menu. CLAP can hand controllers over as events; VST3 only maps them to parameters through IMidiMapping, so learning there needs a parameter standing in for each controller. The connection the picture now uses can carry what was learned back to the editor."
+      "ours": "\"Learn a controller\" in a setting's menu: the setting waits, shown beside its name; move a knob and it is bound, shown as its number; \"Forget\" frees it; Escape stops the waiting. The controller moves the setting on the audio thread and the host hears it as a gesture. What was learned is saved with the project. One controller to a setting and a setting to a controller; channel is ignored; plain 7-bit controllers only, no pitch bend, aftertouch or 14-bit. In VST3 a controller arrives as a hidden parameter standing in for it, so it needs a host that asks for the mapping and sends the plugin MIDI. Tested in both formats' test hosts; not yet tried with hardware in a real host.",
+      "verdict": "meets",
+      "proof": [
+        "a setting learns a controller from its menu, and says so",
+        "a setting says what it has learned, is waiting for, or is locked against",
+        "a_waiting_setting_takes_the_next_controller_and_keeps_it",
+        "a_controller_moves_one_setting_and_a_setting_can_be_freed",
+        "a_controller_moves_the_setting_that_learned_it_as_a_gesture",
+        "what_a_setting_has_learned_is_saved_with_it_and_comes_back",
+        "a_learned_controller_moves_its_setting_and_the_host_is_told",
+        "a_learned_controller_moves_its_setting",
+        "the_page_asks_a_setting_to_learn_by_its_id_and_to_forget",
+        "what_is_learned_is_told_when_it_changes_and_again_now_and_then"
+      ]
     },
     {
       "id": "undo-and-compare",

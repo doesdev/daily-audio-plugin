@@ -107,3 +107,34 @@ fn takes_more_than_the_promised_block() {
     let got = small.render(std::slice::from_ref(&ramp), 64, 64);
     assert_eq!(got, want);
 }
+
+#[test]
+fn a_learned_controller_moves_its_setting() {
+    let spec = kit::Spec::of::<Gain>();
+    let mut host = Host::load::<Gain>(48_000.0, 64);
+    let learnt: Vec<Option<u8>> = spec
+        .params
+        .iter()
+        .map(|p| (p.id == 10).then_some(74))
+        .collect();
+    let saved = kit::state::encode_learnt(&spec, &spec.defaults(), &learnt);
+    assert!(host.restore(&saved));
+    let before = host.value(10);
+
+    // A controller no setting has learned moves nothing.
+    host.send(Event {
+        offset: 0,
+        data: [0xB0, 20, 127],
+    });
+    host.block(64);
+    assert_eq!(host.value(10), before);
+
+    host.send(Event {
+        offset: 0,
+        data: [0xB3, 74, 127],
+    });
+    host.block(64);
+    // All the way up: Gain runs to 2, and CLAP speaks in plain values.
+    assert_eq!(host.value(10), Some(2.0));
+    assert_eq!(kit::state::learnt(&spec, &host.save()), learnt);
+}

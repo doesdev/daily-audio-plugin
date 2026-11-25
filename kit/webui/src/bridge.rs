@@ -4,6 +4,7 @@
 //!
 //! To the page: `hello` (the spec and every value, once it is ready),
 //! `signal` (the sound itself, while audio runs), `presets` (the files),
+//! `learn` (which controller each setting has learned),
 //! `state` (settings moved outside the page) and `meters`. From the
 //! page: `ready`, `blur`, and a gesture on a setting as `begin`, `set`
 //! and `end`.
@@ -133,6 +134,22 @@ pub fn meters(spec: &Spec, values: &[f64]) -> String {
         "levelTexts": texts(spec.meters, values),
     })
     .to_string()
+}
+
+/// Which controller each setting has learned, by the setting's id, and
+/// the id of the one waiting for a controller to be moved.
+pub fn learn(spec: &Spec, learn: &kit::Learn) -> String {
+    let map: serde_json::Map<String, Value> = spec
+        .params
+        .iter()
+        .enumerate()
+        .filter_map(|(index, p)| Some((p.id.to_string(), json!(learn.cc(index)?))))
+        .collect();
+    let waiting = learn
+        .waiting()
+        .and_then(|index| spec.params.get(index))
+        .map(|p| p.id);
+    json!({ "type": "learn", "waiting": waiting, "map": map }).to_string()
 }
 
 /// A sample is sent as a whole number of this many to full scale: it

@@ -3,7 +3,7 @@
 //! when they change; the page's actions go to whoever opened it.
 
 use crate::bridge::{self, Action};
-use crate::feed::Feed;
+use crate::feed::{Feed, Hear};
 use crate::presets;
 use crate::window::{self, Hwnd};
 use kit::Spec;
@@ -47,6 +47,8 @@ struct Link {
     sent: RefCell<Vec<f64>>,
     // What else there is to tell the page each tick: the sound itself.
     feed: RefCell<Option<Feed>>,
+    // Who else may answer a message from the page, before the bridge.
+    hear: RefCell<Option<Hear>>,
 }
 
 impl Link {
@@ -167,6 +169,7 @@ impl Panel {
             view: RefCell::new(None),
             want_hello: Cell::new(false),
             feed: RefCell::new(None),
+            hear: RefCell::new(None),
         });
 
         // Each tick holds its own count on the link: a host closing the
@@ -189,6 +192,14 @@ impl Panel {
                 let Some(link) = ipc.upgrade() else {
                     return;
                 };
+                let heard = link
+                    .hear
+                    .borrow()
+                    .as_ref()
+                    .is_some_and(|hear| hear(req.body()));
+                if heard {
+                    return;
+                }
                 let kept = presets::dir(&link.spec)
                     .and_then(|dir| presets::handle(&link.spec, &dir, req.body()));
                 if let Some(now) = kept {
@@ -214,6 +225,11 @@ impl Panel {
     /// Has `feed` asked each tick for something more to tell the page.
     pub fn feed(&self, feed: Feed) {
         *self.link.feed.borrow_mut() = Some(feed);
+    }
+
+    /// Has `hear` offered each message from the page first.
+    pub fn hear(&self, hear: Hear) {
+        *self.link.hear.borrow_mut() = Some(hear);
     }
 
     pub fn resize(&self, size: (i32, i32)) {

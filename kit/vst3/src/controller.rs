@@ -16,16 +16,50 @@ use vst3::{Class, ComPtr, ComRef};
 pub type Values = Rc<[Cell<f64>]>;
 pub type Handler = Rc<RefCell<Option<ComPtr<IComponentHandler>>>>;
 
+/// The first of 128 parameters that stand in for the MIDI controllers.
+/// VST3 gives a plugin no controller messages: the host turns one into
+/// a change of whichever parameter `IMidiMapping` names for it. These
+/// are hidden and cannot be automated; the processor reads them as the
+/// controllers they are.
+pub const CC_PARAMS: u32 = 0x4D43_0000;
+
+/// The controller a parameter id stands in for.
+pub fn cc_of(id: u32) -> Option<u8> {
+    id.checked_sub(CC_PARAMS)
+        .and_then(|cc| u8::try_from(cc).ok())
+        .filter(|&cc| cc < 128)
+}
+
 pub struct Controller {
     spec: Spec,
     values: Values,
     handler: Handler,
     // The sound, once the host has connected the processor.
     pub(crate) scope: ScopeLink,
+    // Where each stand-in for a controller was last put: a host may
+    // ask for it back.
+    ccs: Rc<[Cell<f64>]>,
 }
 
 impl Class for Controller {
-    type Interfaces = (IEditController, IConnectionPoint);
+    type Interfaces = (IEditController, IConnectionPoint, IMidiMapping);
+}
+
+impl IMidiMappingTrait for Controller {
+    unsafe fn getMidiControllerAssignment(
+        &self,
+        bus: i32,
+        _channel: i16,
+        controller: CtrlNumber,
+        id: *mut ParamID,
+    ) -> tresult {
+        let cc = u32::try_from(controller).ok().filter(|&cc| cc < 128);
+        let (0, Some(cc), Some(id)) = (bus, cc, unsafe { id.as_mut() }) else {
+            return kResultFalse;
+        };
+        *id = CC_PARAMS + cc;
+        kResultTrue
+    }
 }
 
 // The processor offers its scope when the host connects the two; all
@@ -61,11 +95,15 @@ impl Controller {
             values: values.into(),
             handler: Rc::default(),
             scope: Rc::default(),
+            ccs: (0..128).map(|_| Cell::new(0.0)).collect(),
         }
     }
 
     fn cell(&self, id: u32) -> Option<&Cell<f64>> {
-        self.spec.index_of(id).and_then(|i| self.values.get(i))
+        match cc_of(id) {
+            Some(cc) => self.ccs.get(usize::from(cc)),
+            None => self.spec.index_of(id).and_then(|i| self.values.get(i)),
+        }
     }
 }
 
@@ -110,12 +148,30 @@ impl IEditControllerTrait for Controller {
     }
 
     unsafe fn getParameterCount(&self) -> i32 {
-        self.spec.total() as i32
+        self.spec.total() as i32 + 128
     }
 
     unsafe fn getParameterInfo(&self, index: i32, info: *mut ParameterInfo) -> tresult {
-        let row = usize::try_from(index).ok().and_then(|i| self.spec.row(i));
-        let (Some(p), Some(info)) = (row, unsafe { info.as_mut() }) else {
+        let at = usize::try_from(index).ok();
+        let Some(info) = (unsafe { info.as_mut() }) else {
+            return kInvalidArgument;
+        };
+        // After the plugin's own: the stand-ins for the controllers.
+        let cc = at
+            .and_then(|i| i.checked_sub(self.spec.total()))
+            .filter(|&cc| cc < 128);
+        if let Some(cc) = cc {
+            info.id = CC_PARAMS + cc as u32;
+            copy_wstring(&format!("MIDI CC {cc}"), &mut info.title);
+            copy_wstring(&format!("CC {cc}"), &mut info.shortTitle);
+            copy_wstring("", &mut info.units);
+            info.stepCount = 0;
+            info.defaultNormalizedValue = 0.0;
+            info.unitId = 0;
+            info.flags = ParameterInfo_::ParameterFlags_::kIsHidden as i32;
+            return kResultOk;
+        }
+        let Some(p) = at.and_then(|i| self.spec.row(i)) else {
             return kInvalidArgument;
         };
 
@@ -138,7 +194,14 @@ impl IEditControllerTrait for Controller {
     }
 
     unsafe fn getParamStringByValue(&self, id: u32, norm: f64, string: *mut String128) -> tresult {
-        let (Some(p), Some(out)) = (self.spec.by_id(id), unsafe { string.as_mut() }) else {
+        let Some(out) = (unsafe { string.as_mut() }) else {
+            return kInvalidArgument;
+        };
+        if cc_of(id).is_some() {
+            copy_wstring(&format!("{:.0}", norm.clamp(0.0, 1.0) * 127.0), out);
+            return kResultOk;
+        }
+        let Some(p) = self.spec.by_id(id) else {
             return kInvalidArgument;
         };
 
@@ -160,11 +223,17 @@ impl IEditControllerTrait for Controller {
     }
 
     unsafe fn normalizedParamToPlain(&self, id: u32, norm: f64) -> f64 {
-        self.spec.by_id(id).map_or(0.0, |p| p.plain(norm))
+        match cc_of(id) {
+            Some(_) => norm,
+            None => self.spec.by_id(id).map_or(0.0, |p| p.plain(norm)),
+        }
     }
 
     unsafe fn plainParamToNormalized(&self, id: u32, plain: f64) -> f64 {
-        self.spec.by_id(id).map_or(0.0, |p| p.normalized(plain))
+        match cc_of(id) {
+            Some(_) => plain,
+            None => self.spec.by_id(id).map_or(0.0, |p| p.normalized(plain)),
+        }
     }
 
     unsafe fn getParamNormalized(&self, id: u32) -> f64 {

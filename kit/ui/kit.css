@@ -645,10 +645,12 @@ button { cursor: pointer; }
 
 /* ---- locked against presets */
 
-.kit-setting[data-locked] .kit-title::after {
-  content: ' (locked)';
-  color: var(--soft);
-}
+/* What a setting says of itself beside its name. */
+.kit-tag { color: var(--soft); }
+
+/* Waiting for a controller is being touched, from the other side. */
+.kit-setting[data-learning] .kit-title,
+.kit-setting[data-learning] .kit-tag { color: var(--touch); }
 
 /* ---- a menu at a point */
 

@@ -427,7 +427,46 @@ pub fn conforms<P: Plugin>() {
     let spec = host.spec;
 
     let count = unsafe { host.controller.getParameterCount() };
-    assert_eq!(count as usize, spec.total(), "every setting and meter");
+    assert_eq!(
+        count as usize,
+        spec.total() + 128,
+        "every setting and meter, then a stand-in for each MIDI controller"
+    );
+    // The stand-ins: hidden, never automated, and where the mapping
+    // sends each controller.
+    let mapping = host
+        .controller
+        .cast::<IMidiMapping>()
+        .expect("a MIDI mapping");
+    for cc in [0_u32, 74, 127] {
+        let mut info: ParameterInfo = unsafe { std::mem::zeroed() };
+        let at = (spec.total() as u32 + cc) as i32;
+        assert_eq!(
+            unsafe { host.controller.getParameterInfo(at, &mut info) },
+            kResultOk
+        );
+        assert_eq!(info.id, crate::controller::CC_PARAMS + cc);
+        use ParameterInfo_::ParameterFlags_::{kCanAutomate, kIsHidden};
+        assert_ne!(info.flags & kIsHidden as i32, 0, "CC {cc} is hidden");
+        assert_eq!(
+            info.flags & kCanAutomate as i32,
+            0,
+            "CC {cc} is not automated"
+        );
+        let mut id = 0;
+        let rc = unsafe { mapping.getMidiControllerAssignment(0, 0, cc as i16, &mut id) };
+        assert_eq!((rc, id), (kResultTrue, info.id), "CC {cc} is mapped");
+        assert!(
+            spec.index_of(info.id).is_none(),
+            "CC {cc} is no setting's id"
+        );
+    }
+    let mut id = 0;
+    let beyond = unsafe { mapping.getMidiControllerAssignment(0, 0, 128, &mut id) };
+    assert_eq!(
+        beyond, kResultFalse,
+        "pitch bend and the rest are not mapped"
+    );
     for (i, p) in spec.rows().enumerate() {
         let mut info: ParameterInfo = unsafe { std::mem::zeroed() };
         let rc = unsafe { host.controller.getParameterInfo(i as i32, &mut info) };

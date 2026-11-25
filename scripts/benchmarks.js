@@ -116,7 +116,8 @@ const read = (file) => readFileSync(join(ROOT, file), 'utf8')
 const RUST = [
   'kit/core/src/runner.rs', 'kit/core/src/scope.rs',
   'kit/webui/src/presets.rs', 'kit/webui/src/feed.rs',
-  'kit/vst3/src/connect.rs'
+  'kit/vst3/src/connect.rs', 'kit/core/src/learn.rs', 'kit/core/src/state.rs',
+  'kit/vst3/tests/host.rs', 'kit/clap/tests/host.rs'
 ]
 
 export const allProblems = () => {

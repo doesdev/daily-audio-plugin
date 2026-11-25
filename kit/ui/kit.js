@@ -300,6 +300,18 @@ export const spectrum = (samples) => {
     20 * Math.log10(Math.max(1e-9, Math.hypot(re[k], im[k]) / (size / 4))))
 }
 
+// What a setting says of itself beside its name: the controller it has
+// learned, that it is waiting for one, that presets leave it alone.
+export const tagFor = (id, learn, locked) => {
+  const cc = learn?.map[id]
+  const said = [
+    learn?.waiting === id ? 'move a controller' : null,
+    cc == null ? null : `CC ${cc}`,
+    locked ? 'locked' : null
+  ].filter(Boolean)
+  return said.length ? ` (${said.join(', ')})` : ''
+}
+
 // ---- the store: what the host last said, folded message by message
 
 export const EMPTY = {
@@ -318,7 +330,11 @@ export const EMPTY = {
   files: null,
   // The sound itself, while audio runs: { rate, input, output }, the
   // latest samples each way, oldest first. Null until the host sends.
-  signal: null
+  signal: null,
+  // MIDI learn, where the host side has it: { waiting, map }, the id
+  // of the setting waiting for a controller and each setting's
+  // controller by its id. Null until the host says.
+  learn: null
 }
 
 export const reduce = (state, msg) => {
@@ -337,6 +353,9 @@ export const reduce = (state, msg) => {
         rate: msg.rate, input: real(msg.input), output: real(msg.output)
       }
     }
+  }
+  if (msg.type === 'learn') {
+    return { ...state, learn: { waiting: msg.waiting, map: msg.map ?? {} } }
   }
   if (msg.type === 'presets') {
     return { ...state, files: msg.list, filesDir: msg.dir }
@@ -612,10 +631,14 @@ export const mount = (build, opts = {}) => {
   // Escape puts an open panel away, and only that: the keyboard goes
   // back to the host on the next one.
   window.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return
     const open = document.querySelector('.kit-sheet[data-panel]')
-    if (event.key !== 'Escape' || !open) return
+    const waiting = store.get().learn?.waiting != null
+    if (!open && !waiting) return
     event.stopImmediatePropagation()
-    closePanel()
+    // A setting waiting for a controller stops waiting.
+    if (open) closePanel()
+    else post({ type: 'learn', id: null })
   })
   let built = false
   store.on((state) => {
@@ -727,6 +750,7 @@ export const ICONS = {
   help: 'M7.4 7.6a2.7 2.7 0 1 1 3.9 2.4c-.8.5-1.3 1-1.3 2M10 14.6v.2',
   power: 'M10 3.5v6M6.2 5.8a5.5 5.5 0 1 0 7.6 0',
   chevron: 'M6 8l4 4 4-4',
+  learn: 'M10 4.5a5.5 5.5 0 1 0 0 11a5.5 5.5 0 1 0 0-11M10 10l2.6-2.6',
   chosen: 'M5 10.5l3.2 3.2L15 7',
   blank: '',
   close: 'M5.5 5.5l9 9M14.5 5.5l-9 9',
@@ -885,8 +909,9 @@ export const value = (handle, opts = {}) => {
     h('span', {}, describe(handle.row, 0)),
     h('span', {}, describe(handle.row, 1)))
   const kind = opts.bipolar ? 'setting.kit-bipolar' : 'setting'
+  const tag = h('span.kit-tag')
   const el = shell(handle, kind, opts,
-    h('span.kit-title', {}, opts.title ?? handle.row.short), scrub, range)
+    h('span.kit-title', {}, opts.title ?? handle.row.short, tag), scrub, range)
   const show = () => {
     line.style.setProperty('--from', Math.min(rest, handle.value))
     line.style.setProperty('--to', Math.max(rest, handle.value))
@@ -908,11 +933,21 @@ export const value = (handle, opts = {}) => {
     valueMenu(el, handle, out, opts.ui, [event.clientX, event.clientY])
   })
   if (opts.ui) {
-    const lock = () => {
-      if (opts.ui.session.isLocked(handle.index)) el.dataset.locked = 'true'
-      else delete el.dataset.locked
+    const { session, store } = opts.ui
+    const mark = () => {
+      const locked = session.isLocked(handle.index)
+      const { learn } = store.get()
+      const flag = (name, on) => {
+        if (on) el.dataset[name] = 'true'
+        else delete el.dataset[name]
+      }
+      flag('locked', locked)
+      flag('learning', learn?.waiting === handle.row.id)
+      tag.textContent = tagFor(handle.row.id, learn, locked)
     }
-    opts.ui.session.on(lock)
+    session.on(mark)
+    store.on((state, prev) => { if (state.learn !== prev.learn) mark() })
+    mark()
   }
   handle.on(show)
   show()
@@ -1350,6 +1385,9 @@ const popup = (items, [x, y]) => {
 const valueMenu = (el, handle, out, ui, at) => {
   const { row } = handle
   const locked = ui?.session.isLocked(handle.index)
+  const learn = ui?.store.get().learn
+  const cc = learn?.map[row.id]
+  const waiting = learn?.waiting === row.id
   return popup([
     ['Type a value', 'type', 'Enter', () => out.edit()],
     [`Return to ${describe(row, row.default)}`, 'reset', 'Del',
@@ -1357,7 +1395,12 @@ const valueMenu = (el, handle, out, ui, at) => {
     ['Copy', 'copy', 'Ctrl C', () => copyValue(handle)],
     ['Paste', 'paste', 'Ctrl V', () => pasteValue(handle)],
     ui && [locked ? 'Unlock' : 'Lock against presets', 'lock', '',
-      () => ui.session.lock(handle.index, !locked)]
+      () => ui.session.lock(handle.index, !locked)],
+    // Only where the host side can hear a controller.
+    learn && [waiting ? 'Stop waiting for a controller' : 'Learn a controller',
+      'learn', '', () => post({ type: 'learn', id: waiting ? null : row.id })],
+    learn && cc != null && [`Forget controller ${cc}`, 'close', '',
+      () => post({ type: 'forget', id: row.id })]
   ], at)
 }
 

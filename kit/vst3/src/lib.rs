@@ -16,7 +16,7 @@ mod strings;
 pub mod testing;
 mod transport;
 
-pub use controller::Controller;
+pub use controller::{CC_PARAMS, Controller};
 pub use processor::Processor;
 
 use kit::{Plugin, Role, Spec};

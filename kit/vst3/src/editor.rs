@@ -116,7 +116,8 @@ impl Editor {
         // The sound itself, from the processor once the host has
         // connected it; until then the feed has nothing to say.
         if let Some(scope) = self.scope.borrow().clone() {
-            panel.feed(kit_webui::feed::signal(scope));
+            panel.feed(kit_webui::feed::live(self.spec, scope.clone()));
+            panel.hear(kit_webui::feed::learner(self.spec, scope));
         }
 
         *self.panel.borrow_mut() = Some(panel);

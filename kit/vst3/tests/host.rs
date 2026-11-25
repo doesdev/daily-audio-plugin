@@ -115,3 +115,35 @@ fn takes_more_than_the_promised_block() {
     let got = small.render(std::slice::from_ref(&ramp), 64, 64);
     assert_eq!(got, want);
 }
+
+#[test]
+fn a_learned_controller_moves_its_setting_and_the_host_is_told() {
+    let spec = kit::Spec::of::<Gain>();
+    let mut host = Host::load::<Gain>(48_000.0, 64);
+    // Gain (id 10) learned controller 74 in some earlier session.
+    let learnt: Vec<Option<u8>> = spec
+        .params
+        .iter()
+        .map(|p| (p.id == 10).then_some(74))
+        .collect();
+    let saved = kit::state::encode_learnt(&spec, &spec.defaults(), &learnt);
+    assert!(host.restore(&saved));
+
+    // A controller no setting has learned moves nothing.
+    host.set(kit_vst3::CC_PARAMS + 20, 1.0);
+    host.block(64);
+    assert!(host.reported().iter().all(|&(id, _)| id != 10));
+
+    // The host turns controller 74 into its stand-in parameter; the
+    // setting follows, and the host hears where it went.
+    host.set(kit_vst3::CC_PARAMS + 74, 1.0);
+    host.block(64);
+    assert!(
+        host.reported().contains(&(10, 1.0)),
+        "{:?}",
+        host.reported()
+    );
+
+    // And what was learned is saved again.
+    assert_eq!(kit::state::learnt(&spec, &host.save()), learnt);
+}
