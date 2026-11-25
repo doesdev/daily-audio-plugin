@@ -1,5 +1,5 @@
 //! Renders the demos someone listens to before trusting the tests:
-//! `cargo run -p undertow --example demo -- OUT_DIR` writes one WAV a
+//! `cargo run -p undertow --example undertow-demo -- OUT_DIR` writes one WAV a
 //! setting worth hearing, each the dry sound then the same through
 //! the plugin.
 //!

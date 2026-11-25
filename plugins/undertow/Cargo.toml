@@ -10,6 +10,16 @@ publish.workspace = true
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+# Named after the plugin: cargo puts every package's examples in one
+# folder, so a second plugin's `spec` would overwrite this one's.
+[[example]]
+name = "undertow-spec"
+path = "examples/spec.rs"
+
+[[example]]
+name = "undertow-demo"
+path = "examples/demo.rs"
+
 [dependencies]
 kit = { workspace = true }
 kit-dsp = { workspace = true }
