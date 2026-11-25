@@ -22,8 +22,8 @@ are how a person finds that out, and the ledger is where they say so.
 
 - `ideas/ledger.md`: every plugin made and every idea dropped, so
   nothing is made twice.
-- `ideas/backlog.md`: ideas waiting, and notes on what kinds have
-  gone well.
+- `ideas/backlog.md`: ideas waiting, what the listener reaches for,
+  and notes on what kinds have gone well.
 - `docs/kit.md`: how a plugin is written, and what the kit cannot do
   yet.
 - `docs/design.md`: how an editor looks, and what it avoids.
@@ -45,6 +45,9 @@ Take the first idea in the backlog that still holds up, or think of a
 better one. A good idea:
 
 - is one idea, said in a sentence, that a musician would want to try;
+- leans, where it honestly can, on what the listener reaches for
+  (`ideas/backlog.md`): those levers are how familiar ground gets
+  somewhere new, and instruments are wanted as well as effects;
 - fits one screen and about a dozen settings at most;
 - can be heard: a demo of it sounds different from a demo without it;
 - can be built on the kit as it is, or with one small kit addition.

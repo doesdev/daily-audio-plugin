@@ -21,6 +21,44 @@ to build as written:
   small rule run very fast.
 - Two simple processes cross-coupled, each steering the other.
 
+## What the listener reaches for
+
+Said by the person these are made for, on 2026-11-25. These are not
+ideas. They are levers: ways of working that they use a great deal and
+enjoy seeing used inventively. An idea on well trodden ground can come
+much closer to new by being built on one or two of them, and an idea
+that could use one and does not should say why.
+
+- **Mid and side.** Used a lot, and enjoyed most when it is used
+  creatively: not only width and balance, but a process applied to one
+  and not the other, the two treated oppositely, or one steering what
+  is done to the other.
+- **Split bands.** Two or more bands, each processed in its own way.
+- **Transient and sustain.** The hit and the body of a sound split
+  apart and processed separately, as a creative tool as much as a
+  corrective one.
+- **Transformer-inspired saturation.** A tone they like: the weight
+  and the thickening of iron, with what it does to the low end.
+- **Tube-inspired shimmer.** A tone they like: the bloom and the
+  sheen of valves in the upper harmonics.
+- **Instruments.** They want to see what can be done on the
+  instrument side, not only effects. The same levers apply there: a
+  voice whose mid and side, bands, or hit and body are made or shaped
+  apart.
+
+These combine. A split is a place to put a tone; a tone is a reason
+for a split. The kit's paired controls (linked, mirrored, opposed, a
+span) and the pad were drawn with mid and side and band edges in mind.
+
+None of this lowers the bar in step 3. A lever is not novelty by
+itself: mid and side saturation and multiband transient shapers exist.
+Look for the idea as hard as for any other, and say in `NOVELTY.md`
+what the lever is doing that it has not done before.
+
+When a run makes something on one of these, note it under "What has
+gone well" once a person has listened, so the levers that pay off are
+known.
+
 ## What has gone well
 
 Nothing yet. After a person has listened to a few releases, note here
