@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A visual equaliser, dark theme</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 820px; height: 500px; box-sizing: border-box; background: #0B0B0D; font-family: 'Bricolage Grotesque', sans-serif; color: #F4F4F6; position: relative; overflow: hidden">
+<div style="position: absolute; left: 18px; top: 18px; width: 784px; height: 350px; box-sizing: border-box; border-radius: 28px; background: #17171A; border: 1px solid #25252A; color: #F4F4F6; padding: 20px 26px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; gap: 12px">
+<div style="font-size: 22px; font-weight: 600; letter-spacing: -0.02em">[An equaliser]</div>
+<div style="font-size: 13px; color: #9494A0">drag a band on the glass, or its numbers on the sheet: they are the same thing</div>
+</div>
+<svg role="img" aria-label="The sound's spectrum as columns, the equaliser's curve over it, and five bands, one being dragged" viewBox="0 0 732 230" style="width: 100%; height: 230px">
+<sc-for list="{{ columns }}" as="c" hint-placeholder-count="48">
+<rect x="{{ c.x }}" y="{{ c.y }}" width="9" height="{{ c.h }}" rx="2" fill="#F4F4F6" fill-opacity="{{ c.o }}"/>
+</sc-for>
+<path d="M0 115H732" stroke="#34343B" stroke-width="1"/>
+<path d="{{ band }}" fill="#B3A1FF" fill-opacity="0.22"/>
+<path d="{{ curve }}" fill="none" stroke="#F4F4F6" stroke-width="2" stroke-linejoin="round"/>
+<sc-for list="{{ nodes }}" as="n" hint-placeholder-count="5">
+<circle cx="{{ n.x }}" cy="{{ n.y }}" r="{{ n.r }}" fill="{{ n.fill }}" stroke="#151518" stroke-width="3"/>
+</sc-for>
+<rect x="388" y="20" width="124" height="24" rx="12" fill="#B3A1FF"/>
+<text x="450" y="36" text-anchor="middle" font-size="12" font-weight="600" fill="#151518">2.4 kHz  +6.0 dB</text>
+</svg>
+</div>
+<div style="position: absolute; left: 44px; top: 288px; width: 732px; height: 192px; box-sizing: border-box; border-radius: 26px; background: #28282D; padding: 16px 26px 18px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 -12px 30px -10px rgba(0,0,0,0.7), 0 0 0 1px #34343B">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5">
+<button style="height: 44px; min-width: 44px; padding: 0 14px; border: {{ t.border }}; border-radius: 22px; background: {{ t.bg }}; color: {{ t.fg }}">{{ t.name }}</button>
+</sc-for>
+<div style="flex-grow: 1"></div>
+<div style="font-size: 12px; color: #A3A3AE">Band 3 of 5</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; flex-grow: 1">
+<sc-for list="{{ values }}" as="p" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; justify-content: space-between">
+<div style="font-size: 13px; color: {{ p.label }}; font-weight: {{ p.weight }}">{{ p.name }}</div>
+<div style="font-size: 40px; font-weight: 500; letter-spacing: -0.04em; line-height: 1; color: {{ p.ink }}">{{ p.value }}<span style="font-size: 14px; letter-spacing: 0"> {{ p.unit }}</span></div>
+<div style="position: relative; height: 3px; border-radius: 2px; background: #3D3D45"><div style="position: absolute; left: {{ p.from }}; width: {{ p.fill }}; height: 3px; border-radius: 2px; background: {{ p.ink }}"></div></div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":500}}'>
+class Component extends DCLogic {
+renderVals() {
+// The curve: five bells and shelves summed, in dB against a log
+// frequency axis 732 wide; 115 is 0 dB and 9 px is 1 dB.
+const bands = [[90, -3, 60], [230, 2, 70], [470, 6, 55], [590, -4, 40], [680, 3, 80]];
+const bell = (x, [at, gain, wide]) => gain * Math.exp(-Math.pow((x - at) / wide, 2));
+const total = (x) => bands.reduce((sum, b) => sum + bell(x, b), 0);
+const y = (db) => 115 - db * 9;
+const xs = Array.from({ length: 123 }, (_, i) => i * 6);
+const path = (fn) => xs.map((x, i) => (i ? 'L' : 'M') + x + ' ' + y(fn(x)).toFixed(1)).join('');
+// The sound under it: columns with gaps, as the meter has segments.
+const columns = Array.from({ length: 52 }, (_, i) => {
+  const x = i * 14 + 2;
+  const level = 0.2 + 0.62 * Math.exp(-Math.pow((x - 240) / 260, 2)) + 0.1 * Math.sin(i * 1.7);
+  const h = Math.max(6, level * 150);
+  return { x, y: (228 - h).toFixed(1), h: h.toFixed(1), o: 0.16 };
+});
+const value = (name, text, unit, from, fill, touched) => ({
+  name, value: text, unit, from, fill,
+  ink: touched ? '#B3A1FF' : '#F4F4F6',
+  label: touched ? '#B3A1FF' : '#A3A3AE',
+  weight: touched ? 600 : 400
+});
+return {
+  columns,
+  curve: path(total),
+  band: path((x) => bell(x, bands[2])) + 'L732 115L0 115Z',
+  nodes: bands.map((b, i) => ({
+    x: b[0], y: y(total(b[0])).toFixed(1),
+    r: i === 2 ? 9 : 6,
+    fill: i === 2 ? '#B3A1FF' : '#F4F4F6'
+  })),
+  tabs: ['1', '2', '3', '4', '5'].map((name, i) => ({
+    name,
+    bg: i === 2 ? '#F4F4F6' : 'transparent',
+    fg: i === 2 ? '#151518' : '#F4F4F6',
+    border: i === 2 ? '0' : '1px solid #4A4A53'
+  })).concat([{ name: 'Add a band', bg: 'transparent', fg: '#A3A3AE', border: '1px dashed #5A5A64' }]),
+  values: [
+    value('Frequency', '2.4', 'kHz', '0%', '64%', true),
+    value('Gain', '+6.0', 'dB', '50%', '17%', true),
+    value('Width', '1.2', 'Q', '0%', '40%', false),
+    value('Shape', 'Bell', '', '0%', '0%', false)
+  ]
+};
+}
+}
+</script>
+</body>
+</html>

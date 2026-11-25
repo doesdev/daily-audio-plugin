@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Direction C, density</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 820px; height: 500px; box-sizing: border-box; background: #D9D9DE; font-family: 'Bricolage Grotesque', sans-serif; color: #151518; position: relative; overflow: hidden">
+<div style="position: absolute; left: 18px; top: 18px; width: 784px; height: 464px; box-sizing: border-box; border-radius: 28px; background: #151518; color: #F4F4F6; padding: 20px 26px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; gap: 12px">
+<div style="font-size: 22px; font-weight: 600; letter-spacing: -0.02em">[A synth]</div>
+<div style="font-size: 13px; color: #9494A0">Filter, sweeping closed</div>
+<div style="flex-grow: 1"></div>
+<div role="group" aria-label="Density" style="display: flex; padding: 3px; border-radius: 22px; background: #232328; font-size: 12px; font-weight: 600">
+<sc-for list="{{ densities }}" as="d" hint-placeholder-count="3">
+<button onClick="{{ d.pick }}" aria-pressed="{{ d.on }}" style="height: 38px; padding: 0 16px; border: 0; border-radius: 19px; background: {{ d.bg }}; color: {{ d.fg }}">{{ d.name }}</button>
+</sc-for>
+</div>
+</div>
+<svg role="img" aria-label="The filter's response, with its cutoff lit" viewBox="0 0 730 150" style="width: 100%; height: 150px">
+<path d="M0 112h730" stroke="#2A2A30" stroke-width="1"/>
+<path d="M0 60H330C390 60 410 16 436 16S478 70 512 112 590 146 730 148" fill="none" stroke="#F4F4F6" stroke-width="1.75" stroke-linecap="round"/>
+<path d="M398 36C414 22 424 16 436 16S458 30 470 54" fill="none" stroke="#B3A1FF" stroke-width="5" stroke-linecap="round"/>
+</svg>
+</div>
+<div style="position: absolute; left: 44px; bottom: 20px; width: 732px; box-sizing: border-box; border-radius: 26px; background: #F6F6F8; padding: 18px 26px 20px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 -10px 30px -12px rgba(0,0,0,0.45), 0 18px 30px -18px rgba(20,20,40,0.4)">
+<sc-if value="{{ roomy }}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; align-items: flex-end; gap: 18px">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+<button onClick="{{ t.pick }}" style="flex: 1 1 0; padding: 0 0 8px; border: 0; border-bottom: 3px solid {{ t.rule }}; background: transparent; color: {{ t.fg }}; text-align: left; display: flex; flex-direction: column; gap: 8px; min-height: 60px; justify-content: flex-end">
+<span style="display: flex; gap: 4px; align-items: flex-end; height: 24px">
+<sc-for list="{{ t.bars }}" as="b" hint-placeholder-count="4"><span style="width: 8px; height: {{ b.h }}; border-radius: 2px; background: {{ t.bar }}"></span></sc-for>
+</span>
+<span style="font-size: 14px; font-weight: 600">{{ t.name }}</span>
+</button>
+</sc-for>
+</div>
+</sc-if>
+<div style="display: grid; grid-template-columns: {{ columns }}; gap: {{ gap }}">
+<sc-for list="{{ shown }}" as="p" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: {{ p.inner }}">
+<div style="font-size: {{ p.labelSize }}; color: #5B5B66; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ p.label }}</div>
+<div style="font-size: {{ p.size }}; font-weight: 500; letter-spacing: -0.04em; line-height: 1; white-space: nowrap">{{ p.value }}<span style="font-size: {{ p.unitSize }}; letter-spacing: 0; color: #5B5B66"> {{ p.unit }}</span></div>
+<div style="height: 3px; border-radius: 2px; background: #DADAE0"><div style="width: {{ p.fill }}; height: 3px; border-radius: 2px; background: #151518"></div></div>
+</div>
+</sc-for>
+</div>
+<div style="font-size: 12px; color: #5B5B66">{{ note }}</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":500}}'>
+class Component extends DCLogic {
+renderVals() {
+const density = (this.state && this.state.density) || 'Roomy';
+const group = this.state && this.state.group != null ? this.state.group : 1;
+const groups = [
+  ['Source', [['Pitch', '+7', 'st', 0.64], ['Shape', '42', '%', 0.42], ['Spread', '12', 'ct', 0.2], ['Noise', '8', '%', 0.08]]],
+  ['Filter', [['Cutoff', '2.4', 'kHz', 0.58], ['Resonance', '35', '%', 0.35], ['Env amount', '+3.2', 'oct', 0.8], ['Key follow', '50', '%', 0.5]]],
+  ['Envelope', [['Attack', '4', 'ms', 0.1], ['Decay', '320', 'ms', 0.45], ['Sustain', '70', '%', 0.7], ['Release', '1.2', 's', 0.6]]]
+];
+// What each density changes: how many settings are top level, and
+// the size of everything on the sheet.
+const sizes = {
+  Roomy: { size: '44px', unit: '14px', label: '13px', inner: '12px', columns: 4, gap: '22px', prefix: false, note: 'Roomy: one group at a time, the others a glance away as charts.' },
+  Regular: { size: '27px', unit: '12px', label: '12px', inner: '7px', columns: 4, gap: '16px 22px', prefix: true, note: 'Regular: all twelve at the top level, a row a group.' },
+  Dense: { size: '20px', unit: '11px', label: '11px', inner: '5px', columns: 6, gap: '14px 16px', prefix: true, note: 'Dense: all twelve in two rows, and the picture gets the room.' }
+};
+const s = sizes[density];
+const roomy = density === 'Roomy';
+const all = groups.flatMap(([name, rows], g) => rows.map((r) => ({ g, name, r })));
+const shown = all.filter((x) => !roomy || x.g === group).map(({ name, r }) => ({
+  label: s.prefix ? name + ' ' + r[0].toLowerCase() : r[0],
+  value: r[1], unit: r[2], fill: (r[3] * 100) + '%',
+  size: s.size, unitSize: s.unit, labelSize: s.label, inner: s.inner
+}));
+return {
+  roomy,
+  shown,
+  note: s.note,
+  gap: s.gap,
+  columns: 'repeat(' + s.columns + ', minmax(0, 1fr))',
+  densities: Object.keys(sizes).map((name) => ({
+    name,
+    on: name === density ? 'true' : 'false',
+    bg: name === density ? '#F4F4F6' : 'transparent',
+    fg: name === density ? '#151518' : '#9494A0',
+    pick: () => this.setState({ density: name })
+  })),
+  tabs: groups.map(([name, rows], g) => ({
+    name,
+    rule: g === group ? '#151518' : '#DADAE0',
+    fg: g === group ? '#151518' : '#5B5B66',
+    bar: g === group ? '#151518' : '#B9B9C2',
+    bars: rows.map((r) => ({ h: Math.max(8, r[3] * 100) + '%' })),
+    pick: () => this.setState({ group: g })
+  }))
+};
+}
+}
+</script>
+</body>
+</html>

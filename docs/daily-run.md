@@ -83,7 +83,7 @@ npm run new -- NAME "Display Name"      # --instrument if it is played
 3. `tests/sound.rs`: what it promises, failing.
 4. The sound, until `cargo test -p NAME` passes.
 5. The editor: `ui/main.js`, `ui/style.css`, to `docs/design.md`.
-   Start with the screen: the picture only this plugin has. An editor
+   Start with the picture on the glass: the picture only this plugin has. An editor
    with no picture, or a stock one, is not finished.
 6. `docs/scenes.json`, `npm run shots -- NAME`, and look at every
    picture. A picture that looks wrong is a bug.

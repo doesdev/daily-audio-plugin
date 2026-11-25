@@ -111,48 +111,51 @@ look, and what to avoid. `ui/main.js` composes the page:
 
 ```js
 import {
-  mount, header, stage, screen, rail, deck, row, rule, knob, choice,
-  meter, footer
+  mount, glass, header, stage, readouts, meter, picture, sheet, values,
+  value, choice, foot
 } from './kit/kit.js'
 
 mount((ui) => [
-  header(ui),                       // name, undo, redo, A/B, theme
-  stage(
-    screen(ui, (pen) => { /* the picture: see below */ }),
-    rail(row(meter(ui.m.input), meter(ui.m.out)), knob(ui.p.output, { ui }))),
-  deck(
-    rule(ui.p.time, { ui }),
-    choice(ui.p.mode, { ui }),
-    rule(ui.p.feedback, { ui, bipolar: true })),
-  footer(ui)                        // what the pointer is over
+  glass(
+    header(ui, { note: 'Tape echo' }),  // name, undo, redo, A/B, density, theme
+    stage(
+      readouts(meter(ui.m.input), meter(ui.m.out)),
+      picture(ui, (pen) => { /* the picture: see below */ }))),
+  sheet(
+    values(                             // four across
+      value(ui.p.time, { ui }),
+      value(ui.p.feedback, { ui }),
+      value(ui.p.pan, { ui, bipolar: true })),
+    foot(ui, choice(ui.p.mode, { ui }))) // and what the pointer is over
 ])
 ```
 
 `ui.p` has a handle for each setting by key, `ui.m` for each meter.
-Pass `{ ui }` to a control so the foot of the page can describe it.
+Pass `{ ui }` to a control so the foot of the sheet can describe it
+and the picture can tell when it is held.
 
-- `rule` is the house control; `knob` is for the one or two settings
-  that earn the room. `choice`, `menu`, `toggle` for lists. `control`
-  picks for you.
-- A control takes `{ tone: 'ok' | 'warn' | 'hot' | 'cool' }` where a
-  colour says what it does, and `{ bipolar: true }` where its setting
-  rests in the middle.
-- A handle has `value` (0 to 1), `plain` (in its own terms), `text`,
-  `row` (its spec), `on(fn)`, and `begin()`, `move(v)`, `end()` or
-  `set(v)` for a gesture, so a control the kit lacks is a few lines.
-  One a second plugin would want goes in `kit/ui/kit.js`, with a test
-  in `kit/ui/test.js`.
+- `value` is the house control: the number is the control. `bipolar`
+  is for a setting that rests inside its range.
+- `choice` is pills for up to four choices, `menu` for more, `toggle`
+  for Off and On. `control(handle)` picks among them from the spec.
+- `meter` is a level: a number over six segments.
+- `mount(auto)` lays out a whole page from the spec alone: a start,
+  never the end. `mount(build, { density: 'regular' })` starts a page
+  with many settings smaller.
+- A control the kit does not have is drawn on the design canvas first
+  if it is not there already, then built from the kit's tokens. One a
+  second plugin would want goes in `kit/ui/kit.js`, with a test in
+  `kit/ui/test.js`.
 
-**The screen is the main job.** `screen(ui, draw)` calls `draw(pen)`
-whenever a setting or a meter moves. `pen.ctx` is a canvas context
-sized in CSS pixels (`pen.width`, `pen.height`), and `pen.ink`,
-`pen.soft`, `pen.line` and `pen.accent` are the screen's colours.
-Draw what only this plugin has, from `ui.p.x.plain` and
-`ui.m.y.value`. The template draws the bend it puts in the signal and
-what that does to a wave as loud as the input.
-
-`mount(auto)` lays out every setting with no more said. It has no
-picture, so it is a place to start and never what ships.
+**The picture is the main job.** `picture(ui, draw)` calls `draw(pen)`
+whenever a setting or a meter moves or a setting is taken hold of.
+`pen.ctx` is a canvas 2D context, `pen.width` and `pen.height` its
+size, `pen.ink`, `pen.soft`, `pen.line` and `pen.accent` the glass's
+colours, and `pen.touched` the key of the setting being dragged now,
+or null. Draw what only this plugin has, from `ui.p.x.plain` and
+`ui.m.y.value`: what goes in dashed, what comes out in `pen.ink`, and
+in `pen.accent` only the part that `pen.touched` shapes. The template
+draws one cycle of a wave before and after its shaper.
 
 `ui/style.css` comes after the kit's and may set its tokens (at the
 top of `kit/ui/kit.css`) or anything else. Every file the page needs
@@ -175,7 +178,7 @@ broken scene.
 
 Values are by key, in the setting's own terms (a number, a choice's
 name, a meter's fraction). A scene is shot in the dark theme unless it
-says `"theme": "light"`; show the editor in both. `steps` can click, slide, drag, hover and type
+says `"theme": "light"`; show the editor in both. `steps` can click, slide, press and hold, hover and type
 before the shot (`scripts/shots.js` lists them). `npm run shots --
 NAME` writes `docs/images/NAME.png` for each.
 
@@ -200,7 +203,9 @@ settings that show what is new about it.
   waveform, spectrum or history can be drawn from the real signal.
   This is the largest gap against the bar in `docs/design.md` and the
   next thing the kit needs.
-- Presets.
+- Presets, and a bypass of the plugin's own.
+- Most of the design canvas beyond the core: `docs/design.md` lists
+  what is drawn and not yet built.
 - State beyond the settings: A/B and undo are forgotten when the
   editor closes.
 - Sidechain inputs, more than one bus, mono-only or surround layouts.

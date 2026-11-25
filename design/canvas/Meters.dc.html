@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Direction C, the level meter</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 820px; height: 500px; box-sizing: border-box; background: #D9D9DE; font-family: 'Bricolage Grotesque', sans-serif; padding: 18px; display: flex; gap: 14px">
+<div style="flex: 3 1 0; border-radius: 28px; background: #151518; color: #F4F4F6; padding: 22px 26px; display: flex; flex-direction: column; justify-content: center; gap: 34px">
+<sc-for list="{{ dark }}" as="m" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: baseline; gap: 10px">
+<div style="font-size: 34px; font-weight: 500; letter-spacing: -0.03em; line-height: 1; width: 96px; color: {{ m.ink }}">{{ m.text }}</div>
+<div style="font-size: 13px; color: #9494A0">{{ m.note }}</div>
+</div>
+<div style="display: flex; gap: 4px; height: 8px">
+<sc-for list="{{ m.zones }}" as="z" hint-placeholder-count="6">
+<div style="flex: {{ z.flex }} 1 0; border-radius: 3px; background: {{ z.dim }}; overflow: hidden"><div style="width: {{ z.fill }}; height: 8px; background: {{ z.lit }}"></div></div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+<div style="display: flex; gap: 4px; font-size: 11px; color: #9494A0; margin-top: -22px">
+<div style="flex: 30 1 0; display: flex; justify-content: flex-end"><span style="transform: translateX(calc(50% + 2px))">-24</span></div>
+<div style="flex: 14 1 0; display: flex; justify-content: flex-end"><span style="transform: translateX(calc(50% + 2px))">-12</span></div>
+<div style="flex: 10 1 0; display: flex; justify-content: flex-end"><span style="transform: translateX(calc(50% + 2px))">-6</span></div>
+<div style="flex: 7 1 0; display: flex; justify-content: flex-end"><span style="transform: translateX(calc(50% + 2px))">-3</span></div>
+<div style="flex: 7 1 0; display: flex; justify-content: flex-end"><span style="transform: translateX(calc(50% + 2px))">0</span></div>
+<div style="flex: 3 1 0"></div>
+</div>
+</div>
+<div style="flex: 2 1 0; display: flex; flex-direction: column; gap: 14px">
+<div style="flex-grow: 1; border-radius: 26px; background: #F6F6F8; color: #151518; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 18px 30px -18px rgba(20,20,40,0.4)">
+<div style="font-size: 13px; color: #5B5B66">On the sheet, a pair</div>
+<sc-for list="{{ light }}" as="m" hint-placeholder-count="2">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; justify-content: space-between">
+<div style="font-size: 13px; color: #5B5B66">{{ m.note }}</div>
+<div style="font-size: 26px; font-weight: 500; letter-spacing: -0.03em; line-height: 1; color: {{ m.ink }}">{{ m.text }}</div>
+</div>
+<div style="display: flex; gap: 3px; height: 6px">
+<sc-for list="{{ m.zones }}" as="z" hint-placeholder-count="6">
+<div style="flex: {{ z.flex }} 1 0; border-radius: 2px; background: {{ z.dim }}; overflow: hidden"><div style="width: {{ z.fill }}; height: 6px; background: {{ z.lit }}"></div></div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+<div style="font-size: 13px; color: #5B5B66; margin-top: 10px">Dense, on one line</div>
+<sc-for list="{{ light }}" as="m" hint-placeholder-count="2">
+<div style="display: flex; align-items: center; gap: 10px">
+<div style="width: 28px; font-size: 12px; color: #5B5B66">{{ m.note }}</div>
+<div style="flex-grow: 1; display: flex; gap: 3px; height: 4px">
+<sc-for list="{{ m.zones }}" as="z" hint-placeholder-count="6">
+<div style="flex: {{ z.flex }} 1 0; border-radius: 2px; background: {{ z.dim }}; overflow: hidden"><div style="width: {{ z.fill }}; height: 4px; background: {{ z.lit }}"></div></div>
+</sc-for>
+</div>
+<div style="width: 38px; text-align: right; font-size: 15px; font-weight: 500; letter-spacing: -0.02em; color: {{ m.ink }}">{{ m.text }}</div>
+</div>
+</sc-for>
+</div>
+<div style="border-radius: 26px; background: #F6F6F8; color: #5B5B66; padding: 18px 24px; font-size: 13px; line-height: 1.45; box-shadow: 0 18px 30px -18px rgba(20,20,40,0.4)">
+Six segments with space between, no gradient. Breaks at <span style="color: #151518; font-weight: 600">-24, -12, -6, -3 and 0 dB</span>, and the top of the scale is stretched so the last 12 dB get half the bar. The number takes its zone's colour from yellow up. The last segment is the clip lamp: it stays lit until clicked.
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":500}}'>
+class Component extends DCLogic {
+renderVals() {
+// Each zone: where it ends in dB, how much of the bar it gets, and
+// its colour on the dark glass and on the light sheet.
+const zones = [
+  { to: -24, from: -60, flex: 30, dark: '#F4F4F6', light: '#151518' },
+  { to: -12, from: -24, flex: 14, dark: '#5FCB8E', light: '#23895A' },
+  { to: -6, from: -12, flex: 10, dark: '#F2C94B', light: '#A87A08' },
+  { to: -3, from: -6, flex: 7, dark: '#F2994B', light: '#C2601A' },
+  { to: 0, from: -3, flex: 7, dark: '#F0605A', light: '#C93A33' }
+];
+const tint = (hex, a) => {
+  const n = parseInt(hex.slice(1), 16);
+  return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+};
+const meter = (db, clipped, text, note, ground) => {
+  const cells = zones.map((z) => {
+    const part = Math.max(0, Math.min(1, (db - z.from) / (z.to - z.from)));
+    return { flex: z.flex, lit: z[ground], dim: tint(z[ground], 0.2), fill: (part * 100) + '%' };
+  });
+  const red = zones[4][ground];
+  cells.push({ flex: 3, lit: red, dim: tint(red, 0.2), fill: clipped ? '100%' : '0%' });
+  const at = zones.findIndex((z) => db <= z.to);
+  const zone = zones[at < 0 ? 4 : at];
+  const plain = ground === 'dark' ? '#F4F4F6' : '#151518';
+  return { text, note, zones: cells, ink: clipped ? red : (at >= 2 || at < 0 ? zone[ground] : plain) };
+};
+return {
+  dark: [
+    meter(-31, false, '-31', 'Quiet: ink only', 'dark'),
+    meter(-14, false, '-14', 'Healthy: into the green', 'dark'),
+    meter(-4.2, false, '-4.2', 'Hot: the number turns with it', 'dark'),
+    meter(0, true, '0.0', 'Clipped: the lamp stays lit', 'dark')
+  ],
+  light: [
+    meter(-13, false, '-13', 'In', 'light'),
+    meter(-4.8, false, '-4.8', 'Out', 'light')
+  ]
+};
+}
+}
+</script>
+</body>
+</html>

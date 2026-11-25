@@ -30,8 +30,8 @@ npm run docs -- NAME
   (`docs/design.md`, "The bar"), and says in `NOVELTY.md` where it
   does not. It is built round a picture only that plugin has.
 - An editor follows `docs/design.md`: mostly one tone with depth,
-  purple only for a value, any other colour only when it is news, and
-  none of the habits listed under "What it avoids".
+  purple only for what is being touched, any other colour only when it
+  is news, and none of the habits listed under "What it avoids".
 - Say what was not verified. Off Windows that is the WebView2 editor
   tests and both validators.
 - No em or en dashes in any doc.

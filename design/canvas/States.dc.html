@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Direction C, how a value behaves</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 820px; height: 500px; box-sizing: border-box; background: #D9D9DE; font-family: 'Bricolage Grotesque', sans-serif; color: #151518; padding: 18px; display: flex; flex-direction: column; gap: 14px">
+<div style="border-radius: 26px; background: #F6F6F8; padding: 16px 26px; box-shadow: 0 18px 30px -18px rgba(20,20,40,0.4); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 26px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 12px; color: #5B5B66">At rest</div>
+<div style="font-size: 13px; color: #5B5B66">Drive</div>
+<div style="font-size: 46px; font-weight: 500; letter-spacing: -0.04em; line-height: 1">12.0<span style="font-size: 14px; letter-spacing: 0; color: #5B5B66"> dB</span></div>
+<div style="height: 3px; border-radius: 2px; background: #DADAE0"><div style="width: 33%; height: 3px; border-radius: 2px; background: #151518"></div></div>
+<div style="font-size: 12px; color: #5B5B66; line-height: 1.4">Ink only. The line under it shows where it sits in its range.</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 12px; color: #5B5B66">Pointer over</div>
+<div style="font-size: 13px; color: #151518; font-weight: 600">Drive</div>
+<div style="font-size: 46px; font-weight: 500; letter-spacing: -0.04em; line-height: 1">12.0<span style="font-size: 14px; letter-spacing: 0; color: #5B5B66"> dB</span></div>
+<div style="position: relative; height: 3px; border-radius: 2px; background: #DADAE0"><div style="width: 33%; height: 3px; border-radius: 2px; background: #151518"></div><div style="position: absolute; left: 33%; top: -5px; width: 3px; height: 13px; margin-left: -1px; border-radius: 2px; background: #151518"></div></div>
+<div style="font-size: 12px; color: #5B5B66; line-height: 1.4">A grip appears on the line, and the foot of the window says what Drive does.</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 12px; color: #5B5B66">Dragging</div>
+<div style="font-size: 13px; color: #6142D6; font-weight: 600">Drive</div>
+<div style="font-size: 46px; font-weight: 500; letter-spacing: -0.04em; line-height: 1; color: #6142D6">24.5<span style="font-size: 14px; letter-spacing: 0"> dB</span></div>
+<div style="position: relative; height: 3px; border-radius: 2px; background: #DADAE0"><div style="width: 68%; height: 3px; border-radius: 2px; background: #6142D6"></div><div style="position: absolute; left: 68%; top: -5px; width: 3px; height: 13px; margin-left: -1px; border-radius: 2px; background: #6142D6"></div><div style="position: absolute; left: 33%; top: -3px; width: 1px; height: 9px; background: #8A8A96"></div></div>
+<div style="display: flex; justify-content: space-between; font-size: 11px; color: #5B5B66"><div>0</div><div>36 dB</div></div>
+<div style="font-size: 12px; color: #5B5B66; line-height: 1.4">Purple while it moves. The range and the default mark show only now.</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 12px; color: #5B5B66">Typing</div>
+<label for="drive-entry" style="font-size: 13px; color: #6142D6; font-weight: 600">Drive</label>
+<input id="drive-entry" type="text" value="18" style="width: 100%; box-sizing: border-box; font: inherit; font-size: 46px; font-weight: 500; letter-spacing: -0.04em; line-height: 1; height: 46px; padding: 0; border: 0; border-bottom: 3px solid #6142D6; border-radius: 0; background: transparent; color: #151518; outline: none">
+<div style="font-size: 12px; color: #5B5B66; line-height: 1.4">Double-click to type. Enter sets it, Escape leaves it. <span style="color: #151518">8k</span> and <span style="color: #151518">-6</span> both work.</div>
+</div>
+</div>
+<div style="flex-grow: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+<div style="border-radius: 22px; background: #F6F6F8; padding: 18px 22px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 18px 30px -18px rgba(20,20,40,0.4)">
+<div style="font-size: 13px; color: #5B5B66">A choice of a few</div>
+<div style="display: flex; gap: 6px; font-size: 13px; font-weight: 500">
+<button style="height: 44px; padding: 0 18px; border: 0; border-radius: 22px; background: #151518; color: #F4F4F6">Soft</button>
+<button style="height: 44px; padding: 0 18px; border: 1px solid #C9C9D0; border-radius: 22px; background: transparent; color: #151518">Hard</button>
+<button style="height: 44px; padding: 0 18px; border: 1px solid #C9C9D0; border-radius: 22px; background: transparent; color: #151518">Fold</button>
+</div>
+<div style="font-size: 13px; color: #5B5B66; margin-top: 4px">On or off</div>
+<div style="display: flex; align-items: center; gap: 12px">
+<button role="switch" aria-checked="true" aria-label="Freeze" style="width: 64px; height: 44px; padding: 0 4px; border: 0; border-radius: 22px; background: #6142D6; display: flex; align-items: center; justify-content: flex-end"><span style="width: 36px; height: 36px; border-radius: 18px; background: #FFFFFF; display: block"></span></button>
+<div style="font-size: 26px; font-weight: 500; letter-spacing: -0.03em">Freeze on</div>
+</div>
+</div>
+<div style="border-radius: 22px; background: #F6F6F8; padding: 18px 22px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 18px 30px -18px rgba(20,20,40,0.4)">
+<div style="font-size: 13px; color: #5B5B66">A choice of many</div>
+<button style="display: flex; align-items: baseline; justify-content: space-between; padding: 0 0 8px; border: 0; border-bottom: 3px solid #151518; background: transparent; color: #151518; text-align: left"><span style="font-size: 34px; font-weight: 500; letter-spacing: -0.03em">Dorian</span><svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5l4 4 4-4"/></svg></button>
+<div style="display: flex; flex-direction: column; font-size: 15px; color: #5B5B66; gap: 6px; margin-top: 2px">
+<div>Ionian</div>
+<div style="color: #6142D6; font-weight: 600">Dorian</div>
+<div>Phrygian</div>
+</div>
+</div>
+<div style="border-radius: 22px; background: #151518; color: #F4F4F6; padding: 18px 22px; display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 13px; color: #9494A0">A level, on the glass</div>
+<div style="display: flex; gap: 22px">
+<div><div style="font-size: 12px; color: #9494A0">In</div><div style="font-size: 34px; font-weight: 500; letter-spacing: -0.03em">-13</div></div>
+<div><div style="font-size: 12px; color: #9494A0">Out</div><div style="font-size: 34px; font-weight: 500; letter-spacing: -0.03em; color: #F0605A">-1.2</div></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; gap: 4px; height: 8px"><div style="flex: 30 1 0; border-radius: 3px; background: #F4F4F633; overflow: hidden"><div style="width: 100%; height: 8px; background: #F4F4F6"></div></div><div style="flex: 14 1 0; border-radius: 3px; background: #5FCB8E33; overflow: hidden"><div style="width: 92%; height: 8px; background: #5FCB8E"></div></div><div style="flex: 10 1 0; border-radius: 3px; background: #F2C94B33; overflow: hidden"><div style="width: 0%; height: 8px; background: #F2C94B"></div></div><div style="flex: 7 1 0; border-radius: 3px; background: #F2994B33; overflow: hidden"><div style="width: 0%; height: 8px; background: #F2994B"></div></div><div style="flex: 7 1 0; border-radius: 3px; background: #F0605A33; overflow: hidden"><div style="width: 0%; height: 8px; background: #F0605A"></div></div><div style="flex: 3 1 0; border-radius: 3px; background: #F0605A33; overflow: hidden"><div style="width: 0%; height: 8px; background: #F0605A"></div></div></div>
+<div style="display: flex; gap: 4px; height: 8px"><div style="flex: 30 1 0; border-radius: 3px; background: #F4F4F633; overflow: hidden"><div style="width: 100%; height: 8px; background: #F4F4F6"></div></div><div style="flex: 14 1 0; border-radius: 3px; background: #5FCB8E33; overflow: hidden"><div style="width: 100%; height: 8px; background: #5FCB8E"></div></div><div style="flex: 10 1 0; border-radius: 3px; background: #F2C94B33; overflow: hidden"><div style="width: 100%; height: 8px; background: #F2C94B"></div></div><div style="flex: 7 1 0; border-radius: 3px; background: #F2994B33; overflow: hidden"><div style="width: 100%; height: 8px; background: #F2994B"></div></div><div style="flex: 7 1 0; border-radius: 3px; background: #F0605A33; overflow: hidden"><div style="width: 60%; height: 8px; background: #F0605A"></div></div><div style="flex: 3 1 0; border-radius: 3px; background: #F0605A33; overflow: hidden"><div style="width: 0%; height: 8px; background: #F0605A"></div></div></div>
+</div>
+<div style="font-size: 12px; color: #9494A0; line-height: 1.4">The number is the meter: the highest recent peak. It takes its zone's colour from yellow up.</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":500}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

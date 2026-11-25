@@ -38,121 +38,108 @@ today" is an answer. Silence is not.
 
 | | How |
 |---|---|
-| A picture | `screen(ui, draw)`: dark glass to draw on, redrawn as settings and meters move. What to draw is the plugin's job, and its main one. |
-| Precision | Drag, Shift to go a tenth as fast, wheel and arrow keys by a step, double-click for the default, double-click a value (or Enter) to type one: `8k`, `1.2k Hz`, `-6`, the name of a choice. |
+| A picture | `picture(ui, draw)`: the glass to draw on, redrawn as settings and meters move or are taken hold of. What to draw is the plugin's job, and its main one. |
+| Precision | Drag a number, Shift to go a tenth as fast, wheel and arrow keys by a step, double-click its line for the default, double-click the number (or Enter) to type one: `8k`, `1.2k Hz`, `-6`, the name of a choice. While it is held, the ends of its range and its default are shown. |
 | Compare and recover | Undo and redo (the buttons, Ctrl+Z, Ctrl+Shift+Z) and an A/B switch, in every header. Each step goes to the host as a proper gesture. |
-| Explains itself | The foot of the page says what the control under the pointer is and does, from the spec's `about`. Write an `about` for every setting. |
-| Fits the screen | The page is drawn at the spec's size and scaled whole to whatever window the host gives it. |
+| Explains itself | The foot of the sheet says what the control under the pointer is and does, from the spec's `about`. Write an `about` for every setting. |
+| Fits the screen | The page is drawn at the spec's size and scaled whole to whatever window the host gives it. Density (Roomy, Regular, Dense) trades the size of the numbers for room on the glass. |
 | A character | The house look, below. |
 
 ### Where the kit is still under the bar
 
 Be plain about these in `NOVELTY.md` until they are fixed:
 
-- **No live signal on the screen.** Only settings and meters reach the
+- **No live signal on the glass.** Only settings and meters reach the
   page, so a picture can show what the plugin *would* do to a signal
   of the level coming in, not the signal itself: no waveform, no
   spectrum, no history of gain reduction. This is the biggest gap and
   the next thing the kit needs.
-- **No presets.**
+- **No presets and no bypass of its own**, though the design has a
+  place for both in the header.
 - **A and B and the undo history are forgotten** when the editor is
   closed; only the settings themselves are saved.
 - **No modulation or MIDI learn**, which the leading synths have.
 
+## The design, and what of it is built
+
+The look was settled on a design canvas before any of it was built
+(`docs/decisions/0007-direction-c.md`). The canvas holds more than the
+kit has yet. Built: the glass and the sheet, the number as the
+control, pills, a menu, a switch, the segmented level, the header's
+tools, density, both themes. Drawn and agreed but not built: the
+fader and the metering fader, settings in groups with a small chart
+for each, the visual equaliser, gain reduction, the stereo fan,
+linked, opposed, mirrored and span controls, the envelope and
+modulation in blue, the keyboard and the pad, the preset browser, the
+settings panel, a value's menu, help mode, and the empty and error
+states. Each is built from the canvas when a plugin first needs it,
+with its own tests, and not redesigned on the way.
+
 ## Depth
 
-The body has three depths and light comes from above:
-
-- **Cut in**: slots, wells and the screen. Darker than the body, dark
-  along the top edge, with a line of light under the bottom lip.
-- **The body**: the page itself, one flat tone.
-- **Standing off**: the deck and the rail, a rule's grip, a knob's
-  cap, the chosen key. A touch lighter at the top than the bottom,
-  bright along the top edge, a soft shadow below.
-
-Everything you move stands off. Everything it moves in is cut in. That
-is the whole grammar, and it is why depth here is not decoration: it
-says what can be taken hold of. A thing held presses down (its shadow
-tightens) and takes a purple edge.
-
-The screen is dark glass in both themes. In the light theme it is the
-one dark thing on the page, as a display is on a piece of equipment.
+Two things, one over the other. A **glass**, near black in both
+themes, holds the picture. A **sheet** in the theme's own tone holds
+the settings and lies over the lower edge of the glass, with a shadow
+under it. That overlap is the depth: no bevels, no inner glows, no
+borders round groups. In the dark theme the sheet is the lighter of
+two dark greys and the glass takes a hairline edge, so the two still
+stand apart.
 
 ## Colour
 
-Mostly one tone. The greys are neutral with a breath of blue; the
-off-white is cool, not cream.
+Mostly one tone: ink on the sheet, off-white on the glass, and one
+softer tone of each for what matters less. Colour is spent on three
+things only.
 
-| Token | Dark | Light | What it is |
-|-------|------|-------|------------|
-| `--ground` | `#19191c` | `#dfdfe3` | The body |
-| `--body-top`, `--body` | `#2b2b30`, `#232327` | `#fbfbfc`, `#efeff1` | A raised panel, top to bottom |
-| `--cut` | `#131316` | `#d4d4d9` | Anything cut in |
-| `--grip-top`, `--grip` | `#4a4a52`, `#36363c` | `#ffffff`, `#ececef` | Anything you take hold of |
-| `--line` | `#3b3b42` | `#c4c4cb` | Printed marks: a rule's, a scale's |
-| `--ink`, `--ink-soft` | `#ececef`, `#9d9da7` | `#1c1c20`, `#5f5f69` | Text you read; text you glance at |
-| `--accent` | `#a690ff` | `#6a4ad4` | The value |
-| `--screen` | `#101013` | `#101013` | The glass |
+- **Purple means: this is what you are touching.** A setting's name,
+  number and line turn purple while it is dragged or typed, and what
+  it shapes in the picture turns with it. Let go and it is ink again.
+  Nothing is purple at rest but a switch that is on.
+- **A level's colour is news.** Ink up to -24 dB, then green, yellow,
+  orange and red, in segments with space between and no gradient. The
+  number takes its segment's colour from yellow up.
+- **Blue means a setting is being moved for you** (modulation). It is
+  agreed on the canvas and reserved; the kit does not draw it yet.
 
-**Purple means the value, and nothing else.** A rule's fill and the
-index on its grip, a knob's pointer, the chosen key's lettering, a
-switch that is on, the lit part of a drawing on the screen, the focus
-ring. If a thing is purple and is not where a setting is, or the
-focus, it is wrong.
-
-**Any other colour is news.** A level meter is ink, not a traffic
-light: its column is the colour of text until the top 6 dB, which
-warm, and a clip lights a small red lamp that stays lit until it is
-clicked. A control may take a `tone` (`ok`, `warn`, `hot`, `cool`)
-when the colour says what the control does. Most editors use none.
+The tokens are at the top of `kit/ui/kit.css`: the sheet's (`--ink`,
+`--soft`, `--track`, `--touch`), the glass's (`--g-ink`, `--g-soft`,
+`--g-line`, `--g-touch`) and a level's zones (`--z-green` and so on,
+which differ on the light sheet so they hold their contrast).
 
 ## The controls
 
-Each was designed from its job, not from the usual picture of it.
+- **A value** (`value`): the number is the control. Its name, the
+  number large with its unit small, and under it a 3 pixel line that
+  shows where it sits in its range. A grip shows on the line under the
+  pointer. A setting that rests inside its range, such as a trim or a
+  pan, takes `bipolar` and fills from its default, with a mark there.
+- **A choice of a few** (`choice`): pills, the chosen one filled in.
+- **A choice of many** (`menu`): the choice written large over a line.
+- **On or off** (`toggle`): a switch, and beside it what it is and
+  which it is, in words.
+- **A level** (`meter`): the number is the meter, with six segments
+  under it breaking at -24, -12, -6, -3 and 0 dB. The top of the scale
+  is stretched so the last 12 dB get half the bar. The last segment is
+  the clip lamp and stays lit until clicked.
 
-- **Rule** (`rule`), the house control. A setting on one line: its
-  title, a ruled slot with a grip, its value. The scale is printed on
-  the panel, a small mark shows the default, and the travel from rest
-  to the grip is filled. Titles and values line up down a deck, so a
-  page of settings reads like a table. It is used instead of a bank
-  of knobs because a rule shows where a setting is in its range at a
-  glance, takes a fifth of the room, and drags the way it looks.
-- **Knob** (`knob`), for the one or two settings that earn the room,
-  usually the output. A plain turned cap on a skirt, three marks on
-  its scale (least, default, most), and a purple pointer. No arc, no
-  ring of lights.
-- **Keys** (`choice`), a slot with the chosen key standing up.
-- **Switch** (`toggle`), **menu** (`menu`).
-- **Meter** (`meter`), a column of ink in a slot against a scale
-  printed beside it, the peak held as a line for a moment, the level
-  as a number beneath, and a clip lamp.
-- **Screen** (`screen`), the picture.
+Anything pressed is at least 44 pixels (38 at Regular, 32 at Dense).
 
 ### On pictures, meters and waves
 
-These are where an editor most easily becomes every other editor. So:
-
-- Draw the thing only this plugin has. Ask what its one idea looks
-  like, not which standard display it could have.
-- Do not draw a waveform or a spectrum because audio plugins have
-  them. Draw one if it is how this plugin's effect is best seen, and
-  then draw the *difference* the plugin makes, not just the signal.
-- On the screen: thin ink for what is fixed, dashed soft ink for what
-  the signal would have been, purple for what is happening now. No
-  glow, no gradient fill under a curve, no neon.
-- A meter is a reading, so it is ink. Do not colour it to liven the
-  page.
-- If the picture is computed from the settings rather than measured
-  from the sound, it must still be true: the same arithmetic as the
-  audio code, and tested if it is more than a line.
+These are where an editor most easily turns into every other editor.
+One way of drawing, whatever is drawn: what went in is dashed or dim,
+what comes out is solid ink, what is being touched is purple. Columns
+and blocks have gaps. Nothing glows and nothing is filled with a
+gradient. Each plugin picks the one picture that shows its idea, and
+may invent another in the same hand.
 
 ## Type
 
-One family, Archivo, carried in the page so an editor looks the same
-in every host and in its screenshots. Its width axis does the work a
-second typeface would: the name is wide (114%, weight 680), a title a
-little narrow (94%), values are weight 560 with tabular figures so
-they do not jitter as they change. Sentence case throughout.
+One family, Bricolage Grotesque, carried in the page so an editor
+looks the same in every host and in the screenshots. Numbers are set
+at 46 pixels (34, 26 by density), weight 500, tightly spaced; names
+and notes at 13, in sentence case. No capitals for labels, no
+monospace for numbers.
 
 ## What it avoids
 
@@ -162,7 +149,8 @@ plugin's page should not bring one back:
 - labels in capitals, or letter-spaced;
 - a monospace face for numbers;
 - every group in the same rounded card, whatever it is;
-- a knob as an arc or a ring of lights; a meter as green, amber, red;
+- a knob as an arc or a ring of lights; a meter as one bar fading
+  from green to red;
 - a glow, or a gradient under a curve, as decoration;
 - a near-black ground with one bright accent, or a cream ground with
   a serif and a clay accent;
@@ -172,12 +160,12 @@ plugin's page should not bring one back:
 
 ## Making a plugin's editor its own
 
-Spend the effort on the screen. The controls should look like the
+Spend the effort on the picture. The controls should look like the
 house's; the picture should look like nothing else. A control the kit
-does not have is built from the same three depths and the same
-tokens, and goes in the kit if a second plugin would want it. A
-plugin's `ui/style.css` may set any token; changing `--accent` away
-from purple needs a reason a person would accept.
+does not have is drawn on the canvas first if it is not there, built
+from the same tokens, and goes in the kit if a second plugin would
+want it. A plugin's `ui/style.css` may set any token; changing
+`--touch` away from purple needs a reason a person would accept.
 
 ## Checking it
 

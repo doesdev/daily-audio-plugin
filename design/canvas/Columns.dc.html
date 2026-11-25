@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Direction B, Columns</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 820px; height: 500px; box-sizing: border-box; padding: 22px 24px; background: #111113; font-family: 'Inter Tight', sans-serif; color: #F2F2F4; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; align-items: center; gap: 10px">
+<div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Template</div>
+<div style="font-size: 13px; color: #8F8F9A">Soft bend, 12 dB in</div>
+<div style="flex-grow: 1"></div>
+<button aria-label="Undo" style="width: 44px; height: 36px; border: 1px solid #2A2A30; border-radius: 10px; background: transparent; color: #B5B5BF"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4 3 7l3 3M3 7h7a3 3 0 0 1 0 6H8"/></svg></button>
+<div style="display: flex; border: 1px solid #2A2A30; border-radius: 10px; overflow: hidden; font-size: 12px; font-weight: 600">
+<button style="width: 40px; height: 34px; border: 0; background: #F2F2F4; color: #111113">A</button>
+<button style="width: 40px; height: 34px; border: 0; background: transparent; color: #8F8F9A">B</button>
+</div>
+<button aria-label="Switch to the light theme" style="width: 44px; height: 36px; border: 1px solid #2A2A30; border-radius: 10px; background: transparent; color: #B5B5BF"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" fill="currentColor"/></svg></button>
+</div>
+<div style="flex-grow: 1; display: flex; gap: 22px">
+<div style="width: 300px; border-radius: 18px; background: #18181B; border: 1px solid #232328; padding: 18px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px">
+<svg role="img" aria-label="The bend the plugin puts in the signal, with the part in use lit" viewBox="0 0 220 220" style="flex-grow: 1">
+<path d="M10 110h200M110 10v200" stroke="#26262B" stroke-width="1"/>
+<path d="M10 210 210 10" stroke="#3A3A42" stroke-width="1.5" stroke-dasharray="2 6" stroke-linecap="round"/>
+<path d="M10 210C80 210 95 190 110 110S140 10 210 10" fill="none" stroke="#F2F2F4" stroke-width="1.75" stroke-linecap="round"/>
+<path d="M88 172C98 152 104 140 110 110S122 68 132 48" fill="none" stroke="#A690FF" stroke-width="6" stroke-linecap="round"/>
+</svg>
+<div style="display: flex; justify-content: space-between; font-size: 12px; color: #8F8F9A">
+<div>In <span style="color: #F2F2F4; font-weight: 600">-13 dB</span></div>
+<div>Out <span style="color: #F2F2F4; font-weight: 600">-8 dB</span></div>
+</div>
+</div>
+<div style="flex-grow: 1; display: flex; gap: 14px; align-items: stretch">
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 10px">
+<div><div style="font-size: 26px; font-weight: 600; letter-spacing: -0.03em; color: #C9BCFF">12.0</div><div style="font-size: 11px; color: #8F8F9A">dB</div></div>
+<div style="flex-grow: 1; border-radius: 12px; background: #1B1B1F; display: flex; align-items: flex-end; overflow: hidden"><div style="width: 100%; height: 33%; background: #A690FF; border-radius: 12px 12px 0 0"></div></div>
+<div style="font-size: 13px; font-weight: 600; color: #C9BCFF">Drive</div>
+</div>
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 10px">
+<div><div style="font-size: 26px; font-weight: 600; letter-spacing: -0.03em">Soft</div><div style="font-size: 11px; color: #8F8F9A">1 of 3</div></div>
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px">
+<div style="flex-grow: 1; border-radius: 12px; background: #1B1B1F"></div>
+<div style="flex-grow: 1; border-radius: 12px; background: #1B1B1F"></div>
+<div style="flex-grow: 1; border-radius: 12px; background: #F2F2F4"></div>
+</div>
+<div style="font-size: 13px; font-weight: 500; color: #B5B5BF">Shape</div>
+</div>
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 10px">
+<div><div style="font-size: 26px; font-weight: 600; letter-spacing: -0.03em">6.0</div><div style="font-size: 11px; color: #8F8F9A">kHz</div></div>
+<div style="flex-grow: 1; border-radius: 12px; background: #1B1B1F; display: flex; align-items: flex-end; overflow: hidden"><div style="width: 100%; height: 72%; background: #3A3A42; border-radius: 12px 12px 0 0"></div></div>
+<div style="font-size: 13px; font-weight: 500; color: #B5B5BF">Tone</div>
+</div>
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 10px">
+<div><div style="font-size: 26px; font-weight: 600; letter-spacing: -0.03em">100</div><div style="font-size: 11px; color: #8F8F9A">%</div></div>
+<div style="flex-grow: 1; border-radius: 12px; background: #3A3A42"></div>
+<div style="font-size: 13px; font-weight: 500; color: #B5B5BF">Mix</div>
+</div>
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 10px">
+<div><div style="font-size: 26px; font-weight: 600; letter-spacing: -0.03em">-6.0</div><div style="font-size: 11px; color: #8F8F9A">dB</div></div>
+<div style="flex-grow: 1; border-radius: 12px; background: #1B1B1F; display: flex; align-items: flex-end; overflow: hidden"><div style="width: 100%; height: 50%; background: #3A3A42; border-radius: 12px 12px 0 0"></div></div>
+<div style="font-size: 13px; font-weight: 500; color: #B5B5BF">Output</div>
+</div>
+<div style="width: 1px; background: #232328"></div>
+<div style="display: flex; gap: 6px; padding-top: 52px; padding-bottom: 26px">
+<div style="width: 10px; border-radius: 5px; background: #1B1B1F; display: flex; align-items: flex-end"><div style="width: 10px; height: 78%; border-radius: 5px; background: #F2F2F4"></div></div>
+<div style="width: 10px; border-radius: 5px; background: #1B1B1F; display: flex; align-items: flex-end"><div style="width: 10px; height: 86%; border-radius: 5px; background: #F2F2F4"></div></div>
+</div>
+</div>
+</div>
+<div style="font-size: 12px; color: #8F8F9A"><span style="font-weight: 600; color: #F2F2F4">Drive</span> How hard the signal is pushed into the shaper. Pull the column up or down, or type a value.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":500}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

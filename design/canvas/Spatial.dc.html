@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Direction C, the stereo field</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 820px; height: 500px; box-sizing: border-box; background: #D9D9DE; font-family: 'Bricolage Grotesque', sans-serif; color: #151518; position: relative; overflow: hidden">
+<div style="position: absolute; left: 18px; top: 18px; width: 784px; height: 340px; box-sizing: border-box; border-radius: 28px; background: #151518; color: #F4F4F6; padding: 20px 26px; display: flex; gap: 26px">
+<div style="display: flex; flex-direction: column; gap: 4px; width: 420px">
+<div style="display: flex; align-items: baseline; gap: 12px">
+<div style="font-size: 22px; font-weight: 600; letter-spacing: -0.02em">[A widener]</div>
+<div style="font-size: 13px; color: #9494A0">where the sound sits, left to right</div>
+</div>
+<svg role="img" aria-label="The stereo field as a fan: left to right across, louder further out" viewBox="0 0 420 220" style="width: 363px; height: 190px; align-self: center">
+<sc-for list="{{ fan }}" as="s" hint-placeholder-count="55">
+<path d="{{ s.d }}" fill="{{ s.fill }}" fill-opacity="{{ s.o }}"/>
+</sc-for>
+<text x="14" y="216" font-size="12" fill="#9494A0">L</text>
+<text x="398" y="216" font-size="12" fill="#9494A0">R</text>
+</svg>
+</div>
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 18px; padding-top: 44px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: baseline; justify-content: space-between">
+<div style="font-size: 13px; color: #9494A0">In phase</div>
+<div style="font-size: 30px; font-weight: 500; letter-spacing: -0.03em; line-height: 1">+0.62</div>
+</div>
+<div style="display: flex; gap: 4px; height: 8px">
+<sc-for list="{{ phase }}" as="z" hint-placeholder-count="6">
+<div style="flex: 1 1 0; border-radius: 3px; background: {{ z.dim }}; display: flex; justify-content: {{ z.side }}; overflow: hidden"><div style="width: {{ z.fill }}; height: 8px; background: {{ z.lit }}"></div></div>
+</sc-for>
+</div>
+<div style="display: flex; justify-content: space-between; font-size: 11px; color: #9494A0"><div>-1 cancels in mono</div><div>0</div><div>+1</div></div>
+</div>
+<div style="display: flex; gap: 22px">
+<div><div style="font-size: 12px; color: #9494A0">Leans</div><div style="font-size: 20px; font-weight: 500; letter-spacing: -0.02em">1.2 dB left</div></div>
+<div><div style="font-size: 12px; color: #9494A0">Width</div><div style="font-size: 20px; font-weight: 500; letter-spacing: -0.02em">68 %</div></div>
+</div>
+</div>
+</div>
+<div style="position: absolute; left: 44px; top: 278px; width: 732px; height: 202px; box-sizing: border-box; border-radius: 26px; background: #F6F6F8; padding: 20px 26px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 -10px 30px -12px rgba(0,0,0,0.45), 0 18px 30px -18px rgba(20,20,40,0.4)">
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; flex-grow: 1">
+<sc-for list="{{ values }}" as="p" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; justify-content: space-between">
+<div style="font-size: 13px; color: #5B5B66">{{ p.name }}</div>
+<div style="font-size: 42px; font-weight: 500; letter-spacing: -0.04em; line-height: 1">{{ p.value }}<span style="font-size: 14px; letter-spacing: 0; color: #5B5B66"> {{ p.unit }}</span></div>
+<div style="position: relative; height: 3px; border-radius: 2px; background: #DADAE0"><div style="position: absolute; left: {{ p.from }}; width: {{ p.fill }}; height: 3px; border-radius: 2px; background: #151518"></div><div style="position: absolute; left: {{ p.centre }}; top: -3px; width: 1px; height: 9px; background: #8A8A96"></div></div>
+</div>
+</sc-for>
+</div>
+<div style="font-size: 12px; color: #5B5B66; line-height: 1.4">The field is the meter's segments bent into a fan, so it reads the same way. A setting that rests in the middle, like <span style="color: #151518; font-weight: 600">Pan</span>, fills from the middle out and says which way in words.</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":500}}'>
+class Component extends DCLogic {
+renderVals() {
+// The fan: 11 directions from hard left to hard right, each a stack
+// of 5 segments out from the centre, lit as far as that direction is
+// loud. Made-up energy: most in the middle, leaning a little left.
+const [cx, cy] = [210, 206];
+const at = (r, deg) => {
+  const a = deg * Math.PI / 180;
+  return (cx + r * Math.sin(a)).toFixed(1) + ' ' + (cy - r * Math.cos(a)).toFixed(1);
+};
+const sector = (a0, a1, r0, r1) => 'M' + at(r0, a0) + 'L' + at(r1, a0) +
+  'A' + r1 + ' ' + r1 + ' 0 0 1 ' + at(r1, a1) + 'L' + at(r0, a1) +
+  'A' + r0 + ' ' + r0 + ' 0 0 0 ' + at(r0, a0) + 'Z';
+const energy = [0.15, 0.3, 0.5, 0.75, 0.9, 1, 0.8, 0.55, 0.4, 0.2, 0.1];
+const fan = energy.flatMap((e, i) => Array.from({ length: 5 }, (_, ring) => {
+  const a0 = -88 + i * 16;
+  const r0 = 40 + ring * 32;
+  const lit = e * 5 > ring + 0.5;
+  return { d: sector(a0 + 1.4, a0 + 14.6, r0, r0 + 27), fill: '#F4F4F6', o: lit ? 1 : 0.14 };
+}));
+// Correlation: six segments, three each side of zero, lit from the
+// middle. Out of phase is the side that matters, so it has colour.
+const corr = 0.62;
+const lits = ['#F0605A', '#F2994B', '#F2C94B', '#F4F4F6', '#F4F4F6', '#F4F4F6'];
+const tint = (hex) => {
+  const n = parseInt(hex.slice(1), 16);
+  return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',0.18)';
+};
+const phase = lits.map((lit, i) => {
+  const [from, to] = [(i - 3) / 3, (i - 2) / 3];
+  const part = i >= 3
+    ? Math.max(0, Math.min(1, (corr - from) / (to - from)))
+    : Math.max(0, Math.min(1, (to - corr) / (to - from)));
+  return { lit, dim: tint(lit), fill: (part * 100) + '%', side: i >= 3 ? 'flex-start' : 'flex-end' };
+});
+return {
+  fan,
+  phase,
+  values: [
+    { name: 'Width', value: '140', unit: '%', from: '0%', fill: '70%', centre: '50%' },
+    { name: 'Pan', value: '12', unit: 'left', from: '44%', fill: '6%', centre: '50%' },
+    { name: 'Rotate', value: '0', unit: 'deg', from: '50%', fill: '0%', centre: '50%' },
+    { name: 'Mono below', value: '120', unit: 'Hz', from: '0%', fill: '32%', centre: '25%' }
+  ]
+};
+}
+}
+</script>
+</body>
+</html>

@@ -5,18 +5,20 @@
 //
 // A plugin's main.js composes its page:
 //
-//   import { mount, header, screen, deck, rule, footer } from './kit/kit.js'
+//   import {
+//     mount, glass, header, picture, sheet, values, value, foot
+//   } from './kit/kit.js'
 //   mount((ui) => [
-//     header(ui),
-//     screen(ui, (pen) => { /* draw what the plugin is doing */ }),
-//     deck(rule(ui.p.drive), rule(ui.p.tone)),
-//     footer(ui)
+//     glass(header(ui), picture(ui, (pen) => { /* what it is doing */ })),
+//     sheet(
+//       values(value(ui.p.drive, { ui }), value(ui.p.tone, { ui })),
+//       foot(ui))
 //   ])
 //
 // `ui.p` holds a handle for each setting by its key and `ui.m` one for
 // each meter. `mount(auto)` lays every setting out with no more said.
 
-export const VERSION = 1
+export const VERSION = 2
 
 // ---- values: pure, so they run under node as well
 
@@ -41,9 +43,12 @@ export const nudged = (row, from, by, fine = false) => {
   return snap(row, from + by * unit)
 }
 
-// The sweep of a knob for a value, in degrees from straight up.
-export const SWEEP = 270
-export const angle = (norm) => (clamp(norm) - 0.5) * SWEEP
+// A value's text as the number to draw large and the unit to draw
+// small beside it: split at the first space.
+export const parts = (text) => {
+  const at = text.indexOf(' ')
+  return at < 0 ? [text, ''] : [text.slice(0, at), text.slice(at + 1)]
+}
 
 // A setting's value in its own terms, as the host would work it out.
 export const plainOf = (row, norm) => {
@@ -132,7 +137,45 @@ export const differences = (from, to) => to
   .map((value, index) => [index, value])
   .filter(([index, value]) => from[index] !== value)
 
-// ---- meters: a peak that holds for a moment, then lets go
+// ---- density: how much the page shows at once
+
+export const DENSITIES = ['roomy', 'regular', 'dense']
+
+// The density to start in: the one chosen before, else the plugin's.
+export const densityFor = (saved, preferred = 'roomy') =>
+  DENSITIES.includes(saved) ? saved : preferred
+
+export const nextDensity = (density) =>
+  DENSITIES[(DENSITIES.indexOf(density) + 1) % DENSITIES.length]
+
+// ---- meters: six segments, and a peak that holds for a moment
+
+// A level is a fraction of the 60 dB under full scale. Each zone ends
+// at `to` dB; the last is the clip lamp, lit at full scale alone.
+export const ZONES = [
+  { name: 'ink', to: -24 },
+  { name: 'green', to: -12 },
+  { name: 'yellow', to: -6 },
+  { name: 'orange', to: -3 },
+  { name: 'red', to: 0 },
+  { name: 'lamp', to: 0 }
+]
+
+// How full each of the six segments is, 0 to 1, for a level.
+export const zoneFills = (level) => {
+  const db = clamp(level) * 60 - 60
+  return ZONES.map(({ name, to }, i) => {
+    if (name === 'lamp') return db >= 0 ? 1 : 0
+    const from = i ? ZONES[i - 1].to : -60
+    return clamp((db - from) / (to - from))
+  })
+}
+
+// The name of the segment a level has reached.
+export const zoneOf = (level) => {
+  const db = clamp(level) * 60 - 60
+  return ZONES.find(({ to }) => db < to)?.name ?? 'red'
+}
 
 export const HOLD_MS = 1400
 
@@ -314,6 +357,24 @@ const startTheme = () => applyTheme(themeFor(
   window.matchMedia('(prefers-color-scheme: light)').matches
 ))
 
+const DENSITY_KEY = 'kit-density'
+
+const currentDensity = () => document.documentElement.dataset.density
+
+const startDensity = (preferred) => {
+  let saved = null
+  try { saved = window.localStorage.getItem(DENSITY_KEY) } catch {}
+  document.documentElement.dataset.density = densityFor(saved, preferred)
+}
+
+const switchDensity = () => {
+  const next = nextDensity(currentDensity())
+  document.documentElement.dataset.density = next
+  try { window.localStorage.setItem(DENSITY_KEY, next) } catch {}
+  window.dispatchEvent(new Event('kit-density'))
+  return next
+}
+
 const switchTheme = () => {
   const next = otherTheme(currentTheme())
   applyTheme(next)
@@ -336,12 +397,18 @@ const fitTo = (root, base) => {
 }
 
 // Builds the page once the host says hello. `build` gets the handles
-// and returns a node or a list of them.
-export const mount = (build, root = document.getElementById('app')) => {
+// and returns a node or a list of them. `opts.density` is the density
+// the plugin starts in until the person picks one.
+export const mount = (build, opts = {}) => {
+  const root = opts.root ?? document.getElementById('app')
   startTheme()
+  startDensity(opts.density)
+  let touched = null
   const store = makeStore()
   const session = makeSession(store)
-  window.kit = { receive: store.receive, store, session }
+  window.kit = {
+    receive: store.receive, store, session, touched: () => touched
+  }
   let built = false
   store.on((state) => {
     if (built || !state.ready) return
@@ -354,9 +421,16 @@ export const mount = (build, root = document.getElementById('app')) => {
       m: byKey(state.meters, (i) => meterHandle(store, i)),
       store,
       session,
-      // What the foot of the page says about the control under the
-      // pointer; `footer` sets it up.
-      hint: () => {}
+      // What the foot of the sheet says about the control under the
+      // pointer; `foot` sets it up.
+      hint: () => {},
+      // The key of the setting being dragged now, for the picture to
+      // show in purple; a control says when it is taken and let go.
+      touched: () => touched,
+      touch: (key) => {
+        touched = key
+        window.dispatchEvent(new Event('kit-touch'))
+      }
     }
     root.replaceChildren(...[build(ui)].flat(Infinity).filter(Boolean))
     fitTo(root, state.size)
@@ -397,6 +471,20 @@ export const h = (tag, attrs = {}, ...children) => {
   return el
 }
 
+// The icon set: one 1.6 line on a 20 grid, round ends, no fills.
+export const ICONS = {
+  undo: 'M8 5 4.5 8.5 8 12M4.5 8.5H12a3.5 3.5 0 0 1 0 7H9.5',
+  redo: 'M12 5l3.5 3.5L12 12M15.5 8.5H8a3.5 3.5 0 0 0 0 7h2.5',
+  roomy: 'M4.5 4.5h11v4.5h-11zM4.5 11h11v4.5h-11z',
+  regular: 'M4.5 5.5h11M4.5 10h11M4.5 14.5h11',
+  dense: 'M4.5 4.5h11M4.5 8.2h11M4.5 11.8h11M4.5 15.5h11',
+  theme: 'M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12M10 4v12'
+}
+
+export const icon = (name) => h('svg.kit-icon', {
+  viewBox: '0 0 20 20', 'aria-hidden': 'true'
+}, h('path', { d: ICONS[name] }))
+
 // The page's own hint for a control: what it is and what it does.
 const hinted = (el, ui, handle) => {
   if (!ui) return el
@@ -408,12 +496,20 @@ const hinted = (el, ui, handle) => {
   return el
 }
 
-// A value as text that can be typed over: double-click it, or press
-// Enter on its control. Enter keeps what was typed if the setting can
-// hold it; Escape, or anything it cannot hold, leaves it as it was.
+// A value as its number drawn large and its unit small, which can be
+// typed over: double-click it, or press Enter on its control. Enter
+// keeps what was typed if the setting can hold it; Escape, or anything
+// it cannot hold, leaves it as it was.
 const valueText = (handle) => {
   const out = h('output.kit-value', { title: 'Double-click to type a value' })
-  const show = () => { if (!out.dataset.editing) out.textContent = handle.text }
+  const show = () => {
+    if (out.dataset.editing) return
+    const [number, unit] = parts(handle.text)
+    out.replaceChildren(
+      h('span.kit-number', {}, number),
+      unit ? h('span.kit-unit', {}, ` ${unit}`) : ''
+    )
+  }
   const edit = () => {
     if (out.dataset.editing) return
     out.dataset.editing = 'true'
@@ -432,6 +528,7 @@ const valueText = (handle) => {
       if (event.key === 'Escape') done(false)
       event.stopPropagation()
     })
+    input.addEventListener('pointerdown', (event) => event.stopPropagation())
     input.addEventListener('blur', () => done(true))
     out.replaceChildren(input)
     input.select()
@@ -445,46 +542,41 @@ const valueText = (handle) => {
   return Object.assign(out, { edit })
 }
 
-// What every control shares: its title, its body and, unless the
-// control shows its own value (`opts.value` false), that value as text.
-const labelled = (handle, kind, body, opts = {}) => {
-  const out = opts.value === false ? null : valueText(handle)
-  const tone = opts.tone ? `.kit-tone-${opts.tone}` : ''
-  const el = h(`div.kit-control.kit-${kind}${tone}`, {
-    'data-key': handle.row.key,
-    'data-id': handle.row.id
-  }, h('span.kit-title', {}, opts.title ?? handle.row.short), body, out)
-  if (out) {
-    body.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') out.edit()
-    })
-  }
-  return hinted(el, opts.ui, handle)
-}
+// A control's shell: its key, for the page and its tests to find it by.
+const shell = (handle, kind, opts, ...children) => hinted(
+  h(`div.kit-control.kit-${kind}`, {
+    'data-key': handle.row.key, 'data-id': handle.row.id
+  }, children),
+  opts.ui, handle
+)
 
-// Dragging, the wheel, the arrow keys and double-click to reset, on
-// any element that stands for a setting's value. A drag is up and down
-// unless `across`, when it is along the element's own length.
-const adjustable = (el, handle, across = false) => {
-  const along = (event) => (across ? event.clientX : -event.clientY)
+// Dragging along it, the wheel, the arrow keys and double-click for
+// the default, on the element that stands for a setting's value.
+// `mark` is the control that wears the purple while it is held.
+const adjustable = (el, handle, mark, ui) => {
   let from = null
+  const hold = (on) => {
+    if (on) mark.dataset.held = 'true'
+    else delete mark.dataset.held
+    ui?.touch(on ? handle.row.key : null)
+  }
   el.addEventListener('pointerdown', (event) => {
     if (event.button !== 0) return
-    from = { at: along(event), value: handle.value }
+    from = { at: event.clientX, value: handle.value }
     el.setPointerCapture(event.pointerId)
-    el.dataset.held = 'true'
+    hold(true)
     handle.begin()
   })
   el.addEventListener('pointermove', (event) => {
     if (!from) return
-    const span = across ? el.getBoundingClientRect().width : 160
-    const by = along(event) - from.at
+    const span = el.getBoundingClientRect().width
+    const by = event.clientX - from.at
     handle.move(dragged(handle.row, from.value, by, event.shiftKey, span))
   })
   const stop = () => {
     if (!from) return
     from = null
-    delete el.dataset.held
+    hold(false)
     handle.end()
   }
   el.addEventListener('pointerup', stop)
@@ -504,60 +596,45 @@ const adjustable = (el, handle, across = false) => {
   return el
 }
 
-// The house control: a ruled slot cut into the panel, a raised grip
-// that rides in it, the setting's title before and its value after.
-// The rule's marks are the setting's own: a mark at its default, and
-// the travel from where it rests to where it is, filled.
-export const rule = (handle, opts = {}) => {
-  const rest = opts.bipolar ? 0.5 : 0
-  const slot = h('div.kit-rule-slot', {
-    tabindex: 0,
-    role: 'slider',
-    'aria-label': handle.row.title
-  },
-  h('div.kit-rule-marks'),
-  h('div.kit-rule-default', { style: `--default: ${handle.row.default}` }),
-  h('div.kit-rule-fill'),
-  h('div.kit-rule-grip'))
+// The house control: the number is the control. Its name above, the
+// value large, and under it a line that shows where the value sits in
+// its range. Drag the number or the line. A grip shows on the line
+// under the pointer; the ends of the range and a mark at the default
+// show only while it is held, when all of it turns purple. A setting
+// that rests somewhere inside its range (`opts.bipolar`), like a trim
+// or a pan, fills from its default, and keeps the mark there in view.
+export const value = (handle, opts = {}) => {
+  const rest = opts.bipolar ? handle.row.default : 0
+  const out = valueText(handle)
+  const line = h('div.kit-line', {},
+    h('i.kit-line-fill'),
+    h('i.kit-line-default', { style: `--default: ${handle.row.default}` }),
+    h('i.kit-line-grip'))
+  const scrub = h('div.kit-scrub', {
+    tabindex: 0, role: 'slider', 'aria-label': handle.row.title
+  }, out, line)
+  const range = h('div.kit-range', { 'aria-hidden': 'true' },
+    h('span', {}, describe(handle.row, 0)),
+    h('span', {}, describe(handle.row, 1)))
+  const kind = opts.bipolar ? 'setting.kit-bipolar' : 'setting'
+  const el = shell(handle, kind, opts,
+    h('span.kit-title', {}, opts.title ?? handle.row.short), scrub, range)
   const show = () => {
-    slot.style.setProperty('--from', Math.min(rest, handle.value))
-    slot.style.setProperty('--to', Math.max(rest, handle.value))
-    slot.style.setProperty('--at', handle.value)
-    slot.setAttribute('aria-valuetext', handle.text)
+    line.style.setProperty('--from', Math.min(rest, handle.value))
+    line.style.setProperty('--to', Math.max(rest, handle.value))
+    line.style.setProperty('--at', handle.value)
+    scrub.setAttribute('aria-valuetext', handle.text)
   }
-  handle.on(show)
-  show()
-  return labelled(handle, 'rule', adjustable(slot, handle, true), opts)
-}
-
-// A rotary, for the one or two settings that deserve the room: a
-// turned cap standing off the panel, lit from above, its pointer the
-// only mark of colour. The scale has three marks: least, default, most.
-export const knob = (handle, opts = {}) => {
-  const mark = (norm, name) => h(`line.kit-knob-mark${name}`, {
-    x1: 24, y1: 2.5, x2: 24, y2: 5.5, transform: `rotate(${angle(norm)} 24 24)`
+  scrub.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') out.edit()
   })
-  const pointer = h('line.kit-knob-pointer', { x1: 24, y1: 11, x2: 24, y2: 18 })
-  const dial = h('svg.kit-knob-dial', {
-    viewBox: '0 0 48 48',
-    tabindex: 0,
-    role: 'slider',
-    'aria-label': handle.row.title
-  },
-  mark(0, ''), mark(1, ''), mark(handle.row.default, '.kit-knob-default'),
-  h('circle.kit-knob-skirt', { cx: 24, cy: 24, r: 17 }),
-  h('circle.kit-knob-cap', { cx: 24, cy: 24, r: 14.5 }),
-  pointer)
-  const show = () => {
-    pointer.setAttribute('transform', `rotate(${angle(handle.value)} 24 24)`)
-    dial.setAttribute('aria-valuetext', handle.text)
-  }
   handle.on(show)
   show()
-  return labelled(handle, 'knob', adjustable(dial, handle), opts)
+  adjustable(scrub, handle, el, opts.ui)
+  return el
 }
 
-// A list as keys side by side in one slot: the chosen one stands up.
+// A list as pills side by side: the chosen one is filled in.
 export const choice = (handle, opts = {}) => {
   const { choices } = handle.row
   const last = Math.max(1, choices.length - 1)
@@ -571,11 +648,13 @@ export const choice = (handle, opts = {}) => {
   }
   handle.on(show)
   show()
-  const body = h('div.kit-choices', { role: 'group' }, buttons)
-  return labelled(handle, 'choice', body, { ...opts, value: false })
+  return shell(handle, 'choice', opts, h('div.kit-options', {
+    role: 'group', 'aria-label': handle.row.title
+  }, buttons))
 }
 
-// A list as a menu: for more choices than fit side by side.
+// A list as a menu, its choice written as large as a number: for more
+// choices than fit side by side.
 export const menu = (handle, opts = {}) => {
   const { choices } = handle.row
   const last = Math.max(1, choices.length - 1)
@@ -586,60 +665,62 @@ export const menu = (handle, opts = {}) => {
   const show = () => { select.selectedIndex = Math.round(handle.value * last) }
   handle.on(show)
   show()
-  return labelled(handle, 'menu', select, { ...opts, value: false })
+  return shell(handle, 'menu', opts,
+    h('span.kit-title', {}, opts.title ?? handle.row.short), select)
 }
 
+// On or off: a switch, and beside it what it is and which it is.
 export const toggle = (handle, opts = {}) => {
+  const said = h('span.kit-switch-said')
   const button = h('button.kit-switch', {
     type: 'button',
     role: 'switch',
     'aria-label': handle.row.title,
     onclick: () => handle.set(handle.value > 0.5 ? 0 : 1)
-  }, h('span.kit-switch-thumb'))
-  const show = () => button.setAttribute('aria-checked', handle.value > 0.5)
+  }, h('i.kit-switch-thumb'))
+  const show = () => {
+    const on = handle.value > 0.5
+    button.setAttribute('aria-checked', on)
+    said.textContent = `${opts.title ?? handle.row.short} ${on ? 'on' : 'off'}`
+  }
   handle.on(show)
   show()
-  return labelled(handle, 'toggle', button, { ...opts, value: false })
+  return shell(handle, 'toggle', opts, button, said)
 }
 
-// A level, read the way an engineer reads one: a column of ink in a
-// slot against a scale, the peak held as a line for a moment after it
-// passes, and the level as a number beneath. It is ink, not colour,
-// until the level is one to act on: the top 6 dB warm, and a clip
-// lights a lamp that stays lit until it is clicked.
-const SCALE_DB = [0, -6, -12, -24, -36, -48]
-
+// A level: the number is the meter, and under it six segments with
+// space between, breaking at -24, -12, -6, -3 and 0 dB. Ink, green,
+// yellow, orange, red, and a last one that is the clip lamp: it stays
+// lit until clicked. The number takes its segment's colour from yellow
+// up, and keeps it for as long as a peak is held.
 export const meter = (handle, opts = {}) => {
-  const level = handle.row.meter === 'level'
   const out = h('output.kit-value')
-  const marks = level
-    ? SCALE_DB.map((db) => h('div.kit-meter-mark', {
-      style: `--at: ${1 + db / 60}`
-    }))
-    : []
-  const slot = h('div.kit-meter-slot', {
-    role: 'meter',
-    'aria-label': handle.row.title
-  }, marks, h('div.kit-meter-fill'), h('div.kit-meter-peak'))
-  const tone = opts.tone ? `.kit-tone-${opts.tone}` : ''
-  const el = h(`div.kit-control.kit-meter${tone}`, {
+  const segments = ZONES.map(({ name }) =>
+    h(`i.kit-segment.kit-zone-${name}`))
+  const el = h('div.kit-control.kit-meter', {
     'data-key': handle.row.key,
     'data-meter': handle.row.meter,
-    title: level ? 'Click to clear the clip lamp' : null,
+    title: 'Click to clear the clip lamp',
     onclick: () => delete el.dataset.clipped
   },
   h('span.kit-title', {}, opts.title ?? handle.row.short),
-  h('div.kit-meter-lamp'),
-  slot,
-  out)
+  out,
+  h('div.kit-segments', { role: 'meter', 'aria-label': handle.row.title },
+    segments))
   let hold = { level: 0, at: 0 }
   let release = null
   const show = (wait = true) => {
     hold = held(hold, handle.value, performance.now())
-    slot.style.setProperty('--level', handle.value)
-    slot.style.setProperty('--peak', hold.level)
-    out.textContent = handle.text
-    if (level && handle.value >= 0.999) el.dataset.clipped = 'true'
+    zoneFills(handle.value).forEach((fill, i) => {
+      segments[i].style.setProperty('--fill', String(Number(fill.toFixed(3))))
+    })
+    const [number, unit] = parts(handle.text)
+    out.replaceChildren(
+      h('span.kit-number', {}, number),
+      unit ? h('span.kit-unit', {}, ` ${unit}`) : ''
+    )
+    el.dataset.zone = zoneOf(hold.level)
+    if (handle.value >= 0.999) el.dataset.clipped = 'true'
     clearTimeout(release)
     // Let go of the held peak even if no new reading comes.
     if (wait) release = setTimeout(() => show(false), HOLD_MS + 20)
@@ -650,58 +731,54 @@ export const meter = (handle, opts = {}) => {
 }
 
 // The control a setting gets when the page does not say: a switch for
-// Off and On, keys for a few choices, a menu for many, else a rule.
+// Off and On, pills for a few choices, a menu for many, else a value.
 export const control = (handle, opts = {}) => {
   const row = handle.row
-  if (row.kind !== 'list') return rule(handle, opts)
+  if (row.kind !== 'list') return value(handle, opts)
   const off = row.choices.length === 2 && row.choices[0] === 'Off'
   if (off) return toggle(handle, opts)
   return row.choices.length <= 4 ? choice(handle, opts) : menu(handle, opts)
 }
 
-// ---- the page's furniture
+// ---- the page's furniture: a dark glass that holds the picture, and
+// a sheet of settings that lies over its lower edge
 
-export const row = (...children) => h('div.kit-row', {}, children)
+export const glass = (...children) => h('section.kit-glass', {}, children)
 
-export const column = (...children) => h('div.kit-column', {}, children)
-
-// A raised panel that controls sit on.
-export const deck = (...children) => h('section.kit-deck', {}, children)
-
-// Controls that belong together, under a name.
-export const group = (title, ...children) => h('div.kit-group', {},
-  title ? h('h2.kit-group-title', {}, title) : null,
-  children)
-
-// The side of the page where the signal leaves: its meters, and the
-// setting that trims it.
-export const rail = (...children) => h('aside.kit-rail', {}, children)
-
-// The stage: the screen and what stands beside it.
+// What stands on the glass under the header: readouts and the picture.
 export const stage = (...children) => h('div.kit-stage', {}, children)
 
-// The colours of the screen, read from the page so a drawing follows
+// Levels side by side, at the foot of the glass.
+export const readouts = (...children) => h('div.kit-readouts', {}, children)
+
+export const sheet = (...children) => h('section.kit-sheet', {}, children)
+
+// The settings on a sheet, four across.
+export const values = (...children) => h('div.kit-values', {}, children)
+
+// The colours of the glass, read from the page so a drawing follows
 // the tokens.
 const inkOf = (el) => {
   const style = getComputedStyle(el)
   const token = (name) => style.getPropertyValue(name).trim()
   return {
-    ink: token('--screen-ink'),
-    soft: token('--screen-soft'),
-    line: token('--screen-line'),
-    accent: token('--screen-accent'),
-    hot: token('--hot')
+    ink: token('--g-ink'),
+    soft: token('--g-soft'),
+    line: token('--g-line'),
+    accent: token('--g-touch'),
+    hot: token('--g-red')
   }
 }
 
-// The screen: a dark glass set into the body, in either theme, where
-// a plugin draws what it is doing to the sound. `draw(pen)` is called
-// whenever a setting or a meter moves; `pen` has the canvas's 2D
-// context as `ctx`, its size in CSS pixels as `width` and `height`,
-// and the screen's colours as `ink`, `soft`, `line`, `accent`, `hot`.
-export const screen = (ui, draw, opts = {}) => {
-  const canvas = h('canvas.kit-screen-canvas')
-  const el = h('div.kit-screen', {
+// The picture: where a plugin draws what it is doing to the sound.
+// `draw(pen)` is called whenever a setting or a meter moves or is
+// taken hold of; `pen` has the canvas's 2D context as `ctx`, its size
+// in CSS pixels as `width` and `height`, the glass's colours as `ink`,
+// `soft`, `line`, `accent` and `hot`, and `touched`, the key of the
+// setting being dragged now or null: purple is for that alone.
+export const picture = (ui, draw, opts = {}) => {
+  const canvas = h('canvas')
+  const el = h('div.kit-picture', {
     role: 'img', 'aria-label': opts.label ?? `What ${ui.name} is doing`
   }, canvas)
   let queued = false
@@ -718,7 +795,7 @@ export const screen = (ui, draw, opts = {}) => {
     const ctx = canvas.getContext('2d')
     ctx.setTransform(density, 0, 0, density, 0, 0)
     ctx.clearRect(0, 0, width, height)
-    draw({ ctx, width, height, ...inkOf(el) })
+    draw({ ctx, width, height, touched: ui.touched(), ...inkOf(el) })
   }
   const ask = () => {
     if (queued) return
@@ -726,27 +803,49 @@ export const screen = (ui, draw, opts = {}) => {
     requestAnimationFrame(paint)
   }
   ui.store.on(ask)
-  window.addEventListener('resize', ask)
-  window.addEventListener('kit-theme', ask)
+  ;['resize', 'kit-theme', 'kit-touch', 'kit-density'].forEach((name) =>
+    window.addEventListener(name, ask))
   requestAnimationFrame(paint)
   return el
 }
 
-// The switch between the light and the dark theme: a disc, half full.
+// A tool in the header: an icon in a round target, named for a reader.
+const tool = (kind, name, label, onclick) => {
+  const button = h(`button.kit-tool.kit-${kind}`, { type: 'button', onclick },
+    icon(name))
+  const say = (text) => {
+    button.setAttribute('aria-label', text)
+    button.title = text
+  }
+  say(label)
+  return Object.assign(button, { say })
+}
+
+// Tools that belong together share a capsule.
+const capsule = (...children) => h('div.kit-capsule', {}, children)
+
+// The switch between the light and the dark theme.
 export const themeSwitch = () => {
   const label = () => `Switch to the ${otherTheme(currentTheme())} theme`
-  const button = h('button.kit-tool.kit-theme', {
-    type: 'button',
-    onclick: () => {
-      switchTheme()
-      button.setAttribute('aria-label', label())
-      button.title = label()
-    }
-  }, h('svg', { viewBox: '0 0 16 16', 'aria-hidden': 'true' },
-    h('circle', { cx: 8, cy: 8, r: 5.6 }),
-    h('path.kit-fill', { d: 'M 8 2.4 A 5.6 5.6 0 0 1 8 13.6 Z' })))
-  button.setAttribute('aria-label', label())
-  button.title = label()
+  const button = tool('theme', 'theme', label(), () => {
+    switchTheme()
+    button.say(label())
+  })
+  return button
+}
+
+// Roomy, Regular, Dense: each press steps to the next, and the icon
+// shows which it is.
+export const densitySwitch = () => {
+  const label = () => {
+    const now = currentDensity()
+    return `Density: ${now}. Switch to ${nextDensity(now)}`
+  }
+  const button = tool('density', currentDensity(), label(), () => {
+    const next = switchDensity()
+    button.querySelector('path').setAttribute('d', ICONS[next])
+    button.say(label())
+  })
   return button
 }
 
@@ -754,20 +853,8 @@ export const themeSwitch = () => {
 // between two sets of settings to hear which is better.
 export const tools = (ui) => {
   const { session } = ui
-  const icon = (d) => h('svg', { viewBox: '0 0 16 16', 'aria-hidden': 'true' },
-    h('path', { d }))
-  const undo = h('button.kit-tool.kit-undo', {
-    type: 'button',
-    title: 'Undo (Ctrl+Z)',
-    'aria-label': 'Undo',
-    onclick: session.undo
-  }, icon('M 6.5 4 L 3 7.5 L 6.5 11 M 3 7.5 H 10 A 3 3 0 0 1 10 13.5 H 8'))
-  const redo = h('button.kit-tool.kit-redo', {
-    type: 'button',
-    title: 'Redo (Ctrl+Shift+Z)',
-    'aria-label': 'Redo',
-    onclick: session.redo
-  }, icon('M 9.5 4 L 13 7.5 L 9.5 11 M 13 7.5 H 6 A 3 3 0 0 0 6 13.5 H 8'))
+  const undo = tool('undo', 'undo', 'Undo (Ctrl+Z)', session.undo)
+  const redo = tool('redo', 'redo', 'Redo (Ctrl+Shift+Z)', session.redo)
   const letters = ['A', 'B'].map((name) => h('span.kit-compare-slot', {}, name))
   const compare = h('button.kit-compare', {
     type: 'button',
@@ -786,45 +873,52 @@ export const tools = (ui) => {
   }
   session.on(show)
   show()
-  return h('div.kit-tools', {}, undo, redo, compare)
+  return [
+    capsule(undo, redo),
+    capsule(compare),
+    capsule(densitySwitch(), themeSwitch())
+  ]
 }
 
-export const header = (ui, ...children) => h('header.kit-header', {},
-  h('h1.kit-name', {}, ui.name),
-  children,
-  h('div.kit-header-end', {}, tools(ui), themeSwitch()))
+// The head of the glass: the plugin's name, a note under it if the
+// page has one to make (`opts.note`), and the tools, always in the
+// same order so the hand learns them once.
+export const header = (ui, opts = {}) => h('header.kit-header', {},
+  h('div.kit-heading', {},
+    h('h1.kit-name', {}, ui.name),
+    opts.note ? h('p.kit-note', {}, opts.note) : null),
+  h('div.kit-tools', {}, tools(ui)))
 
-// The foot of the page: what the control under the pointer is and
-// does, or how the controls work when it is over none.
-const HOW = 'Drag to set. Shift for fine. Double-click a control for ' +
-  'its default, or its value to type one.'
+// The foot of the sheet: whatever the page puts there, then what the
+// control under the pointer is and does, or how the controls work
+// when it is over none.
+const HOW = 'Drag a number to change it. Shift for fine. Double-click it ' +
+  'to type one, or its line for the default.'
 
-export const footer = (ui) => {
-  const what = h('span.kit-hint-what')
+export const foot = (ui, ...children) => {
+  const what = h('b.kit-hint-what')
   const about = h('span.kit-hint-about', {}, HOW)
   ui.hint = (title, text) => {
     what.textContent = title ?? ''
     about.textContent = title ? (text || '') : HOW
   }
-  return h('footer.kit-footer', {},
-    h('div.kit-hint', { 'aria-live': 'polite' }, what, about),
-    h('span.kit-build', {}, ui.build))
+  return h('footer.kit-foot', {},
+    children,
+    h('p.kit-hint', { 'aria-live': 'polite', title: ui.build }, what, about))
 }
 
-// Every setting on a deck under its group's name, the meters on a
-// rail: a whole page from the spec alone. A start, never the end: a
-// plugin's page should show what the plugin does.
+// Every level on the glass, every number on the sheet, every list in
+// its foot: a whole page from the spec alone. A start, never the end:
+// a plugin's page should show what the plugin does.
 export const auto = (ui) => {
   const handles = Object.values(ui.p)
-  const groups = [...new Set(handles.map((handle) => handle.row.group))]
+  const lists = handles.filter((handle) => handle.row.kind === 'list')
+  const ranges = handles.filter((handle) => handle.row.kind !== 'list')
   const meters = Object.values(ui.m).map((handle) => meter(handle))
   return [
-    header(ui),
-    stage(
-      deck(groups.map((name) => group(name, handles
-        .filter((handle) => handle.row.group === name)
-        .map((handle) => control(handle, { ui }))))),
-      meters.length ? rail(row(meters)) : null),
-    footer(ui)
+    glass(header(ui), stage(readouts(meters))),
+    sheet(
+      values(ranges.map((handle) => value(handle, { ui }))),
+      foot(ui, lists.map((handle) => control(handle, { ui }))))
   ]
 }

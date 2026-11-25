@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dark: a keyboard panel and a pad</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 820px; height: 500px; box-sizing: border-box; background: #0B0B0D; font-family: 'Bricolage Grotesque', sans-serif; color: #F4F4F6; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+<div style="border-radius: 26px; background: #17171A; box-shadow: inset 0 0 0 1px #25252A; color: #F4F4F6; padding: 16px 22px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: baseline; gap: 12px">
+<div style="font-size: 16px; font-weight: 600">Keyboard</div>
+<div style="font-size: 13px; color: #9494A0">a panel that opens under the glass. Piano shaped, but flat. Note names sit faintly above, and brighten for a key that is held.</div>
+</div>
+<div role="img" aria-label="Two octaves of keys, with each note's name faintly above it: three held, one under the pointer" style="position: relative; height: 138px">
+<sc-for list="{{ keys }}" as="k" hint-placeholder-count="24">
+<div style="position: absolute; left: {{ k.mid }}; top: 0; width: 0; display: flex; justify-content: center; font-size: 9px; font-weight: 500; color: {{ k.faint }}; white-space: nowrap">{{ k.name }}</div>
+<div style="position: absolute; left: {{ k.left }}; top: 18px; width: {{ k.width }}; height: {{ k.height }}; box-sizing: border-box; border-radius: {{ k.radius }}; background: {{ k.bg }}; border: {{ k.border }}"></div>
+</sc-for>
+</div>
+</div>
+<div style="flex-grow: 1; display: flex; gap: 12px">
+<div style="width: 286px; border-radius: 26px; background: #17171A; box-shadow: inset 0 0 0 1px #25252A; color: #F4F4F6; padding: 16px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 16px; font-weight: 600">Pad</div>
+<svg role="img" aria-label="A pad: two settings moved at once by one point, with its path behind it" viewBox="0 0 246 180" style="width: 100%; flex-grow: 1">
+<sc-for list="{{ dots }}" as="d" hint-placeholder-count="40">
+<circle cx="{{ d.x }}" cy="{{ d.y }}" r="1.2" fill="#3A3A42"/>
+</sc-for>
+<path d="M40 150C70 120 90 140 120 100S150 70 168 58" fill="none" stroke="#7C7C88" stroke-width="1.5" stroke-dasharray="2 5" stroke-linecap="round"/>
+<path d="M168 0V180M0 58H246" stroke="#B3A1FF" stroke-width="1" stroke-opacity="0.5"/>
+<circle cx="168" cy="58" r="10" fill="#B3A1FF" stroke="#151518" stroke-width="3"/>
+<rect x="138" y="158" width="60" height="20" rx="10" fill="#B3A1FF"/>
+<text x="168" y="172" text-anchor="middle" font-size="11" font-weight="600" fill="#151518">2.4 kHz</text>
+<rect x="2" y="48" width="44" height="20" rx="10" fill="#B3A1FF"/>
+<text x="24" y="62" text-anchor="middle" font-size="11" font-weight="600" fill="#151518">68 %</text>
+</svg>
+</div>
+<div style="flex-grow: 1; border-radius: 26px; background: #28282D; padding: 18px 24px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 18px 30px -18px rgba(0,0,0,0.7)">
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 13px; color: #B3A1FF; font-weight: 600">Across: Cutoff</div>
+<div style="font-size: 44px; font-weight: 500; letter-spacing: -0.04em; line-height: 1; color: #B3A1FF">2.4<span style="font-size: 14px; letter-spacing: 0"> kHz</span></div>
+<div style="height: 3px; border-radius: 2px; background: #3D3D45"><div style="width: 68%; height: 3px; border-radius: 2px; background: #B3A1FF"></div></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 13px; color: #B3A1FF; font-weight: 600">Up: Resonance</div>
+<div style="font-size: 44px; font-weight: 500; letter-spacing: -0.04em; line-height: 1; color: #B3A1FF">68<span style="font-size: 14px; letter-spacing: 0"> %</span></div>
+<div style="height: 3px; border-radius: 2px; background: #3D3D45"><div style="width: 68%; height: 3px; border-radius: 2px; background: #B3A1FF"></div></div>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500">
+<button style="height: 44px; padding: 0 16px; border: 1px solid #4A4A53; border-radius: 22px; background: transparent; color: #F4F4F6">Octave down</button>
+<div style="font-size: 26px; font-weight: 500; letter-spacing: -0.03em; padding: 0 6px">C3</div>
+<button style="height: 44px; padding: 0 16px; border: 1px solid #4A4A53; border-radius: 22px; background: transparent; color: #F4F4F6">Octave up</button>
+<div style="flex-grow: 1"></div>
+<button aria-pressed="true" style="height: 44px; padding: 0 18px; border: 0; border-radius: 22px; background: #F4F4F6; color: #151518">Hold</button>
+</div>
+<div style="font-size: 12px; color: #A3A3AE; line-height: 1.4">The pad moves two settings with one point, and they are ordinary settings: their numbers move on the sheet as it does. Higher on a key plays it harder.</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":500}}'>
+class Component extends DCLogic {
+renderVals() {
+// Two octaves. Naturals are 50 wide with a 5 gap and run the full
+// height; a sharp is narrower and shorter and sits over the gap it
+// belongs to, as on a piano, but flat. Every key carries its name;
+// each C carries its octave too. Held notes are lit, one is under the
+// pointer.
+const held = [0, 4, 7];
+const under = 14;
+const sharpAfter = [0, 1, 3, 4, 5];
+const semis = [0, 2, 4, 5, 7, 9, 11];
+const letters = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+// Positions are shares of the row: 14 naturals, each 50 of 776 wide.
+const share = (px) => (px / 776 * 100).toFixed(3) + '%';
+const naturals = Array.from({ length: 14 }, (_, i) => {
+  const note = Math.floor(i / 7) * 12 + semis[i % 7];
+  const lit = note === under || held.includes(note);
+  return {
+    left: share(i * 55.500), width: share(50), height: '120px', radius: '6px', mid: share(i * 55.500 + 25),
+    faint: lit ? '#F4F4F6' : '#6E6E7A',
+    name: letters[i % 7] + (i % 7 === 0 ? 3 + Math.floor(i / 7) : ''),
+    bg: note === under ? '#B3A1FF' : lit ? '#F4F4F6' : 'rgba(244,244,246,0.14)',
+    border: '0', size: '11px', ink: lit ? '#151518' : '#A3A3AE'
+  };
+});
+const sharps = Array.from({ length: 14 }, (_, i) => i).filter((i) => sharpAfter.includes(i % 7)).map((i) => {
+  const note = Math.floor(i / 7) * 12 + semis[i % 7] + 1;
+  const lit = note === under || held.includes(note);
+  return {
+    left: share(i * 55.500 + 33.750), width: share(38), height: '70px', radius: '0 0 6px 6px', mid: share(i * 55.500 + 52.750),
+    faint: lit ? '#F4F4F6' : '#6E6E7A',
+    name: letters[i % 7] + '#',
+    bg: lit ? (note === under ? '#B3A1FF' : '#F4F4F6') : '#151518',
+    border: lit ? '0' : '1.5px solid #4A4A53', size: '9px', ink: lit ? '#151518' : '#A3A3AE'
+  };
+});
+const dots = Array.from({ length: 48 }, (_, i) => ({ x: 15 + (i % 8) * 31, y: 15 + Math.floor(i / 8) * 30 }));
+return { keys: naturals.concat(sharps), dots };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings that move together, dark theme</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 820px; height: 500px; box-sizing: border-box; background: #0B0B0D; font-family: 'Bricolage Grotesque', sans-serif; color: #F4F4F6; padding: 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+<div style="border-radius: 26px; background: #28282D; padding: 18px 24px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 0 0 1px #34343B">
+<div style="font-size: 13px; color: #A3A3AE"><span style="color: #F4F4F6; font-weight: 600">Linked.</span> Two settings held together; drag either and both go. The gap between them is kept.</div>
+<div style="display: flex; align-items: flex-end; gap: 12px">
+<div style="flex: 1 1 0"><div style="font-size: 13px; color: #B3A1FF; font-weight: 600">Attack, left</div><div style="font-size: 40px; font-weight: 500; letter-spacing: -0.04em; line-height: 1.1; color: #B3A1FF">12<span style="font-size: 14px; letter-spacing: 0"> ms</span></div></div>
+<button aria-pressed="true" aria-label="Linked: press to unlink" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: #B3A1FF; color: #17171A; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7.5 10.5l3-3M6 8 4.5 9.5a2.8 2.8 0 0 0 4 4L10 12M12 10l1.500-1.500a2.800 2.800 0 0 0-4-4L8 6"/></svg></button>
+<div style="flex: 1 1 0; text-align: right"><div style="font-size: 13px; color: #B3A1FF; font-weight: 600">Attack, right</div><div style="font-size: 40px; font-weight: 500; letter-spacing: -0.04em; line-height: 1.1; color: #B3A1FF">14<span style="font-size: 14px; letter-spacing: 0"> ms</span></div></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 5px">
+<div style="height: 3px; border-radius: 2px; background: #3D3D45"><div style="width: 30%; height: 3px; border-radius: 2px; background: #B3A1FF"></div></div>
+<div style="height: 3px; border-radius: 2px; background: #3D3D45"><div style="width: 35%; height: 3px; border-radius: 2px; background: #B3A1FF"></div></div>
+</div>
+</div>
+<div style="border-radius: 26px; background: #28282D; padding: 18px 24px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 0 0 1px #34343B">
+<div style="font-size: 13px; color: #A3A3AE"><span style="color: #F4F4F6; font-weight: 600">Opposed.</span> One line shared by two: what one gains the other gives up. You drag the place they meet.</div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between">
+<div><div style="font-size: 13px; color: #A3A3AE">Mid</div><div style="font-size: 40px; font-weight: 500; letter-spacing: -0.04em; line-height: 1.1">62<span style="font-size: 14px; letter-spacing: 0; color: #A3A3AE"> %</span></div></div>
+<div style="text-align: right"><div style="font-size: 13px; color: #A3A3AE">Side</div><div style="font-size: 40px; font-weight: 500; letter-spacing: -0.04em; line-height: 1.1">38<span style="font-size: 14px; letter-spacing: 0; color: #A3A3AE"> %</span></div></div>
+</div>
+<div style="display: flex; align-items: center; gap: 4px; height: 20px">
+<div style="flex: 62 1 0; height: 8px; border-radius: 3px; background: #F4F4F6"></div>
+<div style="width: 6px; height: 20px; border-radius: 3px; background: #F4F4F6"></div>
+<div style="flex: 38 1 0; height: 8px; border-radius: 3px; background: #6E6E7A"></div>
+</div>
+</div>
+<div style="border-radius: 26px; background: #28282D; padding: 18px 24px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 0 0 1px #34343B">
+<div style="font-size: 13px; color: #A3A3AE"><span style="color: #F4F4F6; font-weight: 600">Mirrored.</span> Two that move apart from a middle by the same amount: a spread, a detune, a width.</div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between">
+<div><div style="font-size: 13px; color: #A3A3AE">Voice 1</div><div style="font-size: 40px; font-weight: 500; letter-spacing: -0.04em; line-height: 1.1">-18<span style="font-size: 14px; letter-spacing: 0; color: #A3A3AE"> ct</span></div></div>
+<div style="font-size: 13px; color: #A3A3AE; padding-bottom: 8px">Detune</div>
+<div style="text-align: right"><div style="font-size: 13px; color: #A3A3AE">Voice 2</div><div style="font-size: 40px; font-weight: 500; letter-spacing: -0.04em; line-height: 1.1">+18<span style="font-size: 14px; letter-spacing: 0; color: #A3A3AE"> ct</span></div></div>
+</div>
+<div style="position: relative; height: 20px">
+<div style="position: absolute; left: 0; right: 0; top: 6px; height: 8px; border-radius: 3px; background: #3D3D45"></div>
+<div style="position: absolute; left: 32%; width: 36%; top: 6px; height: 8px; border-radius: 3px; background: #F4F4F6"></div>
+<div style="position: absolute; left: 50%; top: 0; width: 2px; height: 20px; margin-left: -1px; background: #28282D"></div>
+<div style="position: absolute; left: 32%; top: 0; width: 6px; height: 20px; margin-left: -3px; border-radius: 3px; background: #F4F4F6"></div>
+<div style="position: absolute; left: 68%; top: 0; width: 6px; height: 20px; margin-left: -3px; border-radius: 3px; background: #F4F4F6"></div>
+</div>
+</div>
+<div style="border-radius: 26px; background: #28282D; padding: 18px 24px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 0 0 1px #34343B">
+<div style="font-size: 13px; color: #A3A3AE"><span style="color: #F4F4F6; font-weight: 600">A span.</span> Two ends of one thing: drag either end, or the stretch between to move both.</div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between">
+<div><div style="font-size: 13px; color: #A3A3AE">From</div><div style="font-size: 40px; font-weight: 500; letter-spacing: -0.04em; line-height: 1.1">200<span style="font-size: 14px; letter-spacing: 0; color: #A3A3AE"> Hz</span></div></div>
+<div style="text-align: right"><div style="font-size: 13px; color: #A3A3AE">To</div><div style="font-size: 40px; font-weight: 500; letter-spacing: -0.04em; line-height: 1.1">2.4<span style="font-size: 14px; letter-spacing: 0; color: #A3A3AE"> kHz</span></div></div>
+</div>
+<div style="position: relative; height: 20px">
+<div style="position: absolute; left: 0; right: 0; top: 6px; height: 8px; border-radius: 3px; background: #3D3D45"></div>
+<div style="position: absolute; left: 24%; width: 40%; top: 6px; height: 8px; border-radius: 3px; background: #F4F4F6"></div>
+<div style="position: absolute; left: 24%; top: 0; width: 6px; height: 20px; margin-left: -3px; border-radius: 3px; background: #F4F4F6"></div>
+<div style="position: absolute; left: 64%; top: 0; width: 6px; height: 20px; margin-left: -3px; border-radius: 3px; background: #F4F4F6"></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":500}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

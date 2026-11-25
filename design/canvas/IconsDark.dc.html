@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dark: the icon set</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 820px; height: 500px; box-sizing: border-box; background: #0B0B0D; font-family: 'Bricolage Grotesque', sans-serif; color: #F4F4F6; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+<div style="flex-grow: 1; border-radius: 26px; background: #28282D; padding: 18px 24px; display: flex; flex-direction: column; justify-content: space-around; box-shadow: 0 18px 30px -18px rgba(0,0,0,0.7)">
+<sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+<div style="display: flex; align-items: flex-start; gap: 14px">
+<div style="width: 78px; font-size: 13px; font-weight: 600; padding-top: 12px">{{ g.name }}</div>
+<div style="flex-grow: 1; display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 6px 4px">
+<sc-for list="{{ g.icons }}" as="i" hint-placeholder-count="9">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 3px">
+<div style="width: 44px; height: 40px; border-radius: 20px; background: #34343B; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#F4F4F6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="{{ i.d }}"/></svg></div>
+<div style="font-size: 11px; color: #A3A3AE; white-space: nowrap">{{ i.name }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="display: flex; gap: 12px">
+<div style="border-radius: 22px; background: #17171A; box-shadow: inset 0 0 0 1px #25252A; padding: 12px 18px; display: flex; align-items: center; gap: 6px">
+<sc-for list="{{ panels }}" as="i" hint-placeholder-count="6">
+<div style="width: 44px; height: 44px; border-radius: 22px; background: {{ i.bg }}; display: flex; align-items: center; justify-content: center"><svg role="img" aria-label="{{ i.name }}" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="{{ i.ink }}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="{{ i.d }}"/></svg></div>
+</sc-for>
+</div>
+<div style="flex-grow: 1; border-radius: 22px; background: #28282D; color: #A3A3AE; padding: 12px 20px; font-size: 13px; line-height: 1.4; box-shadow: 0 18px 30px -18px rgba(0,0,0,0.7)">
+Drawn on a 20 grid with one 1.6 line, round ends, no fills. <span style="color: #F4F4F6; font-weight: 600">A panel selector</span> (left) is the same icon in a 44 target: the open panel's is filled in, as the chosen option is everywhere else.
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":500}}'>
+class Component extends DCLogic {
+renderVals() {
+const circle = 'M10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14z';
+const icons = {
+  Undo: 'M7 5 4 8l3 3M4 8h8a4 4 0 0 1 0 8h-2',
+  Redo: 'M13 5l3 3-3 3M16 8H8a4 4 0 0 0 0 8h2',
+  Compare: 'M3 5h6v10H3zM11 5h6v10h-6z',
+  Copy: 'M7 7h9v9H7zM4 13V4h9',
+  Paste: 'M7 3h6v3H7zM7 4.500H4V17h12V4.500h-3',
+  Save: 'M4 4h10l2 2v10H4zM7 4v4h5M7 16v-5h6v5',
+  Reset: 'M4.500 10a5.500 5.500 0 1 0 1.800-4M4 3.500V7h3.500',
+  Random: 'M4 4h12v12H4zM7.500 7.500h.010M12.500 12.500h.010M10 10h.010M12.500 7.500h.010M7.500 12.500h.010',
+  Lock: 'M5 9h10v7H5zM7 9V7a3 3 0 0 1 6 0v2',
+  Link: 'M8.500 11.500l3-3M7 9l-1.500 1.500a2.800 2.800 0 0 0 4 4L11 13M13 11l1.500-1.500a2.800 2.800 0 0 0-4-4L9 7',
+  Help: circle + 'M8 8a2 2 0 1 1 3 1.700c-.700.500-1 .900-1 1.600M10 13.800h.010',
+  About: circle + 'M10 9.500v4.500M10 6.500h.010',
+  Keyboard: 'M3 5h14v10H3zM7.700 10v5M12.300 10v5M6 5v5M10 5v5M14 5v5',
+  Modulation: 'M3 10c2-7 5-7 7 0s5 7 7 0',
+  Envelope: 'M3 16 6 5l3 6h4l4 5',
+  Equaliser: 'M3 13c3 0 3-6 6-6s3 8 8 4',
+  Effects: 'M4 6h12M4 10h12M4 14h12M8 4.500v3M13 8.500v3M6.500 12.500v3',
+  Mixer: 'M5 4v12M10 4v12M15 4v12M3.500 7h3M8.500 12h3M13.500 9h3',
+  Levels: 'M4 16V9M8 16V5M12 16V8M16 16v-4',
+  Pad: 'M3 3h14v14H3zM3 12h14M8 3v14',
+  Presets: 'M4 5h12M4 10h12M4 15h8',
+  Settings: 'M10 12.500a2.500 2.500 0 1 0 0-5 2.500 2.500 0 0 0 0 5zM10 3v2M10 15v2M3 10h2M15 10h2M5 5l1.400 1.400M13.600 13.600 15 15M15 5l-1.400 1.400M6.400 13.600 5 15',
+  Density: 'M3 4h14v5H3zM3 11h14v5H3z',
+  Theme: 'M10 16a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM10 4v12M10 7h4.500M10 10h6M10 13h4.500',
+  Expand: 'M4 8V4h4M16 12v4h-4M4 4l5 5M16 16l-5-5',
+  Pin: 'M10 13v4M6 13h8M7.500 13V5h5v8',
+  Close: 'M5 5l10 10M15 5 5 15',
+  On: 'M10 3v7M6 5.500a6 6 0 1 0 8 0',
+  Play: 'M6 4l10 6-10 6z',
+  Loop: 'M5 9a4 4 0 0 1 4-4h5l-2-2M15 11a4 4 0 0 1-4 4H6l2 2'
+};
+const pick = (names) => names.map((name) => ({ name, d: icons[name] }));
+return {
+  groups: [
+    { name: 'Edit', icons: pick(['Undo', 'Redo', 'Compare', 'Copy', 'Paste', 'Save', 'Reset', 'Random', 'Link']) },
+    { name: 'Panels', icons: pick(['Keyboard', 'Modulation', 'Envelope', 'Equaliser', 'Effects', 'Mixer', 'Levels', 'Pad', 'Presets']) },
+    { name: 'Window', icons: pick(['Settings', 'Density', 'Theme', 'Expand', 'Pin', 'Close', 'Help', 'About', 'Lock']) },
+    { name: 'Run', icons: pick(['On', 'Play', 'Loop']) }
+  ],
+  panels: pick(['Keyboard', 'Modulation', 'Envelope', 'Effects', 'Mixer', 'Settings']).map((i, at) => ({
+    ...i, bg: at === 1 ? '#F4F4F6' : '#232328', ink: at === 1 ? '#151518' : '#F4F4F6'
+  }))
+};
+}
+}
+</script>
+</body>
+</html>

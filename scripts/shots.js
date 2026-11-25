@@ -78,6 +78,8 @@ const STILL = `*, *::before, *::after {
 // with `text`.
 const standIn = (hello, theme) => `
 try { localStorage.setItem('kit-theme', ${JSON.stringify(theme)}) } catch {}
+// Each scene starts at the plugin's own density, whatever the last chose.
+try { localStorage.removeItem('kit-density') } catch {}
 window.posted = []
 window.find = (spec) => {
   if (typeof spec === 'string') return document.querySelector(spec)
@@ -157,6 +159,14 @@ export const STEPS = {
     await mouse(tab, 'mousePressed', point)
     await mouse(tab, 'mouseMoved', { x: point.x + dx, y: point.y })
     await mouse(tab, 'mouseReleased', { x: point.x + dx, y: point.y })
+  },
+  // Press on an element, move `dx` pixels to the right, and keep hold:
+  // the shot shows the control as it is while being dragged.
+  press: async (tab, [spec, dx]) => {
+    const point = await at(tab, spec)
+    await mouse(tab, 'mouseMoved', point, 'none')
+    await mouse(tab, 'mousePressed', point)
+    await mouse(tab, 'mouseMoved', { x: point.x + dx, y: point.y })
   },
   dblclick: (tab, [spec]) => tab.evaluate(
     `window.find(${JSON.stringify(spec)}).dispatchEvent(

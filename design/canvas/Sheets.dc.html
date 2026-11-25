@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Direction C, Sheets</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 820px; height: 500px; box-sizing: border-box; background: #D9D9DE; font-family: 'Bricolage Grotesque', sans-serif; color: #151518; position: relative; overflow: hidden">
+<div style="position: absolute; left: 18px; top: 18px; width: 784px; height: 330px; box-sizing: border-box; border-radius: 28px; background: #151518; color: #F4F4F6; padding: 22px 26px; display: flex; gap: 24px">
+<div style="display: flex; flex-direction: column; width: 250px">
+<div style="font-size: 22px; font-weight: 600; letter-spacing: -0.02em">Template</div>
+<div style="font-size: 13px; color: #9494A0; margin-top: 2px">Soft bend</div>
+<div style="flex-grow: 1"></div>
+<div style="display: flex; gap: 22px; padding-bottom: 78px">
+<div><div style="font-size: 12px; color: #9494A0">In</div><div style="font-size: 30px; font-weight: 500; letter-spacing: -0.03em">-13</div></div>
+<div><div style="font-size: 12px; color: #9494A0">Out</div><div style="font-size: 30px; font-weight: 500; letter-spacing: -0.03em">-8<span style="font-size: 13px; color: #9494A0; letter-spacing: 0"> dB</span></div></div>
+</div>
+</div>
+<svg role="img" aria-label="A wave going in, dashed, and the same wave coming out, bent" viewBox="0 0 440 240" style="flex-grow: 1; height: 240px">
+<path d="M0 120h440" stroke="#2A2A30" stroke-width="1"/>
+<path d="M0 120C55 20 165 20 220 120S385 220 440 120" fill="none" stroke="#5C5C68" stroke-width="1.5" stroke-dasharray="2 6" stroke-linecap="round"/>
+<path d="M0 120C18 44 60 36 110 36S202 44 220 120 260 204 330 204 422 196 440 120" fill="none" stroke="#B3A1FF" stroke-width="3.5" stroke-linecap="round"/>
+</svg>
+<div style="position: absolute; right: 22px; top: 20px; display: flex; gap: 6px; align-items: center">
+<button aria-label="Undo" style="width: 44px; height: 34px; border: 0; border-radius: 17px; background: #232328; color: #C6C6CF"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4 3 7l3 3M3 7h7a3 3 0 0 1 0 6H8"/></svg></button>
+<div style="display: flex; padding: 3px; border-radius: 17px; background: #232328; font-size: 12px; font-weight: 600">
+<button style="width: 36px; height: 28px; border: 0; border-radius: 14px; background: #F4F4F6; color: #151518">A</button>
+<button style="width: 36px; height: 28px; border: 0; border-radius: 14px; background: transparent; color: #9494A0">B</button>
+</div>
+</div>
+</div>
+<div style="position: absolute; left: 44px; top: 268px; width: 732px; height: 212px; box-sizing: border-box; border-radius: 26px; background: #F6F6F8; padding: 20px 26px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 -10px 30px -12px rgba(0,0,0,0.45), 0 18px 30px -18px rgba(20,20,40,0.4)">
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; flex-grow: 1">
+<div style="display: flex; flex-direction: column; justify-content: space-between">
+<div style="font-size: 13px; color: #5B5B66">Drive</div>
+<div style="font-size: 46px; font-weight: 500; letter-spacing: -0.04em; color: #6142D6; line-height: 1">12.0<span style="font-size: 14px; letter-spacing: 0"> dB</span></div>
+<div style="height: 3px; border-radius: 2px; background: #DADAE0"><div style="width: 33%; height: 3px; border-radius: 2px; background: #6142D6"></div></div>
+</div>
+<div style="display: flex; flex-direction: column; justify-content: space-between">
+<div style="font-size: 13px; color: #5B5B66">Tone</div>
+<div style="font-size: 46px; font-weight: 500; letter-spacing: -0.04em; line-height: 1">6.0<span style="font-size: 14px; letter-spacing: 0; color: #5B5B66"> kHz</span></div>
+<div style="height: 3px; border-radius: 2px; background: #DADAE0"><div style="width: 72%; height: 3px; border-radius: 2px; background: #151518"></div></div>
+</div>
+<div style="display: flex; flex-direction: column; justify-content: space-between">
+<div style="font-size: 13px; color: #5B5B66">Mix</div>
+<div style="font-size: 46px; font-weight: 500; letter-spacing: -0.04em; line-height: 1">100<span style="font-size: 14px; letter-spacing: 0; color: #5B5B66"> %</span></div>
+<div style="height: 3px; border-radius: 2px; background: #151518"></div>
+</div>
+<div style="display: flex; flex-direction: column; justify-content: space-between">
+<div style="font-size: 13px; color: #5B5B66">Output</div>
+<div style="font-size: 46px; font-weight: 500; letter-spacing: -0.04em; line-height: 1">-6.0<span style="font-size: 14px; letter-spacing: 0; color: #5B5B66"> dB</span></div>
+<div style="height: 3px; border-radius: 2px; background: #DADAE0"><div style="width: 50%; height: 3px; border-radius: 2px; background: #151518"></div></div>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 16px">
+<div style="display: flex; gap: 6px; font-size: 13px; font-weight: 500">
+<button style="height: 44px; padding: 0 20px; border: 0; border-radius: 22px; background: #151518; color: #F4F4F6">Soft</button>
+<button style="height: 44px; padding: 0 20px; border: 1px solid #C9C9D0; border-radius: 22px; background: transparent; color: #151518">Hard</button>
+<button style="height: 44px; padding: 0 20px; border: 1px solid #C9C9D0; border-radius: 22px; background: transparent; color: #151518">Fold</button>
+</div>
+<div style="font-size: 12px; color: #5B5B66">Drag a number to change it. <span style="color: #151518; font-weight: 600">Drive</span> is how hard the signal is pushed into the shaper.</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":500}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

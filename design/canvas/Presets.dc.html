@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Direction C, the preset browser</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 820px; height: 500px; box-sizing: border-box; background: #D9D9DE; font-family: 'Bricolage Grotesque', sans-serif; color: #151518; position: relative; overflow: hidden">
+<div style="position: absolute; left: 18px; top: 18px; width: 784px; height: 190px; box-sizing: border-box; border-radius: 28px; background: #151518; color: #F4F4F6; padding: 18px 26px; display: flex; gap: 22px">
+<div style="width: 250px; display: flex; flex-direction: column; gap: 2px">
+<div style="font-size: 13px; color: #9494A0">Listening to</div>
+<div style="font-size: 30px; font-weight: 500; letter-spacing: -0.03em; line-height: 1.1">Broken radio</div>
+<div style="font-size: 13px; color: #9494A0">Fold, driven hard, top rolled off</div>
+</div>
+<svg role="img" aria-label="The picture this preset makes: a wave folded back on itself" viewBox="0 0 470 110" style="flex-grow: 1; height: 110px">
+<path d="M0 55H470" stroke="#2A2A30" stroke-width="1"/>
+<path d="{{ waveIn }}" fill="none" stroke="#7C7C88" stroke-width="1.5" stroke-dasharray="2 5" stroke-linecap="round"/>
+<path d="{{ waveOut }}" fill="none" stroke="#F4F4F6" stroke-width="2" stroke-linejoin="round"/>
+</svg>
+</div>
+<div style="position: absolute; left: 44px; top: 150px; width: 732px; height: 330px; box-sizing: border-box; border-radius: 26px; background: #F6F6F8; padding: 18px 24px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 -10px 30px -12px rgba(0,0,0,0.45), 0 18px 30px -18px rgba(20,20,40,0.4)">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500">
+<label for="find" style="position: absolute; left: -9999px">Find a preset</label>
+<input id="find" type="text" placeholder="Find a preset" style="width: 190px; height: 44px; box-sizing: border-box; padding: 0 16px; border: 1px solid #C9C9D0; border-radius: 22px; background: transparent; font: inherit; color: #151518">
+<button aria-pressed="true" style="height: 44px; padding: 0 16px; border: 0; border-radius: 22px; background: #151518; color: #F4F4F6">All</button>
+<button style="height: 44px; padding: 0 16px; border: 1px solid #C9C9D0; border-radius: 22px; background: transparent; color: #151518">Mine</button>
+<button style="height: 44px; padding: 0 16px; border: 1px solid #C9C9D0; border-radius: 22px; background: transparent; color: #151518">Kept</button>
+<div style="flex-grow: 1"></div>
+<button style="height: 44px; padding: 0 18px; border: 1px solid #C9C9D0; border-radius: 22px; background: transparent; color: #151518">Save as new</button>
+</div>
+<div style="flex-grow: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 26px; align-content: start">
+<sc-for list="{{ presets }}" as="p" hint-placeholder-count="8">
+<button style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; margin: 0 -12px; border: 0; border-radius: 12px; background: {{ p.bg }}; color: {{ p.fg }}; text-align: left">
+<span style="display: flex; gap: 3px; align-items: flex-end; height: 20px; width: 34px">
+<sc-for list="{{ p.bars }}" as="b" hint-placeholder-count="4"><span style="width: 6px; height: {{ b.h }}; border-radius: 2px; background: {{ p.bar }}"></span></sc-for>
+</span>
+<span style="flex-grow: 1; font-size: 17px; font-weight: 500; letter-spacing: -0.01em">{{ p.name }}</span>
+<span style="font-size: 12px; color: {{ p.soft }}">{{ p.by }}</span>
+</button>
+</sc-for>
+</div>
+<div style="font-size: 12px; color: #5B5B66; line-height: 1.4">Point at a preset to hear it and see its picture on the glass; press to keep it. Each one's four bars are its settings, so you can see how two differ before you try them.</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":500}}'>
+class Component extends DCLogic {
+renderVals() {
+const line = (n, fn) => Array.from({ length: n + 1 }, (_, i) => (i ? 'L' : 'M') + (i * 470 / n).toFixed(1) + ' ' + fn(i / n).toFixed(1)).join('');
+const fold = (x) => { const t = (((x + 1) % 4) + 4) % 4; return t < 2 ? t - 1 : 3 - t; };
+const wave = (t) => Math.sin(t * Math.PI * 4);
+// Name, who made it, and its four settings as shares of their range.
+const list = [
+  ['Init', 'Factory', [0.33, 0.72, 1, 0.5]], ['Warm tape', 'Factory', [0.45, 0.4, 0.8, 0.5]],
+  ['Broken radio', 'Factory', [0.9, 0.3, 1, 0.3]], ['Glue', 'Factory', [0.2, 0.9, 0.5, 0.55]],
+  ['Bass grit', 'Mine', [0.6, 0.25, 0.7, 0.45]], ['Vocal edge', 'Mine', [0.38, 0.85, 0.4, 0.5]],
+  ['Fizz', 'Factory', [0.75, 1, 0.6, 0.35]], ['Gentle', 'Factory', [0.12, 0.7, 1, 0.5]]
+];
+return {
+  waveIn: line(120, (t) => 55 - 30 * wave(t)),
+  waveOut: line(480, (t) => 55 - 46 * fold(3.2 * wave(t))),
+  presets: list.map(([name, by, values], i) => ({
+    name, by,
+    bg: i === 2 ? '#151518' : 'transparent',
+    fg: i === 2 ? '#F4F4F6' : '#151518',
+    soft: i === 2 ? '#A3A3AE' : '#5B5B66',
+    bar: i === 2 ? '#F4F4F6' : '#151518',
+    bars: values.map((v) => ({ h: Math.max(10, v * 100) + '%' }))
+  }))
+};
+}
+}
+</script>
+</body>
+</html>

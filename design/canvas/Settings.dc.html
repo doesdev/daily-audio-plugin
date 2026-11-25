@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Direction C, the settings panel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 820px; height: 500px; box-sizing: border-box; background: #D9D9DE; font-family: 'Bricolage Grotesque', sans-serif; color: #151518; padding: 18px; display: flex; gap: 14px">
+<div style="flex-grow: 1; border-radius: 26px; background: #F6F6F8; padding: 16px 24px; display: flex; flex-direction: column; box-shadow: 0 18px 30px -18px rgba(20,20,40,0.4)">
+<div style="display: flex; align-items: center; height: 44px">
+<div style="flex-grow: 1; font-size: 22px; font-weight: 500; letter-spacing: -0.02em">Settings</div>
+<button style="height: 44px; padding: 0 18px; border: 1px solid #C9C9D0; border-radius: 22px; background: transparent; color: #151518; font-size: 13px; font-weight: 500">Done</button>
+</div>
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
+<div style="display: flex; align-items: center; gap: 12px; height: 56px; border-top: 1px solid #DADAE0">
+<div style="width: 220px; white-space: nowrap">
+<div style="font-size: 15px; font-weight: 500">{{ r.name }}</div>
+<div style="font-size: 11px; color: #5B5B66">{{ r.note }}</div>
+</div>
+<div style="flex-grow: 1; display: flex; justify-content: flex-end; gap: 6px">
+<sc-for list="{{ r.options }}" as="o" hint-placeholder-count="3">
+<button aria-pressed="{{ o.on }}" style="height: 44px; padding: 0 16px; border: {{ o.border }}; border-radius: 22px; background: {{ o.bg }}; color: {{ o.fg }}; font-size: 13px; font-weight: 500">{{ o.name }}</button>
+</sc-for>
+</div>
+</div>
+</sc-for>
+<div style="flex-grow: 1"></div>
+<div style="font-size: 12px; color: #5B5B66; line-height: 1.4">These are kept for every plugin in the set, not saved with a song: change the theme once and all of them follow.</div>
+</div>
+<div style="width: 236px; flex-shrink: 0; border-radius: 28px; background: #151518; color: #F4F4F6; padding: 20px 22px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 13px; color: #9494A0">About</div>
+<div style="font-size: 30px; font-weight: 500; letter-spacing: -0.03em; line-height: 1.05">Fold</div>
+<div style="font-size: 13px; color: #9494A0; line-height: 1.4">Version 1.0.0, made 25 November 2026. Day 14 of the set.</div>
+<div style="flex-grow: 1"></div>
+<div style="display: flex; flex-direction: column; gap: 2px; font-size: 13px">
+<div style="display: flex; justify-content: space-between; height: 26px; align-items: center"><span style="color: #9494A0">Format</span><span>VST3</span></div>
+<div style="display: flex; justify-content: space-between; height: 26px; align-items: center"><span style="color: #9494A0">Delay added</span><span>0 samples</span></div>
+<div style="display: flex; justify-content: space-between; height: 26px; align-items: center"><span style="color: #9494A0">Working at</span><span>48 kHz</span></div>
+</div>
+<button style="height: 44px; border: 1px solid #3D3D45; border-radius: 22px; background: transparent; color: #F4F4F6; font-size: 13px; font-weight: 500">Open the manual</button>
+<button style="height: 44px; border: 1px solid #3D3D45; border-radius: 22px; background: transparent; color: #F4F4F6; font-size: 13px; font-weight: 500">Licences</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":500}}'>
+class Component extends DCLogic {
+renderVals() {
+// Each row: name, a note, its options and which one is chosen.
+const rows = [
+  ['Theme', 'Follows the computer unless told', ['Light', 'Dark', 'Match'], 2],
+  ['Density', 'How much is shown at once', ['Roomy', 'Regular', 'Dense'], 1],
+  ['Size', 'The whole editor, scaled', ['Small', 'Medium', 'Large'], 1],
+  ['Peak hold', 'How long a peak stays lit', ['Off', '2 s', 'Until pressed'], 1],
+  ['Motion', 'Pictures that move', ['Full', 'Calm', 'Still'], 0],
+  ['Fine drag', 'Hold Shift, or always', ['With Shift', 'Always'], 0]
+];
+return {
+  rows: rows.map(([name, note, options, at]) => ({
+    name, note,
+    options: options.map((o, i) => ({
+      name: o,
+      on: i === at ? 'true' : 'false',
+      bg: i === at ? '#151518' : 'transparent',
+      fg: i === at ? '#F4F4F6' : '#151518',
+      border: i === at ? '1px solid #151518' : '1px solid #C9C9D0'
+    }))
+  }))
+};
+}
+}
+</script>
+</body>
+</html>

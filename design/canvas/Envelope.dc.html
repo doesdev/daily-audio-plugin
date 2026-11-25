@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Direction C, an envelope and its modulation</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 820px; height: 500px; box-sizing: border-box; background: #D9D9DE; font-family: 'Bricolage Grotesque', sans-serif; color: #151518; position: relative; overflow: hidden">
+<div style="position: absolute; left: 18px; top: 18px; width: 784px; height: 330px; box-sizing: border-box; border-radius: 28px; background: #151518; color: #F4F4F6; padding: 20px 26px; display: flex; gap: 22px">
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; gap: 12px">
+<div style="font-size: 22px; font-weight: 600; letter-spacing: -0.02em">Envelope</div>
+<div style="font-size: 13px; color: #9494A0">drag a corner to move it, the middle of a slope to bend it</div>
+</div>
+<svg role="img" aria-label="An envelope: rise, fall, hold, release, with the fall's corner being dragged" viewBox="0 0 470 200" style="width: 100%; height: 200px">
+<path d="M0 180H470" stroke="#2A2A30" stroke-width="1"/>
+<path d="M20 180C24 90 34 30 60 24" fill="none" stroke="#F4F4F6" stroke-width="2" stroke-linecap="round"/>
+<path d="M60 24C90 60 130 74 190 76" fill="none" stroke="#B3A1FF" stroke-width="3" stroke-linecap="round"/>
+<path d="M190 76H330" fill="none" stroke="#F4F4F6" stroke-width="2" stroke-dasharray="1 6" stroke-linecap="round"/>
+<path d="M330 76C350 150 400 174 450 180" fill="none" stroke="#F4F4F6" stroke-width="2" stroke-linecap="round"/>
+<circle cx="60" cy="24" r="6" fill="#F4F4F6" stroke="#151518" stroke-width="3"/>
+<circle cx="190" cy="76" r="9" fill="#B3A1FF" stroke="#151518" stroke-width="3"/>
+<circle cx="330" cy="76" r="6" fill="#F4F4F6" stroke="#151518" stroke-width="3"/>
+<circle cx="110" cy="62" r="4" fill="#151518" stroke="#B3A1FF" stroke-width="2"/>
+<circle cx="372" cy="150" r="4" fill="#151518" stroke="#7C7C88" stroke-width="2"/>
+<rect x="150" y="40" width="80" height="22" rx="11" fill="#B3A1FF"/>
+<text x="190" y="55" text-anchor="middle" font-size="11" font-weight="600" fill="#151518">320 ms</text>
+<text x="250" y="68" font-size="11" fill="#9494A0">held while the note is</text>
+</svg>
+</div>
+<div style="width: 210px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 66px">
+<div style="font-size: 13px; color: #9494A0">It moves</div>
+<sc-for list="{{ routes }}" as="r" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 5px">
+<div style="display: flex; justify-content: space-between; font-size: 14px"><div>{{ r.to }}</div><div style="color: #7FC8F0; font-weight: 600">{{ r.by }}</div></div>
+<div style="position: relative; height: 3px; border-radius: 2px; background: #2E2E35"><div style="position: absolute; left: {{ r.from }}; width: {{ r.span }}; height: 3px; border-radius: 2px; background: #7FC8F0"></div><div style="position: absolute; left: 50%; top: -3px; width: 1px; height: 9px; background: #5C5C68"></div></div>
+</div>
+</sc-for>
+<div style="font-size: 12px; color: #9494A0; line-height: 1.4">Blue is the one other standing colour: it means a setting is being moved for you.</div>
+</div>
+</div>
+<div style="position: absolute; left: 44px; top: 268px; width: 732px; height: 212px; box-sizing: border-box; border-radius: 26px; background: #F6F6F8; padding: 20px 26px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 -10px 30px -12px rgba(0,0,0,0.45), 0 18px 30px -18px rgba(20,20,40,0.4)">
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; flex-grow: 1">
+<sc-for list="{{ values }}" as="p" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; justify-content: space-between">
+<div style="font-size: 13px; color: {{ p.label }}; font-weight: {{ p.weight }}">{{ p.name }}</div>
+<div style="font-size: 44px; font-weight: 500; letter-spacing: -0.04em; line-height: 1; color: {{ p.ink }}">{{ p.value }}<span style="font-size: 14px; letter-spacing: 0"> {{ p.unit }}</span></div>
+<div style="display: flex; flex-direction: column; gap: 3px">
+<div style="position: relative; height: 3px"><div style="position: absolute; left: {{ p.modFrom }}; width: {{ p.modSpan }}; height: 3px; border-radius: 2px; background: #2E7FBF"></div></div>
+<div style="height: 3px; border-radius: 2px; background: #DADAE0"><div style="width: {{ p.fill }}; height: 3px; border-radius: 2px; background: {{ p.ink }}"></div></div>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="font-size: 12px; color: #5B5B66; line-height: 1.4">A setting something else is moving wears a second, blue line above its own: how far it is being swung, and which way. <span style="color: #151518; font-weight: 600">Sustain</span> here is swung by an LFO. Drag the blue line's end to set how much.</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":500}}'>
+class Component extends DCLogic {
+renderVals() {
+const value = (name, text, unit, fill, touched, modFrom, modSpan) => ({
+  name, value: text, unit, fill, modFrom, modSpan,
+  ink: touched ? '#6142D6' : '#151518',
+  label: touched ? '#6142D6' : '#5B5B66',
+  weight: touched ? 600 : 400
+});
+return {
+  routes: [
+    { to: 'Filter cutoff', by: '+3.2 oct', from: '50%', span: '40%' },
+    { to: 'Level', by: '100 %', from: '50%', span: '50%' },
+    { to: 'Pitch', by: '-2 st', from: '42%', span: '8%' }
+  ],
+  values: [
+    value('Attack', '4', 'ms', '10%', false, '0%', '0%'),
+    value('Decay', '320', 'ms', '45%', true, '0%', '0%'),
+    value('Sustain', '70', '%', '70%', false, '55%', '30%'),
+    value('Release', '1.2', 's', '60%', false, '0%', '0%')
+  ]
+};
+}
+}
+</script>
+</body>
+</html>

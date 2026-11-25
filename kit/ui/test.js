@@ -5,9 +5,10 @@
 
 import test from 'mvt'
 import {
-  EMPTY, HOLD_MS, NO_HISTORY, angle, clamp, describe, differences, dragged,
-  fitScale, held, normOf, nudged, otherTheme, parseValue, plainOf, recorded,
-  redone, reduce, snap, themeFor, undone
+  DENSITIES, EMPTY, HOLD_MS, NO_HISTORY, clamp, densityFor, describe,
+  differences, dragged, fitScale, held, nextDensity, normOf, nudged,
+  otherTheme, parseValue, parts, plainOf, recorded, redone, reduce, snap,
+  themeFor, undone, zoneFills, zoneOf
 } from './kit.js'
 import { withBrowser } from '../../scripts/lib/browser.js'
 import { openScene, withSite, writeScene } from '../../scripts/shots.js'
@@ -54,10 +55,57 @@ test('a nudge is a step, or a fiftieth where there are none', (assert) => {
   assert.is(nudged(range, 0.5, 1, true), 0.502)
 })
 
-test('a knob sweeps 270 degrees about straight up', (assert) => {
-  assert.is(angle(0), -135)
-  assert.is(angle(0.5), 0)
-  assert.is(angle(1), 135)
+test('a value splits into the number drawn large and its unit', (assert) => {
+  const cases = [
+    ['12.0 dB', ['12.0', 'dB']],
+    ['-6.0 dB', ['-6.0', 'dB']],
+    ['100 %', ['100', '%']],
+    ['4.0 : 1', ['4.0', ': 1']],
+    ['Soft', ['Soft', '']],
+    ['', ['', '']]
+  ]
+
+  cases.forEach(([text, want]) => assert.deepEqual(parts(text), want))
+})
+
+test('a level fills six segments, breaking at -24, -12, -6, -3 and 0 dB', (assert) => {
+  // A level is a fraction of the 60 dB under full scale.
+  const at = (db) => 1 + db / 60
+  const cases = [
+    [-60, [0, 0, 0, 0, 0, 0]],
+    [-42, [0.5, 0, 0, 0, 0, 0]],
+    [-24, [1, 0, 0, 0, 0, 0]],
+    [-18, [1, 0.5, 0, 0, 0, 0]],
+    [-9, [1, 1, 0.5, 0, 0, 0]],
+    [-4.5, [1, 1, 1, 0.5, 0, 0]],
+    [-1.5, [1, 1, 1, 1, 0.5, 0]],
+    [0, [1, 1, 1, 1, 1, 1]]
+  ]
+
+  cases.forEach(([db, want]) => assert.deepEqual(
+    zoneFills(at(db)).map((v) => Math.round(v * 1000) / 1000), want, `${db} dB`
+  ))
+})
+
+test('a level is named for the segment it has reached', (assert) => {
+  const at = (db) => 1 + db / 60
+  const cases = [
+    [-60, 'ink'], [-30, 'ink'], [-20, 'green'], [-10, 'yellow'],
+    [-5, 'orange'], [-2, 'red'], [0, 'red']
+  ]
+
+  cases.forEach(([db, want]) => assert.is(zoneOf(at(db)), want, `${db} dB`))
+})
+
+test('density is one of three, stepped round in order', (assert) => {
+  assert.deepEqual(DENSITIES, ['roomy', 'regular', 'dense'])
+  assert.is(densityFor('dense', 'roomy'), 'dense')
+  assert.is(densityFor(null, 'regular'), 'regular')
+  assert.is(densityFor('tiny', 'regular'), 'regular')
+  assert.is(densityFor(null), 'roomy')
+  assert.is(nextDensity('roomy'), 'regular')
+  assert.is(nextDensity('regular'), 'dense')
+  assert.is(nextDensity('dense'), 'roomy')
 })
 
 test('a value in its own terms, and back', (assert) => {
@@ -197,7 +245,6 @@ test('the store folds what the host says', (assert) => {
   assert.deepEqual(metered.levelTexts, ['-30 dB'])
   assert.is(reduce(ready, { type: 'unheard-of' }), ready)
 })
-
 // ---- the page itself
 
 const PLUGIN = 'template'
@@ -232,20 +279,34 @@ test('the page builds itself from the hello', async (assert) => {
 
     assert.is(await text(tab, '.kit-name'), 'Template')
     assert.is(await tab.evaluate('document.title'), 'Template')
-    assert.is(await count('.kit-rule'), 3)
-    assert.is(await count('.kit-knob'), 1)
+    assert.is(await count('.kit-glass'), 1)
+    assert.is(await count('.kit-sheet'), 1)
+    assert.is(await count('.kit-setting'), 4)
     assert.is(await count('.kit-meter'), 2)
-    assert.is(await count('.kit-screen canvas'), 1)
+    assert.is(await count('.kit-segment'), 12)
+    assert.is(await count('.kit-picture canvas'), 1)
     assert.is(await text(tab, `${DRIVE} .kit-value`), '12.0 dB')
+    assert.is(await text(tab, `${DRIVE} .kit-number`), '12.0')
     assert.is(await text(tab, '.kit-option[aria-pressed="true"]'), 'Soft')
     assert.deepEqual(await tab.evaluate('window.posted'), [{ type: 'ready' }])
     assert.deepEqual(tab.errors, [])
   })
 })
 
-test('the screen is drawn, and drawn again when a setting moves', async (assert) => {
+test('nothing on the page runs past its edge', async (assert) => {
+  const spills = `[...document.querySelectorAll('#app *')].filter((el) => {
+    const out = document.getElementById('app').getBoundingClientRect()
+    const r = el.getBoundingClientRect()
+    return r.width && (r.right > out.right + 1 || r.bottom > out.bottom + 1)
+  }).map((el) => el.className)`
+  await onPage([], async (tab) => {
+    assert.deepEqual(await tab.evaluate(spills), [])
+  })
+})
+
+test('the picture is drawn, and drawn again when a setting moves', async (assert) => {
   const inked = `(() => {
-    const c = document.querySelector('.kit-screen canvas')
+    const c = document.querySelector('.kit-picture canvas')
     const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data
     let sum = 0
     for (let i = 3; i < d.length; i += 4) sum += d[i]
@@ -263,14 +324,13 @@ test('the screen is drawn, and drawn again when a setting moves', async (assert)
   })
 })
 
-test('a slide along a rule is one gesture for the host', async (assert) => {
-  const width = `document.querySelector('${MIX} .kit-rule-slot')
+test('a slide along a value is one gesture for the host', async (assert) => {
+  const width = `document.querySelector('${MIX} .kit-scrub')
     .getBoundingClientRect().width`
   await onPage([], async (tab) => {
     const half = Math.round(await tab.evaluate(width) / 2)
-    await tab.evaluate(`window.find('${MIX} .kit-rule-slot').scrollIntoView() ?? true`)
     const { STEPS } = await import('../../scripts/shots.js')
-    await STEPS.slide(tab, [`${MIX} .kit-rule-slot`, -half])
+    await STEPS.slide(tab, [`${MIX} .kit-scrub`, -half])
     const sent = await posted(tab)
 
     assert.is(types(sent), 'begin set end')
@@ -278,15 +338,19 @@ test('a slide along a rule is one gesture for the host', async (assert) => {
     assert.true(Math.abs(sent[1].value - 0.5) < 0.01)
     // Shown at once, before the host has said what to call it.
     assert.is(await text(tab, `${MIX} .kit-value`), '50 %')
+    // Purple is for what is being touched, and it is let go of now.
+    assert.is(await tab.evaluate(
+      `document.querySelector('${MIX}').dataset.held ?? null`
+    ), null)
   })
 })
 
 test('a click, a key and a double-click are gestures too', async (assert) => {
   const steps = [
     ['click', { sel: '.kit-option', text: 'Fold' }],
-    ['focus', `${DRIVE} .kit-rule-slot`],
+    ['focus', `${DRIVE} .kit-scrub`],
     ['key', 'ArrowUp'],
-    ['dblclick', `${DRIVE} .kit-rule-slot`]
+    ['dblclick', `${DRIVE} .kit-line`]
   ]
   await onPage(steps, async (tab) => {
     const sent = await posted(tab)
@@ -365,8 +429,8 @@ test('compare flips between two sets of settings', async (assert) => {
   })
 })
 
-test('the foot of the page says what the pointer is over', async (assert) => {
-  const steps = [['hover', `${DRIVE} .kit-rule-slot`]]
+test('the foot of the sheet says what the pointer is over', async (assert) => {
+  const steps = [['hover', `${DRIVE} .kit-scrub`]]
   await onPage(steps, async (tab) => {
     const { STEPS } = await import('../../scripts/shots.js')
     assert.is(await text(tab, '.kit-hint-what'), 'Drive')
@@ -375,7 +439,7 @@ test('the foot of the page says what the pointer is over', async (assert) => {
 
     await STEPS.away(tab, [])
     assert.is(await text(tab, '.kit-hint-what'), '')
-    assert.contains(await text(tab, '.kit-hint-about'), 'Drag to set')
+    assert.contains(await text(tab, '.kit-hint-about'), 'Drag a number')
   })
 })
 
@@ -415,12 +479,34 @@ test('the theme switch flips the page and is remembered', async (assert) => {
   })
 })
 
+test('density steps through three, shrinks the numbers and is remembered', async (assert) => {
+  const density = 'document.documentElement.dataset.density'
+  const size = `parseFloat(getComputedStyle(
+    document.querySelector('${DRIVE} .kit-number')).fontSize)`
+  await onPage([], async (tab) => {
+    assert.is(await tab.evaluate(density), 'roomy')
+    const roomy = await tab.evaluate(size)
+
+    await tab.evaluate('document.querySelector(".kit-density").click() ?? true')
+    assert.is(await tab.evaluate(density), 'regular')
+    assert.true(await tab.evaluate(size) < roomy)
+    assert.is(await tab.evaluate('localStorage.getItem("kit-density")'), 'regular')
+    assert.is(
+      await tab.evaluate('document.querySelector(".kit-density").ariaLabel'),
+      'Density: regular. Switch to dense'
+    )
+    assert.deepEqual(await posted(tab), [])
+  })
+})
+
 test('the page carries its own typeface', async (assert) => {
   await onPage([], async (tab) => {
-    assert.true(await tab.evaluate('document.fonts.check("13px Archivo")'))
+    assert.true(await tab.evaluate(
+      'document.fonts.check("13px \'Bricolage Grotesque\'")'
+    ))
     assert.contains(
       await tab.evaluate('getComputedStyle(document.body).fontFamily'),
-      'Archivo'
+      'Bricolage Grotesque'
     )
   })
 })
@@ -434,16 +520,54 @@ test('what the host says replaces what the page shows', async (assert) => {
   const meters = {
     type: 'meters', levels: [0.5, 0.25], levelTexts: ['-30 dB', '-45 dB']
   }
+  const fill = (n) => `getComputedStyle(document.querySelectorAll(
+    '[data-key="input"] .kit-segment')[${n}]).getPropertyValue('--fill')`
   await onPage([['tell', state], ['tell', meters]], async (tab) => {
     assert.is(await text(tab, `${DRIVE} .kit-value`), '36.0 dB')
     assert.is(await text(tab, '.kit-option[aria-pressed="true"]'), 'Hard')
     assert.is(await text(tab, '[data-key="level"] .kit-value'), '-30 dB')
-    assert.is(await tab.evaluate(`getComputedStyle(document.querySelector(
-      '[data-key="input"] .kit-meter-slot')).getPropertyValue('--level')`
-    ), '0.25')
+    // -45 dB is 15 of the first segment's 36 dB, and none of the next.
+    assert.is(await tab.evaluate(fill(0)), '0.417')
+    assert.is(await tab.evaluate(fill(1)), '0')
     // Automation is not the page's gesture: nothing goes back, and it
     // is not the page's to undo.
     assert.deepEqual(await posted(tab), [])
     assert.true(await tab.evaluate('document.querySelector(".kit-undo").disabled'))
+  })
+})
+
+test('a setting held is purple, with its range, until it is let go', async (assert) => {
+  const held = `document.querySelector('${DRIVE}').dataset.held ?? null`
+  const shown = `getComputedStyle(
+    document.querySelector('${DRIVE} .kit-range')).visibility`
+  const colour = `getComputedStyle(
+    document.querySelector('${DRIVE} .kit-number')).color`
+  await onPage([], async (tab) => {
+    const { STEPS } = await import('../../scripts/shots.js')
+    const rest = await tab.evaluate(colour)
+    assert.is(await tab.evaluate(shown), 'hidden')
+
+    await STEPS.press(tab, [`${DRIVE} .kit-scrub`, 20])
+    assert.is(await tab.evaluate(held), 'true')
+    assert.is(await tab.evaluate(shown), 'visible')
+    assert.not(await tab.evaluate(colour), rest)
+    assert.is(await text(tab, `${DRIVE} .kit-range`), '0.0 dB36.0 dB')
+    assert.is(await tab.evaluate('window.kit.touched()'), 'drive')
+  })
+})
+
+test('a setting that rests inside its range fills from its default', async (assert) => {
+  const fill = `document.querySelector('[data-key="output"] .kit-line-fill')
+    .getBoundingClientRect().width`
+  const state = {
+    type: 'state',
+    values: [0.33, 0, 0.7, 1, 0.75],
+    texts: ['12.0 dB', 'Soft', '6000 Hz', '100 %', '3.0 dB']
+  }
+  await onPage([], async (tab) => {
+    assert.is(await tab.evaluate(fill), 0)
+    const { STEPS } = await import('../../scripts/shots.js')
+    await STEPS.tell(tab, [state])
+    assert.true(await tab.evaluate(fill) > 20)
   })
 })

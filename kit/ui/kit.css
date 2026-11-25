@@ -1,652 +1,571 @@
-/* The kit's look (docs/design.md says why it is this way).
-
-   A body in one tone, off-white or dark grey, built in three depths:
-   things cut into it (slots, the screen), the body itself, and things
-   standing off it (the deck, a grip, a cap). Light comes from above,
-   so a raised edge is bright on top and a cut one is dark on top.
-
-   Purple is the one accent and it means one thing: this is where the
-   setting is. Any other colour appears only when it is news, as a
-   level too hot to leave alone is.
-
-   A plugin's own style.css comes after this and may change any token
-   below, or anything else. */
-
-:root,
-:root[data-theme='dark'] {
-  color-scheme: dark;
-  --ground: #19191c;
-  --body-top: #2b2b30;
-  --body: #232327;
-  --cut: #131316;
-  --edge-light: rgb(255 255 255 / 0.07);
-  --edge-dark: rgb(0 0 0 / 0.55);
-  --lift: 0 14px 28px -16px rgb(0 0 0 / 0.75), 0 2px 4px rgb(0 0 0 / 0.35);
-  --grip-top: #4a4a52;
-  --grip: #36363c;
-  --line: #3b3b42;
-  --ink: #ececef;
-  --ink-soft: #9d9da7;
-  --accent: #a690ff;
-  --accent-strong: #c9bcff;
-  --accent-soft: rgb(166 144 255 / 0.2);
-  --warn: #e3b24f;
-  --hot: #f0716a;
-  --ok: #58c48a;
-  --cool: #6cb4ec;
-}
-
-:root[data-theme='light'] {
-  color-scheme: light;
-  --ground: #dfdfe3;
-  --body-top: #fbfbfc;
-  --body: #efeff1;
-  --cut: #d4d4d9;
-  --edge-light: rgb(255 255 255 / 0.95);
-  --edge-dark: rgb(24 24 44 / 0.2);
-  --lift: 0 14px 26px -16px rgb(24 24 44 / 0.4), 0 2px 4px rgb(24 24 44 / 0.1);
-  --grip-top: #ffffff;
-  --grip: #ececef;
-  --line: #c4c4cb;
-  --ink: #1c1c20;
-  --ink-soft: #5f5f69;
-  --accent: #6a4ad4;
-  --accent-strong: #5234b4;
-  --accent-soft: rgb(106 74 212 / 0.16);
-  --warn: #b97f14;
-  --hot: #cf4a42;
-  --ok: #2f9461;
-  --cool: #2e7fbf;
-}
+/* The house look, direction C: a dark glass that holds the picture, a
+   sheet of settings lying over its lower edge, and type as the control.
+   Mostly one tone. Purple only on what is being touched. Any other
+   colour only when it is news: a level worth acting on.
+   docs/design.md says why. */
 
 :root {
-  /* The screen is dark glass in either theme, so what is drawn on it
-     has colours of its own. */
-  --screen: #101013;
-  --screen-ink: #e9e9ee;
-  --screen-soft: #6c6c78;
-  --screen-line: rgb(255 255 255 / 0.07);
-  --screen-accent: #a690ff;
-  /* What marks a control's value. A control given a tone takes that
-     colour instead: see the tones at the end. */
-  --tone: var(--accent);
-  --pad: 14px;
-  --font: 'Archivo', 'Segoe UI Variable Text', 'Segoe UI', system-ui,
-    sans-serif;
+  --font: 'Bricolage Grotesque', 'Segoe UI Variable Text', 'Segoe UI',
+    system-ui, sans-serif;
+
+  /* The page and the sheet. */
+  --ground: #D9D9DE;
+  --sheet: #F6F6F8;
+  --ink: #151518;
+  --soft: #5B5B66;
+  --track: #DADAE0;
+  --edge: #C9C9D0;
+  --touch: #6142D6;
+  --sheet-shadow: 0 -10px 30px -12px rgba(0, 0, 0, 0.45),
+    0 18px 30px -18px rgba(20, 20, 40, 0.4);
+
+  /* The glass: dark in both themes. */
+  --glass: #151518;
+  --glass-edge: transparent;
+  --g-ink: #F4F4F6;
+  --g-soft: #9494A0;
+  --g-line: #2A2A30;
+  --g-pill: #232328;
+  --g-touch: #B3A1FF;
+  --g-red: #F0605A;
+
+  /* A level's zones, as they read on the sheet. */
+  --z-ink: var(--ink);
+  --z-green: #23895A;
+  --z-yellow: #A87A08;
+  --z-orange: #C2601A;
+  --z-red: #C93A33;
+
+  /* What density changes. */
+  --num: 46px;
+  --target: 44px;
+  --gap: 12px;
+  --pad: 20px;
+  --lap: 64px;
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --ground: #0B0B0D;
+  --sheet: #28282D;
+  --ink: #F4F4F6;
+  --soft: #A3A3AE;
+  --track: #3D3D45;
+  --edge: #4A4A53;
+  --touch: #B3A1FF;
+  --sheet-shadow: 0 -10px 30px -12px rgba(0, 0, 0, 0.45),
+    0 18px 30px -18px rgba(0, 0, 0, 0.7);
+  --glass: #17171A;
+  --glass-edge: #25252A;
+  color-scheme: dark;
+}
+
+:root[data-theme='dark'], .kit-glass {
+  --z-ink: #F4F4F6;
+  --z-green: #5FCB8E;
+  --z-yellow: #F2C94B;
+  --z-orange: #F2994B;
+  --z-red: #F0605A;
+}
+
+:root[data-density='regular'] {
+  --num: 34px;
+  --target: 38px;
+  --gap: 9px;
+  --pad: 16px;
+  --lap: 52px;
+}
+
+:root[data-density='dense'] {
+  --num: 26px;
+  --target: 32px;
+  --gap: 6px;
+  --pad: 12px;
+  --lap: 40px;
 }
 
 * { box-sizing: border-box; }
 
-html, body { height: 100%; }
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--ground);
+}
 
 body {
-  margin: 0;
-  background: var(--ground);
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.3;
   color: var(--ink);
-  font: 400 13px/1.3 var(--font);
-  font-variant-numeric: tabular-nums;
   user-select: none;
   -webkit-user-select: none;
-  overflow: hidden;
+  cursor: default;
 }
+
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+
+:focus-visible {
+  outline: 2px solid var(--touch);
+  outline-offset: 3px;
+}
+
+.kit-glass :focus-visible { outline-color: var(--g-touch); }
 
 #app {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 10px var(--pad) 8px;
+  padding: 18px;
   transform-origin: 0 0;
 }
 
-:focus { outline: none; }
+/* ---- the glass */
 
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+.kit-glass {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: var(--pad) 26px calc(var(--pad) + var(--lap));
+  border-radius: 28px;
+  background: var(--glass);
+  box-shadow: inset 0 0 0 1px var(--glass-edge);
+  color: var(--g-ink);
 }
-
-/* Header: the name, wide; the tools, small and out of the way. */
 
 .kit-header {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  height: 26px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
 }
+
+.kit-heading { min-width: 0; }
 
 .kit-name {
   margin: 0;
-  font-size: 17px;
-  font-weight: 680;
-  font-stretch: 114%;
-  letter-spacing: -0.01em;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
-.kit-header-end {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-left: auto;
+.kit-note {
+  margin: 0;
+  color: var(--g-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .kit-tools {
   display: flex;
-  align-items: center;
-  gap: 2px;
+  gap: 8px;
+  flex: none;
+}
+
+.kit-capsule {
+  display: flex;
+  border-radius: calc(var(--target) / 2);
+  background: var(--g-pill);
+}
+
+.kit-tool, .kit-compare {
+  height: var(--target);
+  padding: 0;
+  border: 0;
+  border-radius: calc(var(--target) / 2);
+  background: transparent;
+  color: var(--g-ink);
 }
 
 .kit-tool {
+  width: var(--target);
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 24px;
-  padding: 0;
-  background: none;
-  border: 0;
-  border-radius: 6px;
-  color: var(--ink-soft);
-  cursor: pointer;
 }
 
-.kit-tool:hover:not(:disabled) { color: var(--ink); background: var(--cut); }
-.kit-tool:disabled { opacity: 0.35; cursor: default; }
-.kit-tool svg { width: 15px; height: 15px; }
+.kit-tool:hover:not(:disabled) { background: rgba(244, 244, 246, 0.1); }
+.kit-tool:disabled { color: #5C5C68; cursor: default; }
 
-.kit-tool path,
-.kit-tool circle {
+.kit-icon {
+  width: 20px;
+  height: 20px;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.5;
+  stroke-width: 1.6;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.kit-tool path.kit-fill { fill: currentColor; stroke: none; }
-
-/* Compare: two letters in a slot, the one in use standing up. */
-
 .kit-compare {
   display: flex;
-  margin-left: 6px;
-  padding: 2px;
-  background: var(--cut);
-  border: 0;
-  border-radius: 8px;
-  box-shadow: inset 0 1px 2px var(--edge-dark), 0 1px 0 var(--edge-light);
-  color: var(--ink-soft);
-  font: 600 11px var(--font);
-  cursor: pointer;
+  align-items: center;
+  padding: 0 4px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .kit-compare-slot {
+  width: calc(var(--target) - 2px);
+  height: calc(var(--target) - 8px);
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 18px;
-  border-radius: 6px;
+  border-radius: calc(var(--target) / 2);
+  color: var(--g-soft);
 }
 
 .kit-compare-slot[data-on='true'] {
-  background: linear-gradient(var(--grip-top), var(--grip));
-  box-shadow: inset 0 1px 0 var(--edge-light), 0 1px 2px var(--edge-dark);
-  color: var(--accent-strong);
+  background: var(--g-ink);
+  color: var(--glass);
 }
-
-/* The stage: the screen, and the rail beside it. */
 
 .kit-stage {
-  display: flex;
-  flex: 1;
-  gap: 10px;
+  flex: 1 1 0;
   min-height: 0;
+  display: flex;
+  gap: 26px;
 }
 
-.kit-screen {
-  position: relative;
-  flex: 1;
+.kit-readouts {
+  display: flex;
+  gap: 22px;
+  align-self: flex-end;
+}
+
+.kit-picture {
+  flex: 1 1 0;
   min-width: 0;
-  background: var(--screen);
-  border-radius: 12px;
-  box-shadow:
-    inset 0 2px 6px rgb(0 0 0 / 0.7),
-    inset 0 0 0 1px rgb(255 255 255 / 0.04),
-    0 1px 0 var(--edge-light);
-  overflow: hidden;
+  position: relative;
 }
 
-/* A sheen across the top of the glass: the one gradient that is not a
-   surface, and it is there because glass has one. */
-.kit-screen::after {
-  content: '';
+.kit-picture canvas {
   position: absolute;
   inset: 0;
-  background: linear-gradient(rgb(255 255 255 / 0.045), transparent 38%);
-  pointer-events: none;
-}
-
-.kit-screen-canvas {
-  display: block;
   width: 100%;
   height: 100%;
 }
 
-/* Raised panels: the deck the controls sit on, and the rail. */
+/* ---- a level */
 
-.kit-deck,
-.kit-rail {
-  background: linear-gradient(var(--body-top), var(--body));
-  border-radius: 12px;
-  box-shadow: inset 0 1px 0 var(--edge-light), var(--lift);
-}
-
-.kit-deck {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px 26px;
-  align-content: start;
-  padding: 12px 16px;
-}
-
-.kit-rail {
+.kit-meter {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 10px 12px;
-}
-
-.kit-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.kit-group-title {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 620;
-}
-
-.kit-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.kit-column {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.kit-control {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
+  gap: 2px;
+  width: 104px;
 }
 
 .kit-title {
-  color: var(--ink-soft);
-  font-size: 11.5px;
-  font-stretch: 94%;
+  font-size: 13px;
+  color: var(--soft);
   white-space: nowrap;
+}
+
+.kit-glass .kit-title { font-size: 12px; color: var(--g-soft); }
+
+.kit-meter .kit-number {
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.kit-unit {
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--soft);
+}
+
+.kit-glass .kit-unit { color: var(--g-soft); }
+
+.kit-meter[data-zone='yellow'] .kit-number { color: var(--z-yellow); }
+.kit-meter[data-zone='orange'] .kit-number { color: var(--z-orange); }
+.kit-meter[data-zone='red'] .kit-number,
+.kit-meter[data-clipped] .kit-number { color: var(--z-red); }
+
+.kit-segments {
+  display: flex;
+  gap: 3px;
+  height: 6px;
+  margin-top: 6px;
+}
+
+.kit-segment {
+  display: block;
+  border-radius: 2px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--z) 20%, transparent);
+}
+
+.kit-segment::before {
+  content: '';
+  display: block;
+  width: calc(var(--fill, 0) * 100%);
+  height: 100%;
+  background: var(--z);
+}
+
+/* The top of the scale is stretched: the last 12 dB get half the bar. */
+.kit-zone-ink { flex: 30 1 0; --z: var(--z-ink); }
+.kit-zone-green { flex: 14 1 0; --z: var(--z-green); }
+.kit-zone-yellow { flex: 10 1 0; --z: var(--z-yellow); }
+.kit-zone-orange { flex: 7 1 0; --z: var(--z-orange); }
+.kit-zone-red { flex: 7 1 0; --z: var(--z-red); }
+.kit-zone-lamp { flex: 3 1 0; --z: var(--z-red); }
+.kit-meter[data-clipped] .kit-zone-lamp::before { width: 100%; }
+
+/* ---- the sheet */
+
+.kit-sheet {
+  flex: none;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  margin: calc(-1 * var(--lap)) 26px 2px;
+  padding: var(--pad) 26px calc(var(--pad) - 2px);
+  border-radius: 26px;
+  background: var(--sheet);
+  box-shadow: var(--sheet-shadow);
+}
+
+.kit-values {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gap) 22px;
+}
+
+.kit-setting {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  min-width: 0;
+}
+
+.kit-scrub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  cursor: ew-resize;
+  touch-action: none;
+  border-radius: 4px;
 }
 
 .kit-value {
-  min-width: 54px;
-  font-size: 12.5px;
-  font-weight: 560;
-  text-align: center;
+  display: block;
   white-space: nowrap;
-  cursor: text;
 }
 
-.kit-entry {
-  width: 64px;
-  padding: 1px 4px;
-  background: var(--cut);
-  border: 0;
-  border-radius: 4px;
-  box-shadow: inset 0 1px 2px var(--edge-dark), 0 0 0 1.5px var(--accent);
-  color: var(--ink);
-  font: inherit;
-  text-align: center;
+.kit-setting .kit-number {
+  font-size: var(--num);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
 }
 
-/* Rule: title, a ruled slot with a grip, the value. One line. */
-
-.kit-rule {
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-}
-
-.kit-rule .kit-title { width: 52px; }
-.kit-rule .kit-value { width: 64px; min-width: 0; text-align: right; }
-
-.kit-rule-slot {
-  --from: 0;
-  --to: 0;
-  --at: 0;
-  --grip-w: 12px;
+.kit-line {
   position: relative;
-  flex: 1;
-  min-width: 90px;
-  height: 22px;
-  cursor: ew-resize;
-  touch-action: none;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--track);
 }
 
-/* The channel the grip rides in. */
-.kit-rule-slot::before {
-  content: '';
+.kit-line i {
   position: absolute;
-  inset: 8px 0;
-  background: var(--cut);
-  border-radius: 3px;
-  box-shadow: inset 0 1px 2px var(--edge-dark), 0 1px 0 var(--edge-light);
+  display: block;
+  background: var(--ink);
 }
 
-/* The rule itself: a mark every tenth of the travel, under the
-   channel, the way a fader's scale is printed on the panel. */
-.kit-rule-marks {
-  position: absolute;
-  left: calc(var(--grip-w) / 2);
-  right: calc(var(--grip-w) / 2);
-  bottom: 1px;
-  height: 4px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--line) 0 1px,
-    transparent 1px calc((100% - 1px) / 10)
-  );
-}
-
-.kit-rule-default {
-  position: absolute;
+.kit-line-fill {
   top: 0;
-  left: calc(var(--default) * (100% - var(--grip-w)) + var(--grip-w) / 2 - 3px);
-  width: 0;
-  height: 0;
-  border: 3px solid transparent;
-  border-top-color: var(--ink-soft);
-  border-bottom: 0;
-}
-
-.kit-rule-fill {
-  position: absolute;
-  top: 9px;
-  height: 4px;
-  left: calc(var(--from) * (100% - var(--grip-w)) + var(--grip-w) / 2);
-  width: calc((var(--to) - var(--from)) * (100% - var(--grip-w)));
-  background: var(--tone);
+  left: calc(var(--from) * 100%);
+  width: calc((var(--to) - var(--from)) * 100%);
+  height: 3px;
   border-radius: 2px;
 }
 
-.kit-rule-grip {
-  position: absolute;
-  top: 2px;
-  left: calc(var(--at) * (100% - var(--grip-w)));
-  width: var(--grip-w);
-  height: 18px;
-  background: linear-gradient(var(--grip-top), var(--grip));
-  border-radius: 4px;
-  box-shadow:
-    inset 0 1px 0 var(--edge-light),
-    0 2px 4px var(--edge-dark),
-    0 0 0 0.5px var(--edge-dark);
+.kit-line-grip {
+  top: -5px;
+  left: calc(var(--at) * 100% - 1.5px);
+  width: 3px;
+  height: 13px;
+  border-radius: 2px;
+  opacity: 0;
 }
 
-/* The grip's index: where on the rule the value is read. */
-.kit-rule-grip::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  bottom: 3px;
-  left: calc(50% - 1px);
-  width: 2px;
-  background: var(--tone);
-  border-radius: 1px;
+.kit-line i.kit-line-default {
+  top: -3px;
+  left: calc(var(--default) * 100%);
+  width: 1px;
+  height: 9px;
+  background: var(--soft);
+  opacity: 0;
 }
 
-.kit-rule-slot[data-held] .kit-rule-grip {
-  box-shadow:
-    inset 0 1px 0 var(--edge-light),
-    0 1px 2px var(--edge-dark),
-    0 0 0 1.5px var(--tone);
-}
-
-/* Knob: a cap standing on a skirt, lit from above. */
-
-.kit-knob-dial {
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  cursor: ns-resize;
-  touch-action: none;
-  overflow: visible;
-}
-
-.kit-knob-mark {
-  stroke: var(--line);
-  stroke-width: 1.4;
-  stroke-linecap: round;
-}
-
-.kit-knob-default { stroke: var(--ink-soft); }
-
-.kit-knob-skirt {
-  fill: var(--cut);
-  filter: drop-shadow(0 1px 0 var(--edge-light));
-}
-
-.kit-knob-cap {
-  fill: var(--grip);
-  stroke: var(--edge-dark);
-  stroke-width: 0.5;
-  filter: drop-shadow(0 2.5px 2.5px var(--edge-dark));
-}
-
-.kit-knob-pointer {
-  stroke: var(--tone);
-  stroke-width: 2.2;
-  stroke-linecap: round;
-}
-
-.kit-knob-dial[data-held] .kit-knob-cap { stroke: var(--tone); stroke-width: 1; }
-
-/* Choices: keys in one slot, the chosen one standing up. */
-
-.kit-choice {
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-}
-
-.kit-choice .kit-title { width: 52px; }
-
-.kit-choices {
+.kit-range {
   display: flex;
-  flex: 1;
-  padding: 2px;
-  background: var(--cut);
-  border-radius: 8px;
-  box-shadow: inset 0 1px 2px var(--edge-dark), 0 1px 0 var(--edge-light);
+  justify-content: space-between;
+  margin-top: calc(6px - var(--gap));
+  height: 12px;
+  font-size: 11px;
+  line-height: 12px;
+  color: var(--soft);
+  visibility: hidden;
+}
+
+:root[data-density='dense'] .kit-range { display: none; }
+
+.kit-setting:hover .kit-title,
+.kit-setting:focus-within .kit-title { color: var(--ink); }
+
+.kit-setting:hover .kit-line-grip,
+.kit-setting:focus-within .kit-line-grip,
+.kit-setting[data-held] .kit-line-grip { opacity: 1; }
+
+/* Purple: this is what you are touching. */
+.kit-setting[data-held] .kit-title,
+.kit-setting[data-held] .kit-number,
+.kit-setting[data-held] .kit-unit,
+.kit-setting:has([data-editing]) .kit-title { color: var(--touch); }
+
+.kit-setting[data-held] .kit-line-fill,
+.kit-setting[data-held] .kit-line-grip { background: var(--touch); }
+
+.kit-bipolar .kit-line i.kit-line-default,
+.kit-setting[data-held] .kit-line i.kit-line-default { opacity: 1; }
+.kit-setting[data-held] .kit-range { visibility: visible; }
+
+.kit-entry {
+  display: block;
+  width: 100%;
+  height: var(--num);
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: var(--num);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.kit-scrub:has([data-editing]) .kit-line { background: var(--touch); }
+.kit-scrub:has([data-editing]) .kit-line i { display: none; }
+
+/* ---- the foot of the sheet */
+
+.kit-foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: var(--target);
+}
+
+.kit-options {
+  display: flex;
+  gap: 6px;
 }
 
 .kit-option {
-  flex: 1;
-  padding: 3px 10px;
-  background: none;
-  border: 0;
-  border-radius: 6px;
-  color: var(--ink-soft);
-  font: inherit;
-  cursor: pointer;
-}
-
-.kit-option:hover { color: var(--ink); }
-
-.kit-option[aria-pressed='true'] {
-  background: linear-gradient(var(--grip-top), var(--grip));
-  box-shadow: inset 0 1px 0 var(--edge-light), 0 1px 3px var(--edge-dark);
-  color: var(--accent-strong);
-  font-weight: 620;
-}
-
-.kit-menu,
-.kit-toggle {
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-}
-
-.kit-select {
-  padding: 4px 8px;
-  background: var(--cut);
-  border: 0;
-  border-radius: 7px;
-  box-shadow: inset 0 1px 2px var(--edge-dark), 0 1px 0 var(--edge-light);
-  color: var(--ink);
-  font: inherit;
-}
-
-.kit-switch {
-  position: relative;
-  width: 36px;
-  height: 20px;
-  padding: 0;
-  background: var(--cut);
-  border: 0;
-  border-radius: 10px;
-  box-shadow: inset 0 1px 2px var(--edge-dark), 0 1px 0 var(--edge-light);
-  cursor: pointer;
-}
-
-.kit-switch-thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  background: linear-gradient(var(--grip-top), var(--grip));
-  border-radius: 50%;
-  box-shadow: inset 0 1px 0 var(--edge-light), 0 1px 3px var(--edge-dark);
-  transition: transform 120ms ease;
-}
-
-.kit-toggle[aria-checked='true'] { background: var(--tone); }
-.kit-toggle[aria-checked='true'] .kit-switch-thumb { transform: translateX(16px); }
-
-/* Meter: a column of ink in a slot against a scale. Ink, not colour:
-   only the top 6 dB warm, and only a clip lights the lamp. */
-
-.kit-meter {
-  gap: 4px;
-  min-width: 30px;
-}
-
-.kit-meter .kit-value {
-  min-width: 0;
-  font-size: 10.5px;
+  height: var(--target);
+  padding: 0 18px;
+  border: 1px solid var(--edge);
+  border-radius: calc(var(--target) / 2);
+  background: transparent;
   font-weight: 500;
-  color: var(--ink-soft);
-  cursor: default;
-}
-
-.kit-meter-lamp {
-  width: 12px;
-  height: 3px;
-  background: var(--cut);
-  border-radius: 1.5px;
-  box-shadow: inset 0 1px 1px var(--edge-dark);
-}
-
-.kit-meter[data-clipped] .kit-meter-lamp {
-  background: var(--hot);
-  box-shadow: 0 0 6px var(--hot);
-}
-
-.kit-meter-slot {
-  --level: 0;
-  --peak: 0;
-  position: relative;
-  flex: 1;
-  width: 12px;
-  min-height: 60px;
-  background: var(--cut);
-  border-radius: 3px;
-  box-shadow: inset 0 1px 2px var(--edge-dark), 0 1px 0 var(--edge-light);
-}
-
-/* The scale's marks stand outside the slot, on the panel. */
-.kit-meter-mark {
-  position: absolute;
-  left: -5px;
-  bottom: calc(var(--at) * 100%);
-  width: 3px;
-  height: 1px;
-  background: var(--line);
-}
-
-.kit-meter-fill {
-  position: absolute;
-  inset: 1px;
-  border-radius: 2px;
-  background: linear-gradient(0deg, var(--ink) 0 90%, var(--warn) 90%);
-  clip-path: inset(calc((1 - var(--level)) * 100%) 0 0 0);
-}
-
-.kit-meter-peak {
-  position: absolute;
-  left: 1px;
-  right: 1px;
-  bottom: calc(var(--peak) * (100% - 2px));
-  height: 1.5px;
-  background: var(--ink);
-  opacity: calc(var(--peak) * 1000);
-}
-
-/* A meter of anything but level is a value: purple, with no zones. */
-.kit-meter[data-meter='fraction'] .kit-meter-fill { background: var(--tone); }
-
-/* Footer: what the pointer is over, and the build. */
-
-.kit-footer {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  height: 16px;
-  color: var(--ink-soft);
-  font-size: 11px;
-}
-
-.kit-hint {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.kit-option:hover { border-color: var(--ink); }
+
+.kit-option[aria-pressed='true'] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--sheet);
+}
+
+.kit-hint {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  color: var(--soft);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
 .kit-hint-what {
-  margin-right: 6px;
   color: var(--ink);
   font-weight: 600;
 }
 
-.kit-hint-what:empty { margin: 0; }
+.kit-hint-what:not(:empty)::after { content: ' '; }
 
-/* Tones: a control whose meaning has a colour of its own may wear it
-   in place of purple. Use one only where the colour says something. */
+.kit-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 
-.kit-tone-ok { --tone: var(--ok); }
-.kit-tone-warn { --tone: var(--warn); }
-.kit-tone-hot { --tone: var(--hot); }
-.kit-tone-cool { --tone: var(--cool); }
+.kit-select {
+  appearance: none;
+  padding: 0 0 6px;
+  border: 0;
+  border-bottom: 3px solid var(--ink);
+  border-radius: 0;
+  background: transparent;
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
 
-@media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; animation: none !important; }
+.kit-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.kit-switch {
+  width: calc(var(--target) + 20px);
+  height: var(--target);
+  padding: 0 4px;
+  border: 0;
+  border-radius: calc(var(--target) / 2);
+  background: var(--track);
+  display: flex;
+  align-items: center;
+}
+
+.kit-switch[aria-checked='true'] {
+  background: var(--touch);
+  justify-content: flex-end;
+}
+
+.kit-switch-thumb {
+  display: block;
+  width: calc(var(--target) - 8px);
+  height: calc(var(--target) - 8px);
+  border-radius: 50%;
+  background: var(--sheet);
+}
+
+.kit-switch-said {
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .kit-line-grip, .kit-option, .kit-tool { transition: opacity 0.12s,
+    background-color 0.12s, border-color 0.12s; }
 }
