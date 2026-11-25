@@ -30,7 +30,7 @@ pub fn decode(spec: &Spec, bytes: &[u8]) -> Option<Vec<f64>> {
     let pairs = rest.get(..count.checked_mul(PAIR)?)?;
 
     let mut values = spec.defaults();
-    for pair in pairs.chunks_exact(PAIR) {
+    for pair in pairs.as_chunks::<PAIR>().0 {
         let id = u32::from_le_bytes(pair[..4].try_into().ok()?);
         let value = f64::from_le_bytes(pair[4..].try_into().ok()?);
         if let Some(index) = spec.setting_of(id).filter(|_| value.is_finite()) {

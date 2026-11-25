@@ -26,6 +26,12 @@ concurrency:
 permissions:
   contents: read
 
+# The Rust the daily run's machine has (`rustc --version` there), so a
+# lint that passes where a plugin is made passes here too. Bump both
+# together.
+env:
+  RUST: 1.97.0
+
 jobs:
   check:
     runs-on: windows-latest
@@ -37,15 +43,17 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - name: Rust
-        run: rustup toolchain install stable --profile minimal -c clippy,rustfmt
+        run: |
+          rustup toolchain install $env:RUST --profile minimal -c clippy,rustfmt
+          rustup default $env:RUST
       - uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: cargo-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
-          restore-keys: cargo-${{ runner.os }}-
+          key: cargo-${{ runner.os }}-${{ env.RUST }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-${{ env.RUST }}-
       - run: npm ci
       - run: npm run check
 
@@ -63,15 +71,17 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - name: Rust
-        run: rustup toolchain install stable --profile minimal
+        run: |
+          rustup toolchain install $env:RUST --profile minimal
+          rustup default $env:RUST
       - uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: cargo-release-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
-          restore-keys: cargo-release-${{ runner.os }}-
+          key: cargo-release-${{ runner.os }}-${{ env.RUST }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-release-${{ runner.os }}-${{ env.RUST }}-
       - run: npm ci
       - name: Validators
         shell: pwsh
@@ -143,15 +153,17 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - name: Rust
-        run: rustup toolchain install stable --profile minimal
+        run: |
+          rustup toolchain install $env:RUST --profile minimal
+          rustup default $env:RUST
       - uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: cargo-release-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
-          restore-keys: cargo-release-${{ runner.os }}-
+          key: cargo-release-${{ runner.os }}-${{ env.RUST }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-release-${{ runner.os }}-${{ env.RUST }}-
       - run: npm ci
       - name: Release what is waiting
         run: npm run release -- publish
