@@ -1,7 +1,16 @@
 [
   {
     "name": "editor",
-    "values": { "level": 0.72 }
+    "values": {
+      "level": 0.72
+    }
+  },
+  {
+    "name": "light",
+    "theme": "light",
+    "values": {
+      "level": 0.72
+    }
   },
   {
     "name": "fold",
@@ -15,7 +24,13 @@
   },
   {
     "name": "shape",
-    "values": { "shape": "Hard", "drive": 24 },
-    "crop": { "sel": ".kit-group", "text": "Shape" }
+    "values": {
+      "shape": "Hard",
+      "drive": 24
+    },
+    "crop": {
+      "sel": ".kit-group",
+      "text": "Shape"
+    }
   }
 ]

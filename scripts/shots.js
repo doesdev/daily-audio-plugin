@@ -6,8 +6,9 @@
 // values. Each scene in plugins/PLUGIN/docs/scenes.json becomes
 // docs/images/NAME.png at twice the window's pixels.
 //
-// A scene is { name, values, steps, crop, width, height }: `values`
-// sets settings and meters by key, in their own terms; `steps` are
+// A scene is { name, values, theme, steps, crop, width, height }:
+// `values` sets settings and meters by key, in their own terms;
+// `theme` is "dark" (the default) or "light"; `steps` are
 // [verb, ...args] from STEPS below, run in order before the shot;
 // `crop` names the element (or elements) to cut the shot down to.
 //
@@ -75,7 +76,8 @@ const STILL = `*, *::before, *::after {
 // page posts, for tests to read. `find` is how steps and crops name an
 // element: a selector, or { sel, text } for the one whose text starts
 // with `text`.
-const standIn = (hello) => `
+const standIn = (hello, theme) => `
+try { localStorage.setItem('kit-theme', ${JSON.stringify(theme)}) } catch {}
 window.posted = []
 window.find = (spec) => {
   if (typeof spec === 'string') return document.querySelector(spec)
@@ -90,14 +92,14 @@ window.ipc = { postMessage: (text) => {
 `
 
 // The page for one scene, in the site; its file URL.
-export const writeScene = (site, name, hello) => {
+export const writeScene = (site, name, hello, theme = 'dark') => {
   const html = readFileSync(join(site, 'index.html'), 'utf8')
   const main = '<script type="module" src="main.js"></script>'
   if (!html.includes(main)) {
     throw fail('NOMAIN', 'index.html no longer loads main.js as expected')
   }
 
-  writeFileSync(join(site, `standin-${name}.js`), standIn(hello))
+  writeFileSync(join(site, `standin-${name}.js`), standIn(hello, theme))
   const page = html
     .replace('</head>', `<style>${STILL}</style>\n</head>`)
     .replace(main, `<script src="standin-${name}.js"></script>\n${main}`)
@@ -271,7 +273,9 @@ export const takeShots = async (plugin, names = [], out = null) => {
     withBrowser(async (browser) => {
       const taken = []
       for (const scene of chosen) {
-        const url = writeScene(site, scene.name, dumped.scenes[scene.name])
+        const url = writeScene(
+          site, scene.name, dumped.scenes[scene.name], scene.theme
+        )
         const png = await shoot(browser, url, scene, dumped.size)
         writeFileSync(join(images, `${scene.name}.png`), png)
         taken.push(scene.name)

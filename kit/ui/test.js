@@ -5,7 +5,8 @@
 
 import test from 'mvt'
 import {
-  EMPTY, angle, arc, clamp, describe, dragged, nudged, reduce, snap
+  EMPTY, TICKS, angle, arc, clamp, describe, dragged, litTicks, nudged,
+  otherTheme, reduce, snap, themeFor
 } from './kit.js'
 import { withBrowser } from '../../scripts/lib/browser.js'
 import { openScene, withSite, writeScene } from '../../scripts/shots.js'
@@ -56,6 +57,29 @@ test('a knob sweeps 270 degrees about straight up', (assert) => {
   assert.is(arc(24, 24, 18, -135, 135),
     'M 11.27 36.73 A 18 18 0 1 1 36.73 36.73')
   assert.is(arc(24, 24, 18, 0, 90), 'M 24.00 6.00 A 18 18 0 0 1 42.00 24.00')
+})
+
+test('a knob lights its ticks from where it rests to its value', (assert) => {
+  const last = TICKS - 1
+  const middle = last / 2
+
+  assert.is(litTicks(0), null)
+  assert.deepEqual(litTicks(1), [0, last])
+  assert.deepEqual(litTicks(0.5), [0, middle])
+  assert.is(litTicks(0.5, true), null)
+  assert.deepEqual(litTicks(0, true), [0, middle])
+  assert.deepEqual(litTicks(1, true), [middle, last])
+  assert.deepEqual(litTicks(7, true), [middle, last])
+})
+
+test('the theme is the one chosen before, else the system\'s', (assert) => {
+  assert.is(themeFor('light', false), 'light')
+  assert.is(themeFor('dark', true), 'dark')
+  assert.is(themeFor(null, true), 'light')
+  assert.is(themeFor(null, false), 'dark')
+  assert.is(themeFor('sepia', false), 'dark')
+  assert.is(otherTheme('light'), 'dark')
+  assert.is(otherTheme('dark'), 'light')
 })
 
 test('the page describes a value until the host does', (assert) => {
@@ -132,7 +156,7 @@ test('the page builds itself from the hello', async (assert) => {
       'document.querySelectorAll(".kit-knob").length'
     ), 4)
     assert.is(await text(tab, '[data-key="drive"] .kit-value'), '12.0 dB')
-    assert.is(await text(tab, '.kit-choice[aria-pressed="true"]'), 'Soft')
+    assert.is(await text(tab, '.kit-option[aria-pressed="true"]'), 'Soft')
     assert.deepEqual(await tab.evaluate('window.posted'), [{ type: 'ready' }])
     assert.deepEqual(tab.errors, [])
   })
@@ -153,7 +177,7 @@ test('a drag on a knob is one gesture for the host', async (assert) => {
 
 test('a click, a key and a double-click are gestures too', async (assert) => {
   const steps = [
-    ['click', { sel: '.kit-choice', text: 'Fold' }],
+    ['click', { sel: '.kit-option', text: 'Fold' }],
     ['focus', '[data-key="drive"] .kit-knob-dial'],
     ['key', 'ArrowUp']
   ]
@@ -164,13 +188,43 @@ test('a click, a key and a double-click are gestures too', async (assert) => {
     assert.is(types, 'begin set end begin set end')
     assert.deepEqual([sent[1].id, sent[1].value], [1, 1])
     assert.is(sent[4].id, 0)
-    assert.is(await text(tab, '.kit-choice[aria-pressed="true"]'), 'Fold')
+    assert.is(await text(tab, '.kit-option[aria-pressed="true"]'), 'Fold')
 
     await tab.evaluate(`document.querySelector('[data-key="drive"] svg')
       .dispatchEvent(new MouseEvent('dblclick', { bubbles: true })) ?? true`)
     const reset = (await posted(tab)).slice(6)
     assert.deepEqual(reset.map((m) => m.type), ['begin', 'set', 'end'])
     assert.is(await text(tab, '[data-key="drive"] .kit-value'), '12.0 dB')
+  })
+})
+
+test('the theme switch flips the page and is remembered', async (assert) => {
+  const theme = 'document.documentElement.dataset.theme'
+  const ground = 'getComputedStyle(document.body).backgroundColor'
+  await onPage([], async (tab) => {
+    assert.is(await tab.evaluate(theme), 'dark')
+    const dark = await tab.evaluate(ground)
+
+    await tab.evaluate('document.querySelector(".kit-theme").click() ?? true')
+    assert.is(await tab.evaluate(theme), 'light')
+    assert.not(await tab.evaluate(ground), dark)
+    assert.is(await tab.evaluate('localStorage.getItem("kit-theme")'), 'light')
+    assert.is(
+      await tab.evaluate('document.querySelector(".kit-theme").ariaLabel'),
+      'Switch to the dark theme'
+    )
+    // The switch is the page's own business: the host hears nothing.
+    assert.deepEqual(await posted(tab), [])
+  })
+})
+
+test('the page carries its own typeface', async (assert) => {
+  await onPage([], async (tab) => {
+    assert.true(await tab.evaluate('document.fonts.check("13px Archivo")'))
+    assert.contains(
+      await tab.evaluate('getComputedStyle(document.body).fontFamily'),
+      'Archivo'
+    )
   })
 })
 
@@ -183,7 +237,7 @@ test('what the host says replaces what the page shows', async (assert) => {
   const meters = { type: 'meters', levels: [0.5], levelTexts: ['-30 dB'] }
   await onPage([['tell', state], ['tell', meters]], async (tab) => {
     assert.is(await text(tab, '[data-key="drive"] .kit-value'), '36.0 dB')
-    assert.is(await text(tab, '.kit-choice[aria-pressed="true"]'), 'Hard')
+    assert.is(await text(tab, '.kit-option[aria-pressed="true"]'), 'Hard')
     assert.is(await text(tab, '[data-key="level"] .kit-value'), '-30 dB')
     assert.is(await tab.evaluate(`getComputedStyle(
       document.querySelector('.kit-meter-fill')).getPropertyValue('--level')`

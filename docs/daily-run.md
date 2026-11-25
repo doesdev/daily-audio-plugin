@@ -26,6 +26,7 @@ are how a person finds that out, and the ledger is where they say so.
   gone well.
 - `docs/kit.md`: how a plugin is written, and what the kit cannot do
   yet.
+- `docs/design.md`: how an editor looks, and what it avoids.
 
 ## 2. Repair first
 
@@ -79,8 +80,8 @@ npm run new -- NAME "Display Name"      # --instrument if it is played
 2. The spec in `src/lib.rs`.
 3. `tests/sound.rs`: what it promises, failing.
 4. The sound, until `cargo test -p NAME` passes.
-5. The editor: `ui/main.js`, `ui/style.css`. It should show what the
-   plugin does, not just list its settings.
+5. The editor: `ui/main.js`, `ui/style.css`, to `docs/design.md`. It
+   should show what the plugin does, not just list its settings.
 6. `docs/scenes.json`, `npm run shots -- NAME`, and look at every
    picture. A picture that looks wrong is a bug.
 7. `docs/manual.md` and `README.md`.

@@ -22,8 +22,8 @@ repo, built on one kit, and released from here.
 - `scripts/`: making a plugin, its screenshots and manual, the check,
   bundling and releasing.
 - `ideas/`: what might be made, and a ledger of what was.
-- `docs/`: how a plugin is written (`kit.md`), how the daily run goes
-  (`daily-run.md`), and why things are the way they are
+- `docs/`: how a plugin is written (`kit.md`), how an editor looks
+  (`design.md`), how the daily run goes (`daily-run.md`), and why things are the way they are
   (`decisions/`).
 
 ## A plugin

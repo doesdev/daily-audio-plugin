@@ -12,7 +12,7 @@ mount((ui) => [
     group('Colour', row(knob(ui.p.tone))),
     group('Output', row(
       knob(ui.p.mix),
-      knob(ui.p.output, { bipolar: false }),
+      knob(ui.p.output),
       meter(ui.m.level, { vertical: true })
     )))
 ])

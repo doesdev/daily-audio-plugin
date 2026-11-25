@@ -134,11 +134,16 @@ pub fn meters(spec: &Spec, values: &[f64]) -> String {
 }
 
 /// The kit's own page, the same for every plugin.
-const KIT: [kit::Asset; 3] = [
+const KIT: [kit::Asset; 4] = [
     (
         "/index.html",
         "text/html",
         include_str!("../../ui/index.html"),
+    ),
+    (
+        "/kit/fonts.css",
+        "text/css",
+        include_str!("../../ui/fonts.css"),
     ),
     ("/kit/kit.css", "text/css", include_str!("../../ui/kit.css")),
     (
@@ -286,6 +291,7 @@ mod tests {
             ("/index.html", Some("text/html")),
             ("/kit/kit.js", Some("text/javascript")),
             ("/kit/kit.css", Some("text/css")),
+            ("/kit/fonts.css", Some("text/css")),
             ("/main.js", Some("text/javascript")),
             ("/test.js", None),
             ("/../Cargo.toml", None),

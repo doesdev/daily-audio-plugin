@@ -130,9 +130,12 @@ plugin does. A handle has `value` (0 to 1), `text`, `row` (its spec),
 so a control the kit does not have is a few lines. One a second plugin
 would want goes in `kit/ui/kit.js`, with a test in `kit/ui/test.js`.
 
-`ui/style.css` comes after the kit's and may set its tokens
-(`--accent` and the rest, at the top of `kit/ui/kit.css`) or anything
-else. Every file the page needs is listed in `ASSETS` in `src/lib.rs`;
+How an editor looks is `docs/design.md`: read it before drawing one.
+A control takes `{ tone: 'ok' | 'warn' | 'hot' | 'cool' }` where a
+colour says what it does, and a knob `{ bipolar: true }` where its
+setting rests in the middle. `header(ui)` carries the switch between
+the light and the dark theme. `ui/style.css` comes after the kit's and
+may set its tokens (at the top of `kit/ui/kit.css`) or anything else. Every file the page needs is listed in `ASSETS` in `src/lib.rs`;
 the screenshots are taken from the page as the binary serves it, so a
 file left out shows up as a broken scene.
 
@@ -143,13 +146,15 @@ file left out shows up as a broken scene.
 ```json
 [
   { "name": "editor", "values": { "out": 0.7 } },
+  { "name": "light", "theme": "light", "values": { "out": 0.7 } },
   { "name": "frozen", "values": { "freeze": "On", "time": 400 },
     "crop": { "sel": ".kit-group", "text": "Delay" } }
 ]
 ```
 
 Values are by key, in the setting's own terms (a number, a choice's
-name, a meter's fraction). `steps` can click, drag, hover and type
+name, a meter's fraction). A scene is shot in the dark theme unless it
+says `"theme": "light"`; show the editor in both. `steps` can click, drag, hover and type
 before the shot (`scripts/shots.js` lists them). `npm run shots --
 NAME` writes `docs/images/NAME.png` for each.
 

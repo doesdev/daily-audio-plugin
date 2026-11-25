@@ -44,6 +44,26 @@ export const nudged = (row, from, by, fine = false) => {
 export const SWEEP = 270
 export const angle = (norm) => (clamp(norm) - 0.5) * SWEEP
 
+// A knob's ring is this many ticks across its sweep; those from the
+// resting end to the value are lit. A setting that rests in the
+// middle (`bipolar`) lights from the middle out. [first, last] of the
+// lit ticks, or null when the value sits on its resting tick.
+export const TICKS = 31
+
+export const litTicks = (norm, bipolar = false) => {
+  const at = Math.round(clamp(norm) * (TICKS - 1))
+  const rest = bipolar ? (TICKS - 1) / 2 : 0
+  return at === rest ? null : [Math.min(at, rest), Math.max(at, rest)]
+}
+
+// The theme to start in: the one chosen before, else the system's.
+export const themeFor = (saved, prefersLight) => {
+  if (saved === 'light' || saved === 'dark') return saved
+  return prefersLight ? 'light' : 'dark'
+}
+
+export const otherTheme = (theme) => (theme === 'light' ? 'dark' : 'light')
+
 // An SVG arc on a circle of radius `r` about (cx, cy), between two
 // angles in degrees from straight up, clockwise.
 export const arc = (cx, cy, r, from, to) => {
@@ -173,9 +193,37 @@ const byKey = (rows, make) => Object.fromEntries(
   rows.map((row, index) => [row.key, make(index)])
 )
 
+// ---- the theme: light or dark, chosen once for every editor this
+// host shows, since they share the page's storage
+
+const THEME_KEY = 'kit-theme'
+
+const savedTheme = () => {
+  try { return window.localStorage.getItem(THEME_KEY) } catch { return null }
+}
+
+const currentTheme = () => document.documentElement.dataset.theme
+
+const applyTheme = (theme) => {
+  document.documentElement.dataset.theme = theme
+}
+
+const startTheme = () => applyTheme(themeFor(
+  savedTheme(),
+  window.matchMedia('(prefers-color-scheme: light)').matches
+))
+
+const switchTheme = () => {
+  const next = otherTheme(currentTheme())
+  applyTheme(next)
+  try { window.localStorage.setItem(THEME_KEY, next) } catch {}
+  return next
+}
+
 // Builds the page once the host says hello. `build` gets the handles
 // and returns a node or a list of them.
 export const mount = (build, root = document.getElementById('app')) => {
+  startTheme()
   const store = makeStore()
   window.kit = { receive: store.receive, store }
   let built = false
@@ -209,7 +257,7 @@ const SVG = 'http://www.w3.org/2000/svg'
 // An element: h('div.name', { attrs }, ...children).
 export const h = (tag, attrs = {}, ...children) => {
   const [name, ...classes] = tag.split('.')
-  const svg = ['svg', 'path', 'circle', 'line', 'g'].includes(name)
+  const svg = ['svg', 'path', 'circle', 'line', 'g', 'rect'].includes(name)
   const el = svg
     ? document.createElementNS(SVG, name)
     : document.createElement(name)
@@ -226,7 +274,8 @@ export const h = (tag, attrs = {}, ...children) => {
 // its own value (`opts.value` false), that value as text.
 const labelled = (handle, kind, body, opts = {}) => {
   const out = opts.value === false ? null : h('output.kit-value')
-  const el = h(`div.kit-control.kit-${kind}`, {
+  const tone = opts.tone ? `.kit-tone-${opts.tone}` : ''
+  const el = h(`div.kit-control.kit-${kind}${tone}`, {
     'data-key': handle.row.key,
     'data-id': handle.row.id,
     title: handle.row.about || null
@@ -239,19 +288,21 @@ const labelled = (handle, kind, body, opts = {}) => {
 }
 
 // Dragging, the wheel, the arrow keys and double-click to reset, on
-// any element that stands for a setting's value.
-const adjustable = (el, handle) => {
+// any element that stands for a setting's value. A drag is up and down
+// unless `across`, as a slider's is.
+const adjustable = (el, handle, across = false) => {
+  const along = (event) => (across ? event.clientX : -event.clientY)
   let from = null
   el.addEventListener('pointerdown', (event) => {
     if (event.button !== 0) return
-    from = { y: event.clientY, value: handle.value }
+    from = { at: along(event), value: handle.value }
     el.setPointerCapture(event.pointerId)
     handle.begin()
   })
   el.addEventListener('pointermove', (event) => {
     if (!from) return
-    const dy = from.y - event.clientY
-    handle.move(dragged(handle.row, from.value, dy, event.shiftKey))
+    const by = along(event) - from.at
+    handle.move(dragged(handle.row, from.value, by, event.shiftKey))
   })
   const stop = () => {
     if (!from) return
@@ -275,23 +326,33 @@ const adjustable = (el, handle) => {
   return el
 }
 
+// A point on a circle about a 48 by 48 dial's centre, `deg` from
+// straight up.
+const onDial = (r, deg) => {
+  const rad = (deg - 90) * Math.PI / 180
+  return [24 + r * Math.cos(rad), 24 + r * Math.sin(rad)]
+}
+
 export const knob = (handle, opts = {}) => {
-  const track = h('path.kit-knob-track', { d: arc(24, 24, 18, -135, 135) })
-  const fill = h('path.kit-knob-fill')
-  const tick = h('line.kit-knob-tick', { x1: 24, y1: 24, x2: 24, y2: 9 })
+  const ticks = Array.from({ length: TICKS }, (_, i) => {
+    const deg = angle(i / (TICKS - 1))
+    const [x1, y1] = onDial(19.5, deg)
+    const [x2, y2] = onDial(22.5, deg)
+    return h('line.kit-knob-tick', { x1, y1, x2, y2 })
+  })
+  const pointer = h('line.kit-knob-pointer', { x1: 24, y1: 18, x2: 24, y2: 10 })
   const dial = h('svg.kit-knob-dial', {
     viewBox: '0 0 48 48',
     tabindex: 0,
     role: 'slider',
     'aria-label': handle.row.title
-  }, track, fill, h('circle.kit-knob-cap', { cx: 24, cy: 24, r: 12 }), tick)
+  }, ticks, h('circle.kit-knob-cap', { cx: 24, cy: 24, r: 15.5 }), pointer)
   const show = () => {
-    const deg = angle(handle.value)
-    // From the centre for a setting that rests there, else the start.
-    const rest = opts.bipolar ? 0 : -135
-    const [a, b] = deg < rest ? [deg, rest] : [rest, deg]
-    fill.setAttribute('d', b - a < 0.5 ? '' : arc(24, 24, 18, a, b))
-    tick.setAttribute('transform', `rotate(${deg} 24 24)`)
+    const lit = litTicks(handle.value, opts.bipolar)
+    ticks.forEach((tick, i) => tick.classList.toggle(
+      'kit-lit', lit !== null && i >= lit[0] && i <= lit[1]
+    ))
+    pointer.setAttribute('transform', `rotate(${angle(handle.value)} 24 24)`)
     dial.setAttribute('aria-valuetext', handle.text)
   }
   handle.on(show)
@@ -301,22 +362,26 @@ export const knob = (handle, opts = {}) => {
 
 export const slider = (handle, opts = {}) => {
   const fill = h('div.kit-slider-fill')
+  const thumb = h('div.kit-slider-thumb')
   const bar = h('div.kit-slider-bar', {
     tabindex: 0,
     role: 'slider',
     'aria-label': handle.row.title
-  }, fill)
-  const show = () => { fill.style.width = `${handle.value * 100}%` }
+  }, fill, thumb)
+  const show = () => {
+    fill.style.width = `${handle.value * 100}%`
+    thumb.style.left = `${handle.value * 100}%`
+  }
   handle.on(show)
   show()
-  return labelled(handle, 'slider', adjustable(bar, handle), opts)
+  return labelled(handle, 'slider', adjustable(bar, handle, true), opts)
 }
 
 // A list as buttons side by side: for a handful of choices.
 export const choice = (handle, opts = {}) => {
   const { choices } = handle.row
   const last = Math.max(1, choices.length - 1)
-  const buttons = choices.map((name, i) => h('button.kit-choice', {
+  const buttons = choices.map((name, i) => h('button.kit-option', {
     type: 'button',
     onclick: () => handle.set(i / last)
   }, name))
@@ -370,8 +435,14 @@ export const meter = (handle, opts = {}) => {
   }
   handle.on(show)
   show()
-  return h(`div.kit-control.kit-meter${opts.vertical ? '.kit-vertical' : ''}`, {
-    'data-key': handle.row.key
+  const classes = [
+    'kit-meter',
+    ...(opts.vertical ? ['kit-vertical'] : []),
+    ...(opts.tone ? [`kit-tone-${opts.tone}`] : [])
+  ]
+  return h(`div.kit-control.${classes.join('.')}`, {
+    'data-key': handle.row.key,
+    'data-meter': handle.row.meter
   }, h('span.kit-title', {}, opts.title ?? handle.row.short), bar, out)
 }
 
@@ -392,10 +463,29 @@ export const group = (title, ...children) => h('section.kit-group', {},
   title ? h('h2.kit-group-title', {}, title) : null,
   children)
 
+// The switch between the light and the dark theme: a disc, half full.
+export const themeSwitch = () => {
+  const label = () => `Switch to the ${otherTheme(currentTheme())} theme`
+  const button = h('button.kit-theme', {
+    type: 'button',
+    onclick: () => {
+      switchTheme()
+      button.setAttribute('aria-label', label())
+      button.title = label()
+    }
+  }, h('svg', { viewBox: '0 0 16 16', 'aria-hidden': 'true' },
+    h('circle', { cx: 8, cy: 8, r: 6.2 }),
+    h('path', { d: 'M 8 1.8 A 6.2 6.2 0 0 1 8 14.2 Z' })))
+  button.setAttribute('aria-label', label())
+  button.title = label()
+  return button
+}
+
 export const header = (ui, ...children) => h('header.kit-header', {},
   h('h1.kit-name', {}, ui.name),
   children,
-  h('span.kit-build', {}, ui.build))
+  h('span.kit-build', {}, ui.build),
+  themeSwitch())
 
 // Every setting under its group's name, then the meters: a whole page
 // from the spec alone.

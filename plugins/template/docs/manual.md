@@ -14,6 +14,12 @@ soft drive and trims the level by 6 dB. Turn **Drive** up until you hear the edg
 want, pick a **Shape**, then bring **Output** down to match the level
 you started with.
 
+The half-full disc at the top right switches between the dark and
+the light theme. The choice is kept for every plugin of ours in the
+same host.
+
+![The light theme](images/light.png)
+
 Drag a knob up or down to turn it. Hold Shift for fine moves, use the
 mouse wheel or the arrow keys for single steps, and double-click to put
 a setting back to its default. Every setting can be automated by the

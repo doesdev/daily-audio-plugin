@@ -61,8 +61,8 @@ impl Plugin for Template {
         audio_out: 2,
         midi_in: false,
         midi_out: false,
-        size: (680, 250),
-        min_size: (480, 250),
+        size: (640, 240),
+        min_size: (480, 240),
     };
 
     // The ids are fixed for good too. A new setting takes the next id
