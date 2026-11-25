@@ -63,6 +63,12 @@ sound without Template: it fades across in a hundredth of a second,
 so it does not click, and it is the same bypass your host's own
 button works.
 
+To put a setting on a knob of your own, right-click its number and
+choose **Learn a controller**, then move the knob. The setting shows
+the controller's number beside its name from then on, and your project
+remembers it. **Forget** in the same menu frees it, and Escape stops
+it waiting.
+
 Beside the name is the preset that is loaded. Press it to open the
 presets: point at one to hear it, press it to keep it, and **Save as
 new** keeps your own, as a file under
