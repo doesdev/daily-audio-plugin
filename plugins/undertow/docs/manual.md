@@ -98,8 +98,9 @@ Ctrl+Shift+Z), and **A B** flips between two sets of settings so you
 can hear which is better: B starts as a copy of A. The stacked bars
 step through three densities, Roomy, Regular and Dense, which trade
 the size of the numbers for room on the glass. The split disc switches
-between the dark and the light theme. The sun opens the settings
-(theme, density, how long a meter holds its peak, motion, fine drag),
+between the dark and the light theme. The two sliders open the
+settings (theme, density, how long a meter holds its peak and how
+fast it falls, motion, fine drag),
 and the question mark turns help on: the foot of the sheet then also
 says each setting's range and where it rests. All of these are kept
 for every plugin of ours in the same host.
@@ -140,6 +141,50 @@ a wide synth bass under a mono vocal.
 **Drive** is how hard the carried half goes into the curve, from 0 to
 24 dB. The swing drawn on the glass gets wider with it. A small sound
 comes out at its own level; louder ones are rounded off by the curve.
+
+### The tube window
+
+**Tube**, at the foot of the sheet, opens a window on the valve
+itself. It has four settings and draws the curve they make; the
+dashed line is a sound left alone. All four rest where Undertow has
+always sounded, so nothing changes until you move one. A dot on the
+Tube button means something in there has been moved, **At rest** puts
+all four back, and **Done** closes the window. Every plugin of ours
+with a valve in it has this same window.
+
+![The tube window, with the top half giving out sooner](images/tube.png)
+
+**Bias** is where on its curve the valve rests before the bass pushes
+it, from -100 to 100%. Off 0% the carried half is already on a
+lopsided part of the curve, so it has even harmonics even with Push
+at 0%. The curve on the glass moves its resting point with it.
+
+**Grid** is how suddenly the top half of the curve gives out, from 0
+to 100%. At 0% both halves round off alike. Higher, and the upward
+swing flattens sooner and lower than the downward one, which is
+harder and brighter. The curve on the glass changes with it.
+
+**Sag** is how far a held loud sound eases back, from 0 to 100%, as a
+valve's supply droops under load. Quiet sounds are left alone; loud,
+sustained ones lose a little and soften.
+
+**Glow** is how high the harmonics the valve adds sit, from 0 to
+100%. The sound going in is not made brighter: only what the curve
+adds is.
+
+### Mid and side
+
+**Listen** is the three buttons on the glass above the meters.
+**Both**, **Mid** and **Side** choose what you hear: everything, the middle alone, or the sides alone. They
+are for listening while you work and come in without a click. Set it
+back to Both before you print, since it is a setting like any other
+and your host saves it.
+
+**Balance** weighs the two halves, from -100 to 100%. Below 0% the
+sides are turned down, to nothing at -100%; above, the middle is.
+Neither is ever turned up, so with Output it sets the level of each.
+
+![Listening to the sides alone](images/sides.png)
 
 ### Output
 

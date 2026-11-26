@@ -5,7 +5,7 @@
 import {
   mount, glass, header, stage, readouts, meter, picture, sheet, values,
   value, choice, foot, groups, fader, faders, linked, mirrored, opposed,
-  span, pairs, pad, notice, menu, toggle
+  span, pairs, pad, notice, menu, toggle, column, listen
 } from './kit/kit.js'
 
 const page = new URLSearchParams(window.location.search).get('page') ?? 'main'
@@ -92,6 +92,22 @@ const PAGES = {
     sheet(
       values(menu(ui.p.mode, { ui }), value(ui.p.drive, { ui })),
       foot(ui, toggle(ui.p.freeze, { ui })))
+  ],
+  tone: (ui) => [
+    glass(
+      header(ui, { note: 'Mid and side, a valve and a transformer' }),
+      stage(
+        column(
+          listen(ui.p.listen, { ui }),
+          readouts(meter(ui.m.input, { title: 'In' }), meter(ui.m.level))),
+        picture(ui, curve(ui)))),
+    sheet(
+      values(
+        value(ui.p.drive, { ui }),
+        value(ui.p.mix, { ui }),
+        value(ui.p.balance, { ui, bipolar: true }),
+        value(ui.p.output, { ui, bipolar: true })),
+      foot(ui))
   ],
   mirror: (ui) => [
     glass(header(ui), stage(picture(ui, curve(ui)))),

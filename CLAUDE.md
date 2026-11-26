@@ -35,6 +35,9 @@ npm run gallery                    # the kit's own pictures, both themes
   otherwise.
 - Every plugin ships a Mix and level matching wherever they make
   sense, and says in its `benchmark.json` why not where they do not.
+- A plugin that works on mid and side ships the kit's solo and
+  balance; one that models a valve or a transformer uses the kit's,
+  with its shared window. None of these is written twice.
 - An editor is built round a picture only that plugin has, and says
   in `NOVELTY.md` where it is under the bar.
 - An editor follows `docs/design.md`: mostly one tone with depth,

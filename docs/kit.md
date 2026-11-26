@@ -160,6 +160,21 @@ and the picture can tell when it is held.
   says in its `benchmark.json` under `tools` why one makes no sense
   for it (an instrument has nothing coming in to match or to mix
   with). The template does both: copy how.
+- `kit::listen(id)` and `kit::balance(id)` with `kit_dsp::MidSide`
+  are how either half is heard alone and weighed against the other:
+  multiply mid and side by what `next(balance, listen)` returns, as
+  the last thing. On the page, `listen(ui.p.listen, { ui })` is the
+  pills, and `column(...)` stacks them over the `readouts`.
+- `kit_dsp::Tube` is the one valve and `kit_dsp::Transformer` the
+  one transformer. Give the plugin `kit::tube_bias`, `tube_grid`,
+  `tube_sag`, `tube_glow` (or `kit::iron_weight`, `iron_core`,
+  `iron_grip`, `iron_roll`), set the shape from them each block, and
+  `foot` adds the button and the window; `auto()` keeps those
+  settings off the sheet. `tubeCurve` and `ironCurve` in `kit.js`
+  are the same curves as `tube_curve` and `iron_curve`, held
+  together by a test on each side with the same numbers: change one
+  and change the other. A plugin that has any of the three says so in
+  `benchmark.json`, as with Mix.
 - Every setting can learn a MIDI controller from its menu, and what it
   learned is saved with the project. The plugin writes nothing for it.
   Every plugin takes MIDI in for this; notes still reach only one

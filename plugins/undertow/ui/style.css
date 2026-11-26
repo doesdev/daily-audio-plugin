@@ -1,6 +1,6 @@
-/* Undertow's own look, over the kit's. Five settings sit in one row
+/* Undertow's own look, over the kit's. Six settings sit in one row
    rather than the kit's four, since each belongs beside the others:
    the three that set the lean, then the way out. */
 .kit-values {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }

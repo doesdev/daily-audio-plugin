@@ -296,3 +296,56 @@ fn matched_it_goes_out_as_loud_as_it_came_in_however_hard_it_leans() {
     // Left alone the level moves, which is what matching is for.
     assert!((loose / came - 1.0).abs() > 0.05, "{loose} for {came}");
 }
+
+#[test]
+fn soloed_only_that_half_is_heard_and_the_balance_turns_the_other_down() {
+    let n = SECOND;
+    let bass: Vec<f32> = (0..n).map(|i| 0.3 * (i as f32 * 0.008).sin()).collect();
+    let air: Vec<f32> = (0..n).map(|i| 0.15 * (i as f32 * 0.21).sin()).collect();
+    let input = stereo(&bass, &air);
+    let power = |x: &[f32]| x.iter().map(|s| s * s).sum::<f32>();
+    let heard = |settings: &[(usize, f64)]| {
+        let (mid, side) = settled(&mut with(settings), &input);
+        (power(&mid), power(&side))
+    };
+    let (mid, side) = heard(&[]);
+
+    let (m, s) = heard(&[(undertow::LISTEN, 1.0)]);
+    assert!(
+        s < side * 1e-6 && (m / mid - 1.0).abs() < 1e-3,
+        "mid alone: {m} {s}"
+    );
+    let (m, s) = heard(&[(undertow::LISTEN, 2.0)]);
+    assert!(
+        m < mid * 1e-6 && (s / side - 1.0).abs() < 1e-3,
+        "side alone: {m} {s}"
+    );
+
+    // Half way to the sides: the middle is down to a quarter (a
+    // sixteenth in power), and the sides are as they were.
+    let (m, s) = heard(&[(undertow::BALANCE, 50.0)]);
+    assert!((m / mid - 1.0 / 16.0).abs() < 0.005, "{}", m / mid);
+    assert!((s / side - 1.0).abs() < 1e-3);
+}
+
+#[test]
+fn the_tube_window_changes_the_valve_and_at_rest_changes_nothing() {
+    let n = SECOND;
+    let quiet = vec![0.0f32; n];
+    let tone: Vec<f32> = (0..n)
+        .map(|i| 0.4 * (std::f32::consts::TAU * 200.0 * i as f32 / RATE).sin())
+        .collect();
+    // A tone on the sides only, driven, with nothing in the middle to
+    // lean: what the valve itself does to it.
+    let input = stereo(&quiet, &tone);
+    let second = |settings: &[(usize, f64)]| {
+        let base = [(PUSH, 0.0), (DRIVE, 18.0)];
+        let (_, side) = settled(&mut with(&[&base[..], settings].concat()), &input);
+        near(&side, 400.0)
+    };
+
+    // Centred and at rest, a valve makes no even harmonics.
+    assert!(second(&[]) < 1e-4, "{}", second(&[]));
+    assert!(second(&[(undertow::TUBE_BIAS, 40.0)]) > 0.005);
+    assert!(second(&[(undertow::TUBE_GRID, 100.0)]) > 0.001);
+}

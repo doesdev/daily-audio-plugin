@@ -5,7 +5,7 @@
 
 use kit::level::{db_to_gain, peak, to_fraction};
 use kit::{Asset, Block, Info, Param, Plugin, Role, list, meter, range};
-use kit_dsp::{Match, Smooth, Svf};
+use kit_dsp::{Match, MidSide, Smooth, Svf, Tube, TubeShape};
 
 // Indexes into PARAMS, for `Block`.
 pub const PUSH: usize = 0;
@@ -16,6 +16,12 @@ pub const MIX: usize = 4;
 pub const OUTPUT: usize = 5;
 pub const BYPASS: usize = 6;
 pub const MATCH: usize = 7;
+pub const BALANCE: usize = 8;
+pub const LISTEN: usize = 9;
+pub const TUBE_BIAS: usize = 10;
+pub const TUBE_GRID: usize = 11;
+pub const TUBE_SAG: usize = 12;
+pub const TUBE_GLOW: usize = 13;
 // Indexes into METERS.
 pub const INPUT: usize = 0;
 pub const LEVEL: usize = 1;
@@ -60,6 +66,10 @@ pub struct Undertow {
     drive: Smooth,
     mix: Smooth,
     matcher: Match,
+    // The valve itself, as the tube window sets it, and which of the
+    // middle and the sides is heard.
+    tube: Tube,
+    halves: MidSide,
     output: Smooth,
     lean: f32,
     lean_fall: f32,
@@ -117,6 +127,12 @@ impl Plugin for Undertow {
         // Ids 6 to 9 are the meters'.
         kit::bypass(10),
         kit::level_match(11),
+        kit::balance(12),
+        kit::listen(13),
+        kit::tube_bias(14),
+        kit::tube_grid(15),
+        kit::tube_sag(16),
+        kit::tube_glow(17),
     ];
 
     const METERS: &'static [Param] = &[
@@ -140,6 +156,8 @@ impl Plugin for Undertow {
             drive: Smooth::new(1.0, EASE_MS, rate),
             mix: Smooth::new(0.0, EASE_MS, rate),
             matcher: Match::new(rate),
+            tube: Tube::new(rate),
+            halves: MidSide::new(rate),
             output: Smooth::new(1.0, EASE_MS, rate),
             lean: 0.0,
             lean_fall: 0.0,
@@ -154,6 +172,8 @@ impl Plugin for Undertow {
         self.drive = Smooth::new(db_to_gain(at(DRIVE)), EASE_MS, rate);
         self.mix = Smooth::new(at(MIX) / 100.0, EASE_MS, rate);
         self.matcher = Match::new(rate);
+        self.tube = Tube::new(rate);
+        self.halves = MidSide::new(rate);
         self.output = Smooth::new(db_to_gain(at(OUTPUT)), EASE_MS, rate);
         self.lean = 0.0;
         self.lean_fall = 1.0 / (LEAN_HOLD_MS * 0.001 * rate);
@@ -172,6 +192,16 @@ impl Plugin for Undertow {
         let output = db_to_gain(block.value(OUTPUT));
         let mid_leans = block.choice(STEER) == MID_ON_SIDE;
         let matching = block.choice(MATCH) == 1;
+        let balance = block.value(BALANCE) / 100.0;
+        let listen = block.choice(LISTEN);
+        // The valve is refined once a block: these are set and left,
+        // not ridden.
+        self.tube.set(TubeShape {
+            bias: block.value(TUBE_BIAS) / 100.0,
+            grid: block.value(TUBE_GRID) / 100.0,
+            sag: block.value(TUBE_SAG) / 100.0,
+            glow: block.value(TUBE_GLOW) / 100.0,
+        });
         // The filter's corner moves once a block: it shapes the bias,
         // never the sound directly, so a step in it is not heard.
         self.low.set(follow, 0.707);
@@ -191,7 +221,8 @@ impl Plugin for Undertow {
             // The bias is the leaning half's own low wave, not an
             // envelope of it: up and down push opposite ways.
             let bias = self.low.next(key).low * push;
-            let wet = leaned(carried, drive, bias);
+            // With the tube window at rest this is `leaned` exactly.
+            let wet = self.tube.next(carried * drive, bias) / drive;
             let carried = carried + (wet - carried) * mix;
 
             self.lean = (self.lean - self.lean_fall).max(bias.abs() / REACH);
@@ -207,7 +238,12 @@ impl Plugin for Undertow {
             let heard_now = left * left + right * right;
             let made = out_l * out_l + out_r * out_r;
             let output = output * self.matcher.next(heard_now, made, matching);
-            let outs = [out_l * output, out_r * output];
+            // Soloing and weighing the halves come last, after the
+            // level is matched on the whole: a solo is for hearing, and
+            // must not make the matcher turn the rest up.
+            let (mid_gain, side_gain) = self.halves.next(balance, listen);
+            let (mid, side) = (mid * mid_gain, side * side_gain);
+            let outs = [(mid + side) * output, (mid - side) * output];
             for (ch, value) in outs.iter().enumerate().take(block.outputs()) {
                 block.output(ch)[i] = *value;
             }

@@ -71,7 +71,14 @@ test('it\\'s fine', async () => {})`
 test('a plugin answers on all seven points against two leaders', (assert) => {
   const points = Object.fromEntries(
     POINTS.map((point) => [point, { verdict: 'meets', note: 'Yes' }]))
-  const tools = { mix: true, match: 'An instrument: nothing comes in to match' }
+  const none = 'It has none'
+  const tools = {
+    mix: true,
+    match: 'An instrument: nothing comes in to match',
+    mid_side: none,
+    tube: none,
+    transformer: none
+  }
   const sheet = {
     plugin: 'echo', kind: 'Delay', leaders: [leader, leader], points, tools
   }
@@ -91,8 +98,13 @@ test('a plugin answers on all seven points against two leaders', (assert) => {
 test('a plugin ships a mix and a level match, or says why not', (assert) => {
   const points = Object.fromEntries(
     POINTS.map((point) => [point, { verdict: 'meets', note: 'Yes' }]))
+  const rest = { mid_side: 'No', tube: 'No', transformer: 'No' }
   const sheet = (tools) => ({
-    plugin: 'echo', kind: 'Delay', leaders: [leader, leader], points, tools
+    plugin: 'echo',
+    kind: 'Delay',
+    leaders: [leader, leader],
+    points,
+    tools: tools && { ...rest, ...tools }
   })
   const both = 'kit::mix(3), kit::level_match(8),'
   const said = (tools, source) => pluginProblems('echo', sheet(tools), source)
@@ -109,6 +121,34 @@ test('a plugin ships a mix and a level match, or says why not', (assert) => {
     [{ mix: true, match: true }, 'kit::mix(3),', 'says it has match'],
     [{ mix: true, match: '  ' }, both, 'tools.match must be true'],
     [{ mix: false, match: true }, both, 'tools.mix must be true']
+  ]
+  cases.forEach(([tools, source, want]) => assert.true(
+    said(tools, source).some((problem) => problem.includes(want)), want))
+})
+
+test('mid and side, a valve and a transformer bring the kit\'s tools', (assert) => {
+  const points = Object.fromEntries(
+    POINTS.map((point) => [point, { verdict: 'meets', note: 'Yes' }]))
+  const said = (tools, source) => pluginProblems('echo', {
+    plugin: 'echo',
+    kind: 'Delay',
+    leaders: [leader, leader],
+    points,
+    tools: { mix: true, match: true, ...tools }
+  }, 'kit::mix(3), kit::level_match(8), ' + source)
+  const all = 'kit::listen(9), kit::tube_bias(10), kit::iron_weight(14),'
+  const no = 'It has none'
+
+  assert.deepEqual(
+    said({ mid_side: true, tube: true, transformer: true }, all), [])
+  assert.deepEqual(said({ mid_side: no, tube: no, transformer: no }, ''), [])
+
+  const cases = [
+    [{ tube: no, transformer: no }, '', 'tools.mid_side must be true'],
+    [{ mid_side: true, tube: no, transformer: no }, '', 'says it has mid_side'],
+    [{ mid_side: no, tube: true, transformer: no }, '', 'says it has tube'],
+    [{ mid_side: no, tube: no, transformer: true }, '',
+      'says it has transformer']
   ]
   cases.forEach(([tools, source, want]) => assert.true(
     said(tools, source).some((problem) => problem.includes(want)), want))
