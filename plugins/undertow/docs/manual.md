@@ -160,28 +160,51 @@ comes out at its own level; louder ones are rounded off by the curve.
 ### The tube window
 
 **Tube**, at the foot of the sheet, opens a window on the valve
-itself. It has four settings and draws the curve they make; the
-dashed line is a sound left alone. All four rest where Undertow has
-always sounded, so nothing changes until you move one. A dot on the
+itself. It draws the curve its settings make; the dashed line is a
+sound left alone. Everything in it rests where Undertow has always
+sounded, so nothing changes until you move something. A dot on the
 Tube button means something in there has been moved, **At rest** puts
-all four back, and **Done** closes the window. Every plugin of ours
-with a valve in it has this same window.
+it all back, and **Done** closes the window. Every plugin of ours with
+a valve in it has this same window.
 
-![The tube window, with the top half giving out sooner](images/tube.png)
+![The tube window, set as a 12AX7 stage](images/tube.png)
+
+**Character** is a list of settings of the whole window, each after a
+kind of valve stage: an EF86 as a pentode, open or tight; an EF86
+strapped as a triode; a 12AX7 stage; a starved plate; a push-pull
+pair. Choosing one sets everything in the window in one step, which
+one undo takes back, and its name stays on the button until you move
+something. They are places to start from, not copies of a part.
+
+**Stage** is how the valve is wired. **Pentode**, where it rests, has
+a curve that is the same either side, so it adds odd harmonics and
+the push of the bass is what makes it lopsided. **Triode** is
+lopsided to begin with: it adds the second harmonic at any level,
+cuts off on the way down, and its top is a little darker. **Strapped**
+is a pentode wired as a triode, between the two.
 
 **Bias** is where on its curve the valve rests before the bass pushes
-it, from -100 to 100%. Off 0% the carried half is already on a
-lopsided part of the curve, so it has even harmonics even with Push
-at 0%. The curve on the glass moves its resting point with it.
+it, from -100 to 100%. It adds to the push and takes nothing from it:
+the bass still rides the sides along the curve, from wherever Bias
+has put them. Off 0% there are even harmonics even with Push at 0%.
 
 **Grid** is how suddenly the top half of the curve gives out, from 0
-to 100%. At 0% both halves round off alike. Higher, and the upward
-swing flattens sooner and lower than the downward one, which is
-harder and brighter. The curve on the glass changes with it.
+to 100%. At 0% it rounds off as the stage's curve does. Higher, and
+the upward swing flattens sooner and lower, which is harder and
+brighter.
+
+**Bloom** is what a loud sound leaves behind, from 0 to 100%. A valve
+driven until its grid conducts is pushed down its curve for a moment
+and comes back: after a hit the sound is thinner and then fills out
+again, over a thirtieth of a second at low settings and a third of a
+second at high ones.
+
+**Feedback** is how much the stage holds itself straight, from 0 to
+100%. Higher is cleaner and firmer up to the point where it runs out,
+and then gives way more suddenly.
 
 **Sag** is how far a held loud sound eases back, from 0 to 100%, as a
-valve's supply droops under load. Quiet sounds are left alone; loud,
-sustained ones lose a little and soften.
+valve's supply droops under load. Quiet sounds are left alone.
 
 **Glow** is how high the harmonics the valve adds sit, from 0 to
 100%. The sound going in is not made brighter: only what the curve

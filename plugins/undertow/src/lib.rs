@@ -23,6 +23,9 @@ pub const TUBE_GRID: usize = 11;
 pub const TUBE_SAG: usize = 12;
 pub const TUBE_GLOW: usize = 13;
 pub const KEY: usize = 14;
+pub const TUBE_STAGE: usize = 15;
+pub const TUBE_BLOOM: usize = 16;
+pub const TUBE_FEEDBACK: usize = 17;
 // Indexes into METERS.
 pub const INPUT: usize = 0;
 pub const LEVEL: usize = 1;
@@ -135,6 +138,9 @@ impl Plugin for Undertow {
         kit::tube_sag(16),
         kit::tube_glow(17),
         kit::key(18),
+        kit::tube_stage(19),
+        kit::tube_bloom(20),
+        kit::tube_feedback(21),
     ];
 
     // A sidechain: another track can do the pushing.
@@ -202,6 +208,9 @@ impl Plugin for Undertow {
         // The valve is refined once a block: these are set and left,
         // not ridden.
         self.tube.set(TubeShape {
+            stage: block.choice(TUBE_STAGE),
+            bloom: block.value(TUBE_BLOOM) / 100.0,
+            feedback: block.value(TUBE_FEEDBACK) / 100.0,
             bias: block.value(TUBE_BIAS) / 100.0,
             grid: block.value(TUBE_GRID) / 100.0,
             sag: block.value(TUBE_SAG) / 100.0,
