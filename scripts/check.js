@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { checkDocs } from './docs.js'
-import { ROOT, plugins } from './lib/plugins.js'
+import { ROOT, pageTests, plugins } from './lib/plugins.js'
 import { takeShots } from './shots.js'
 
 const WINDOWS = process.platform === 'win32'
@@ -30,6 +30,11 @@ const docs = () => plugins().map((plugin) => {
   problems.forEach((p) => console.error(`docs: ${plugin}: ${p}`))
   return problems.length === 0
 }).every(Boolean)
+
+// Each plugin's own page tests, where it has them.
+const pages = () => pageTests()
+  .map((file) => node(file)())
+  .every(Boolean)
 
 // Each plugin's every scene loads and draws with no error from its
 // page. The pictures go to a temp folder: the ones in the repo are
@@ -67,6 +72,7 @@ export const STEPS = [
   ['every licence allows shipping', node('scripts/licences.js')],
   ['the page', node('kit/ui/test.js')],
   ['the rest of the page, on the gallery', node('kit/ui/gallery.test.js')],
+  ['each plugin\'s own page', pages],
   ['the benchmark rule', node('scripts/benchmarks.test.js')],
   ['held to the best of the field', node('scripts/benchmarks.js')],
   ['manuals', docs],

@@ -1,0 +1,6 @@
+/* Aftersound's own look, over the kit's. Its eight settings sit in one
+   row rather than the kit's four, so the glass keeps the room the two
+   decays need: the strings' four, the hammer's two, then the way out. */
+.kit-values {
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+}

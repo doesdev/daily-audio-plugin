@@ -8,12 +8,10 @@ made (to the ledger) or dropped (to Dropped, below, with why).
 ## Waiting
 
 Nothing that survived its search yet. The run of 2026-11-25 looked for
-eight and made one (Undertow); the rest are under Dropped. Ideas from
-that day not yet searched, to start from:
+eight and made one (Undertow); the rest are under Dropped. The run of
+2026-11-26 made the first of the ideas below (Aftersound). Ideas not
+yet searched, to start from:
 
-- A voice for an instrument made of two coupled strings, one in each
-  channel, so the prompt sound sits in the middle and the slower
-  aftersound spreads into the sides.
 - Hit and body exchanged between notes: each note's attack played
   with the previous note's body.
 - Mid and side wound on one shared transformer core, so the middle's

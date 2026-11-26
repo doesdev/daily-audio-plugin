@@ -653,7 +653,7 @@ test('a meter holds its number and lets its bar fall at a pace', async (assert) 
   })
 })
 
-test('a number too wide for its column is drawn smaller, not over its neighbour', async (assert) => {
+test('a number too wide for its column is drawn smaller, not over its neighbour, and its line stays level with theirs', async (assert) => {
   const texts = PARAMS.map((row, i) => (i === 1 ? '16000.0 Hz' : 'x'))
   const state = { type: 'state', values: PARAMS.map((r) => r.default), texts }
   const fit = `Number(document.querySelector('${key('tone')} .kit-value')
@@ -668,6 +668,14 @@ test('a number too wide for its column is drawn smaller, not over its neighbour'
     await tab.evaluate('new Promise((r) => requestAnimationFrame(() => r(true)))')
     assert.true(await tab.evaluate(fit) < 1)
     assert.true(await tab.evaluate(inside) >= -1)
+    const lineTop = (name) => `document.querySelector('${key(name)} .kit-line')
+      .getBoundingClientRect().top`
+    const [fitted, neighbour] = [
+      await tab.evaluate(lineTop('tone')),
+      await tab.evaluate(lineTop('drive'))
+    ]
+    assert.true(Math.abs(fitted - neighbour) < 0.5,
+      `line at ${fitted}, its neighbour's at ${neighbour}`)
   })
 })
 

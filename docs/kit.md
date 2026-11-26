@@ -198,6 +198,12 @@ and the picture can tell when it is held.
 - `mount(auto)` lays out a whole page from the spec alone: a start,
   never the end. `mount(build, { density: 'regular' })` starts a page
   with many settings smaller.
+- Anything the page works out for itself that must agree with the
+  sound (a curve drawn from the settings) is held to the plugin by a
+  test on each side with the same numbers: one in `tests/sound.rs`,
+  one in the plugin's own `ui/test.js` (mvt, importing the module
+  that does the working out). The check runs every `ui/test.js` it
+  finds.
 - A control the kit does not have is drawn on the design canvas first
   if it is not there already, then built from the kit's tokens. One a
   second plugin would want goes in `kit/ui/kit.js`, with a test in

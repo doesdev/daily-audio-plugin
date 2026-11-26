@@ -15,6 +15,13 @@ export const plugins = (root = ROOT) => readdirSync(join(root, 'plugins'))
   .filter((name) => existsSync(join(pluginDir(name, root), 'Cargo.toml')))
   .sort()
 
+// A plugin's page may carry its own tests, as `ui/test.js`, for what
+// it works out itself (a curve that must agree with the sound's). The
+// check runs each one found.
+export const pageTests = (root = ROOT) => plugins(root)
+  .map((name) => join(pluginDir(name, root), 'ui', 'test.js'))
+  .filter((file) => existsSync(file))
+
 export const manifest = (plugin, root = ROOT) =>
   readFileSync(join(pluginDir(plugin, root), 'Cargo.toml'), 'utf8')
 
