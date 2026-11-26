@@ -5,7 +5,7 @@
 
 use kit::level::{db_to_gain, peak, to_fraction};
 use kit::{Asset, Block, Info, Param, Plugin, Role, list, meter, range};
-use kit_dsp::{Smooth, Svf};
+use kit_dsp::{Match, Smooth, Svf};
 
 // Indexes into PARAMS, for `Block`.
 pub const PUSH: usize = 0;
@@ -15,6 +15,7 @@ pub const STEER: usize = 3;
 pub const MIX: usize = 4;
 pub const OUTPUT: usize = 5;
 pub const BYPASS: usize = 6;
+pub const MATCH: usize = 7;
 // Indexes into METERS.
 pub const INPUT: usize = 0;
 pub const LEVEL: usize = 1;
@@ -58,6 +59,7 @@ pub struct Undertow {
     push: Smooth,
     drive: Smooth,
     mix: Smooth,
+    matcher: Match,
     output: Smooth,
     lean: f32,
     lean_fall: f32,
@@ -114,6 +116,7 @@ impl Plugin for Undertow {
             .about("Level after everything else"),
         // Ids 6 to 9 are the meters'.
         kit::bypass(10),
+        kit::level_match(11),
     ];
 
     const METERS: &'static [Param] = &[
@@ -136,6 +139,7 @@ impl Plugin for Undertow {
             push: Smooth::new(0.0, EASE_MS, rate),
             drive: Smooth::new(1.0, EASE_MS, rate),
             mix: Smooth::new(0.0, EASE_MS, rate),
+            matcher: Match::new(rate),
             output: Smooth::new(1.0, EASE_MS, rate),
             lean: 0.0,
             lean_fall: 0.0,
@@ -149,6 +153,7 @@ impl Plugin for Undertow {
         self.push = Smooth::new(at(PUSH) / 100.0, EASE_MS, rate);
         self.drive = Smooth::new(db_to_gain(at(DRIVE)), EASE_MS, rate);
         self.mix = Smooth::new(at(MIX) / 100.0, EASE_MS, rate);
+        self.matcher = Match::new(rate);
         self.output = Smooth::new(db_to_gain(at(OUTPUT)), EASE_MS, rate);
         self.lean = 0.0;
         self.lean_fall = 1.0 / (LEAN_HOLD_MS * 0.001 * rate);
@@ -166,6 +171,7 @@ impl Plugin for Undertow {
         let mix = block.value(MIX) / 100.0;
         let output = db_to_gain(block.value(OUTPUT));
         let mid_leans = block.choice(STEER) == MID_ON_SIDE;
+        let matching = block.choice(MATCH) == 1;
         // The filter's corner moves once a block: it shapes the bias,
         // never the sound directly, so a step in it is not heard.
         self.low.set(follow, 0.707);
@@ -195,7 +201,13 @@ impl Plugin for Undertow {
             } else {
                 (carried, key)
             };
-            let outs = [(mid + side) * output, (mid - side) * output];
+            // Matched to what came in before the output trim, which is
+            // then the person's own to set on top.
+            let (out_l, out_r) = (mid + side, mid - side);
+            let heard_now = left * left + right * right;
+            let made = out_l * out_l + out_r * out_r;
+            let output = output * self.matcher.next(heard_now, made, matching);
+            let outs = [out_l * output, out_r * output];
             for (ch, value) in outs.iter().enumerate().take(block.outputs()) {
                 block.output(ch)[i] = *value;
             }

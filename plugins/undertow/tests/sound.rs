@@ -273,3 +273,26 @@ fn a_moved_setting_is_eased_not_jumped() {
     // A 500 Hz sine of 0.5 at most moves about 0.033 a sample.
     assert!(step < 0.05, "the biggest step between samples was {step}");
 }
+
+#[test]
+fn matched_it_goes_out_as_loud_as_it_came_in_however_hard_it_leans() {
+    let n = SECOND * 3;
+    let bass: Vec<f32> = (0..n).map(|i| 0.3 * (i as f32 * 0.008).sin()).collect();
+    let air: Vec<f32> = (0..n).map(|i| 0.15 * (i as f32 * 0.21).sin()).collect();
+    let input = stereo(&bass, &air);
+    // The power of the last second, middle and side together.
+    let power = |(mid, side): &(Vec<f32>, Vec<f32>)| {
+        let last = |x: &[f32]| x[x.len() - SECOND..].iter().map(|s| s * s).sum::<f32>();
+        last(mid) + last(side)
+    };
+    let came = power(&(bass.clone(), air.clone()));
+
+    let settings = [(PUSH, 100.0), (DRIVE, 24.0), (OUTPUT, 0.0)];
+    let loose = power(&settled(&mut with(&settings), &input));
+    let matched = [settings.as_slice(), &[(undertow::MATCH, 1.0)]].concat();
+    let held = power(&settled(&mut with(&matched), &input));
+
+    assert!((held / came - 1.0).abs() < 0.05, "{held} for {came}");
+    // Left alone the level moves, which is what matching is for.
+    assert!((loose / came - 1.0).abs() > 0.05, "{loose} for {came}");
+}

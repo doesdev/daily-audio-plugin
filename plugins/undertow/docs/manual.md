@@ -156,6 +156,13 @@ the top right, and your host's own bypass for the plugin: the two are
 the same setting. Going in and out takes a hundredth of a second, so
 it can be automated without a click.
 
+**Match** holds the level going out to the level coming in, so that
+when you change a setting you hear what it does to the tone and are
+not fooled by it simply being louder. It is the button with two bars
+beside On. It works on the level before Output, so Output is still
+yours to set on top, and it moves slowly, over a few tenths of a
+second, so it never pumps. It reaches at most 24 dB either way.
+
 ## Troubleshooting
 
 **Nothing changes.** Undertow only works on a stereo sound: a mono
