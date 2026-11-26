@@ -15,7 +15,8 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import {
-  cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync
+  cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync,
+  writeFileSync
 } from 'node:fs'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -55,14 +56,37 @@ export const notes = (name, readme, novelty, zip) => {
   ].join('\n')
 }
 
-const zip = (dir, file) => {
-  rmSync(file, { force: true })
-  // Windows ships bsdtar, which writes a zip by the file's extension.
-  if (process.platform === 'win32') {
-    execFileSync('tar', ['-a', '-cf', file, '-C', dir, '.'])
-  } else {
-    execFileSync('zip', ['-qr', file, '.'], { cwd: dir })
+// The names in a zip's central directory, in order: enough to check
+// what a person unzipping it will see.
+export const zipEntries = (buffer) => {
+  const names = []
+  let at = buffer.indexOf(Buffer.from([0x50, 0x4b, 0x01, 0x02]))
+  while (at >= 0 && buffer.readUInt32LE(at) === 0x02014b50) {
+    const [nameLength, extraLength, commentLength] =
+      [28, 30, 32].map((offset) => buffer.readUInt16LE(at + offset))
+    names.push(buffer.toString('utf8', at + 46, at + 46 + nameLength))
+    at += 46 + nameLength + extraLength + commentLength
   }
+  return names
+}
+
+// How to zip `dir` into `file` on `platform`. Windows ships bsdtar,
+// which writes a zip by the file's extension, and `tar` is its name
+// there. What is in `dir` is named one by one rather than as ".":
+// bsdtar puts ./ before every entry of ".", and Windows' own zip
+// handling then shows the archive as empty.
+export const zipCommand = (dir, file, opts = {}) => {
+  const { platform = process.platform, tar = 'tar' } = opts
+  const entries = readdirSync(dir).sort()
+  return platform === 'win32'
+    ? { cmd: tar, args: ['-a', '-cf', file, '-C', dir, ...entries] }
+    : { cmd: 'zip', args: ['-qr', file, ...entries], cwd: dir }
+}
+
+export const zip = (dir, file, opts = {}) => {
+  rmSync(file, { force: true })
+  const { cmd, args, cwd } = zipCommand(dir, file, opts)
+  execFileSync(cmd, args, { cwd })
 }
 
 export const dist = async (plugin) => {
