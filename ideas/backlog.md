@@ -76,6 +76,34 @@ anything that models a **transformer** the transformer window: the
 same four settings and the same picture in each plugin, so learning
 one is learning all.
 
+### What they hear in iron and glass
+
+Said in their own words, to be built on and not yet built. The point
+is not a list of part numbers to copy: it is why two parts differ,
+and emulating that.
+
+- **Transformers** they have owned in hardware and like most: the
+  Haufe T14, the UTC O-12 and the Marinair LO1166. Each pleases in
+  different places. The Transformer window has one core shaped by
+  four settings; what it lacks is whatever sets these three apart
+  (how early and how evenly the core saturates with frequency, what
+  the windings do to the top, how much it leans one way). Next is to
+  find out what that is for each and offer them as characters of the
+  one window, not as three more plugins.
+- **Valves**: type and maker both matter, and so does how the valve
+  is wired (triode or pentode, how it is biased). Their example is
+  the EF86: a Telefunken adds a sheen up high, a Valvo is tight and
+  punchy. They point to a thread they write in as SubSpec on why the
+  same type behaves differently in a given circuit:
+  <https://groupdiy.com/threads/schematic-for-the-blue-bottle-microphone-and-the-battle-of-the-ef86-type-tubes%F0%9F%98%8E.93726/page-2#post-1245093>
+  (it could not be read from the daily run's network; ask for the
+  gist). The Tube window's Bias, Grid, Sag and Glow are a start; a
+  character should be a named setting of causes, not a preset of
+  those four.
+- A window's Bias must only ever add to what a plugin does with the
+  resting point itself. Undertow rides it with the bass, and a test
+  holds that.
+
 And a **sidechain** wherever one sound steers what is done to another:
 the other track is as good a steerer as the sound's own other half.
 
