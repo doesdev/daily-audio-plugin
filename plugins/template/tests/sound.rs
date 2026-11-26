@@ -114,3 +114,39 @@ fn a_moved_setting_is_eased_not_jumped() {
     assert!(step < 0.01, "the biggest step between samples was {step}");
     assert!(out[4799] < 0.05, "and it got there: {}", out[4799]);
 }
+
+#[test]
+fn matched_it_goes_out_as_loud_as_it_came_in_whatever_the_drive() {
+    let tone: Vec<f32> = (0..RATE as usize * 3)
+        .map(|i| 0.25 * (i as f32 * 0.03).sin())
+        .collect();
+    let last = |x: &[f32]| rms(&x[x.len() - RATE as usize..]);
+    let came = last(&tone);
+
+    for drive in [0.0, 18.0, 36.0] {
+        let settings = [(DRIVE, drive), (OUTPUT, 0.0)];
+        let loose = last(&settled(&mut with(&settings), &tone));
+        let matched = [settings.as_slice(), &[(template::MATCH, 1.0)]].concat();
+        let held = last(&settled(&mut with(&matched), &tone));
+
+        assert!(
+            (held / came - 1.0).abs() < 0.03,
+            "{drive} dB: {held} for {came}"
+        );
+        // Left alone, driving it is simply louder: that is what
+        // matching is for.
+        assert!(drive == 0.0 || loose > came * 1.5, "{drive} dB: {loose}");
+    }
+}
+
+#[test]
+fn the_output_trim_is_still_the_persons_own_on_top_of_matching() {
+    let tone: Vec<f32> = (0..RATE as usize * 3)
+        .map(|i| 0.25 * (i as f32 * 0.03).sin())
+        .collect();
+    let last = |x: &[f32]| rms(&x[x.len() - RATE as usize..]);
+    let settings = [(DRIVE, 24.0), (OUTPUT, -6.0), (template::MATCH, 1.0)];
+    let held = last(&settled(&mut with(&settings), &tone));
+
+    assert!((held / last(&tone) - 0.501).abs() < 0.02, "{held}");
+}

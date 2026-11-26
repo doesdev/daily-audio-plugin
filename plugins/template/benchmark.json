@@ -42,5 +42,9 @@
       "verdict": "meets",
       "note": "Three of its own; a person's are files they can copy and share."
     }
+  },
+  "tools": {
+    "mix": true,
+    "match": true
   }
 }

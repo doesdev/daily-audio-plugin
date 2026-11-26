@@ -5,7 +5,7 @@
 
 use kit::level::{db_to_gain, peak, to_fraction};
 use kit::{Asset, Block, Info, Param, Plugin, Role, list, meter, range};
-use kit_dsp::{Smooth, Svf};
+use kit_dsp::{Match, Smooth, Svf};
 
 // Indexes into PARAMS, for `Block`.
 pub const DRIVE: usize = 0;
@@ -14,6 +14,7 @@ pub const TONE: usize = 2;
 pub const MIX: usize = 3;
 pub const OUTPUT: usize = 4;
 pub const BYPASS: usize = 5;
+pub const MATCH: usize = 6;
 // Indexes into METERS.
 pub const LEVEL: usize = 0;
 pub const INPUT: usize = 1;
@@ -31,6 +32,7 @@ pub struct Template {
     drive: Smooth,
     tone: Smooth,
     mix: Smooth,
+    matcher: Match,
     output: Smooth,
 }
 
@@ -86,14 +88,13 @@ impl Plugin for Template {
             .skew(3.0)
             .decimals(0)
             .about("Where the low-pass after the shaper starts to cut"),
-        range(3, "mix", "Mix", "Output", (0.0, 100.0, 100.0), "%")
-            .decimals(0)
-            .about("How much of the shaped signal against the dry one"),
+        kit::mix(3),
         range(4, "output", "Output", "Output", (-24.0, 12.0, -6.0), "dB")
             .decimals(1)
             .about("Level after everything else"),
         // Ids 5 and 6 are the meters'.
         kit::bypass(7),
+        kit::level_match(8),
     ];
 
     const METERS: &'static [Param] = &[meter(5, "level", "Out"), meter(6, "input", "In")];
@@ -111,6 +112,7 @@ impl Plugin for Template {
             drive: Smooth::new(0.0, EASE_MS, rate),
             tone: Smooth::new(0.0, EASE_MS, rate),
             mix: Smooth::new(0.0, EASE_MS, rate),
+            matcher: Match::new(rate),
             output: Smooth::new(0.0, EASE_MS, rate),
         }
     }
@@ -122,6 +124,7 @@ impl Plugin for Template {
         self.drive = Smooth::new(db_to_gain(at(DRIVE)), EASE_MS, rate);
         self.tone = Smooth::new(at(TONE), EASE_MS, rate);
         self.mix = Smooth::new(at(MIX) / 100.0, EASE_MS, rate);
+        self.matcher = Match::new(rate);
         self.output = Smooth::new(db_to_gain(at(OUTPUT)), EASE_MS, rate);
     }
 
@@ -135,6 +138,7 @@ impl Plugin for Template {
         let mix = block.value(MIX) / 100.0;
         let output = db_to_gain(block.value(OUTPUT));
         let shape = block.choice(SHAPE);
+        let matching = block.choice(MATCH) == 1;
 
         let mut loudest = 0.0f32;
         let mut heard = 0.0f32;
@@ -145,13 +149,23 @@ impl Plugin for Template {
             // Each setting eased once a sample, the same for both sides.
             let (drive, mix) = (self.drive.next(drive), self.mix.next(mix));
             let (tone, output) = (self.tone.next(tone), self.output.next(output));
-            for ch in 0..block.outputs().min(2) {
-                let (input, out) = block.io(ch);
-                let dry = input.get(i).copied().unwrap_or(0.0);
+            let (mut heard_now, mut made) = (0.0, 0.0);
+            let mut mixed = [0.0f32; 2];
+            let sides = block.outputs().min(2);
+            for (ch, mixed) in mixed.iter_mut().enumerate().take(sides) {
+                let dry = block.input(ch).get(i).copied().unwrap_or(0.0);
                 let filter = &mut self.filters[ch];
                 filter.set(tone, 0.707);
                 let wet = filter.next(shaped(shape, dry * drive)).low;
-                out[i] = (dry + (wet - dry) * mix) * output;
+                *mixed = dry + (wet - dry) * mix;
+                heard_now += dry * dry;
+                made += *mixed * *mixed;
+            }
+            // Matched to what came in before the output trim, which is
+            // then the person's own to set on top.
+            let gain = self.matcher.next(heard_now, made, matching) * output;
+            for (ch, mixed) in mixed.iter().enumerate().take(sides) {
+                block.output(ch)[i] = mixed * gain;
             }
         }
         for ch in 0..block.outputs() {
