@@ -175,6 +175,14 @@ and the picture can tell when it is held.
   together by a test on each side with the same numbers: change one
   and change the other. A plugin that has any of the three says so in
   `benchmark.json`, as with Mix.
+- A sidechain: `const KEY_IN: u32 = 2;` on the plugin gives it a
+  second input in both formats, which the host routes another track
+  to. `block.key(ch)` reads it (silence if nothing is routed; `None`
+  if the plugin has none) and `block.keyed_io(ch)` gives it beside
+  the input and output. `kit::key(id)` is the one Sidechain switch,
+  off by default, since a host hands over an unrouted sidechain as
+  silence: `flag(ui.p.key, { ui })` in the foot. In a test, the
+  channels past the plugin's own input are its sidechain.
 - Every setting can learn a MIDI controller from its menu, and what it
   learned is saved with the project. The plugin writes nothing for it.
   Every plugin takes MIDI in for this; notes still reach only one

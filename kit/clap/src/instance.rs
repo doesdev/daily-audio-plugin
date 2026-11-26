@@ -374,13 +374,23 @@ unsafe extern "C" fn process<P: Plugin>(
 
     let n = process.frames_count as usize;
     let ins = unsafe { channels(process.audio_inputs, process.audio_inputs_count) };
+    // The sidechain is the second input port, when the host gives it.
+    let key = match process.audio_inputs_count > 1 && core.spec.key_in > 0 {
+        true => unsafe { channels(process.audio_inputs.add(1), 1) },
+        false => &[],
+    };
+    let main = core.spec.info.audio_in as usize;
     let outs = unsafe { channels(process.audio_outputs, process.audio_outputs_count) };
     let made = core.spec.info.audio_out as usize;
     runner.run(
         n,
         transport::read(unsafe { process.transport.as_ref() }, runner.rate()),
         |ch, start, into| {
-            let src = ins.get(ch).or(ins.last()).filter(|p| !p.is_null());
+            let src = match ch < main {
+                true => ins.get(ch).or(ins.last()),
+                false => key.get(ch - main).or(key.last()),
+            }
+            .filter(|p| !p.is_null());
             match src {
                 Some(&p) => into.copy_from_slice(unsafe {
                     std::slice::from_raw_parts(p.add(start), into.len())

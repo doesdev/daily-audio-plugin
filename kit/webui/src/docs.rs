@@ -130,6 +130,7 @@ mod tests {
         ],
         meters: &[meter(2, "out", "Output")],
         assets: &[],
+        key_in: 0,
     };
 
     #[test]

@@ -76,6 +76,9 @@ anything that models a **transformer** the transformer window: the
 same four settings and the same picture in each plugin, so learning
 one is learning all.
 
+And a **sidechain** wherever one sound steers what is done to another:
+the other track is as good a steerer as the sound's own other half.
+
 These combine. A split is a place to put a tone; a tone is a reason
 for a split. The kit's paired controls (linked, mirrored, opposed, a
 span) and the pad were drawn with mid and side and band edges in mind.

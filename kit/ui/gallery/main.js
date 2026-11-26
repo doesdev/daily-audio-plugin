@@ -5,7 +5,7 @@
 import {
   mount, glass, header, stage, readouts, meter, picture, sheet, values,
   value, choice, foot, groups, fader, faders, linked, mirrored, opposed,
-  span, pairs, pad, notice, menu, toggle, column, listen
+  span, pairs, pad, notice, menu, toggle, column, listen, flag
 } from './kit/kit.js'
 
 const page = new URLSearchParams(window.location.search).get('page') ?? 'main'
@@ -107,7 +107,7 @@ const PAGES = {
         value(ui.p.mix, { ui }),
         value(ui.p.balance, { ui, bipolar: true }),
         value(ui.p.output, { ui, bipolar: true })),
-      foot(ui))
+      foot(ui, flag(ui.p.key, { ui })))
   ],
   mirror: (ui) => [
     glass(header(ui), stage(picture(ui, curve(ui)))),

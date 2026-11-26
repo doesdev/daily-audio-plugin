@@ -6,6 +6,7 @@
 use crate::{Descriptor, create};
 use clap_sys::audio_buffer::clap_audio_buffer;
 use clap_sys::events::*;
+use clap_sys::ext::audio_ports::*;
 use clap_sys::ext::latency::{CLAP_EXT_LATENCY, clap_plugin_latency};
 use clap_sys::ext::params::{CLAP_EXT_PARAMS, clap_param_info, clap_plugin_params};
 use clap_sys::ext::state::{CLAP_EXT_STATE, clap_plugin_state};
@@ -141,6 +142,8 @@ pub struct Host {
     output: Vec<Vec<f32>>,
     in_ptrs: Vec<*mut f32>,
     out_ptrs: Vec<*mut f32>,
+    key: Vec<Vec<f32>>,
+    key_ptrs: Vec<*mut f32>,
     lists: Box<Lists>,
     // Kept alive: the plugin holds pointers to both.
     _host: Box<clap_host>,
@@ -175,7 +178,10 @@ impl Host {
         let buffers = |n: u32| -> Vec<Vec<f32>> { (0..n).map(|_| vec![0.0; block]).collect() };
         let mut input = buffers(spec.info.audio_in);
         let mut output = buffers(spec.info.audio_out);
+        let mut key = buffers(spec.key_in);
         Self {
+            key_ptrs: key.iter_mut().map(|b| b.as_mut_ptr()).collect(),
+            key,
             spec,
             plugin,
             in_ptrs: input.iter_mut().map(|b| b.as_mut_ptr()).collect(),
@@ -204,6 +210,11 @@ impl Host {
     /// Input channel `ch` for the next block.
     pub fn input(&mut self, ch: usize) -> &mut [f32] {
         &mut self.input[ch]
+    }
+
+    /// Sidechain channel `ch` for the next block.
+    pub fn key(&mut self, ch: usize) -> &mut [f32] {
+        &mut self.key[ch]
     }
 
     /// Output channel `ch` of the last block.
@@ -257,15 +268,17 @@ impl Host {
             latency: 0,
             constant_mask: 0,
         };
-        let audio_in = buffer(&mut self.in_ptrs);
+        // The input, then the sidechain if the plugin has one.
+        let audio_in = [buffer(&mut self.in_ptrs), buffer(&mut self.key_ptrs)];
+        let given = u32::from(!self.in_ptrs.is_empty()) + u32::from(!self.key_ptrs.is_empty());
         let mut audio_out = buffer(&mut self.out_ptrs);
         let process = clap_process {
             steady_time: -1,
             frames_count: frames as u32,
             transport: std::ptr::null(),
-            audio_inputs: &audio_in,
+            audio_inputs: audio_in.as_ptr(),
             audio_outputs: &mut audio_out,
-            audio_inputs_count: u32::from(!self.in_ptrs.is_empty()),
+            audio_inputs_count: given,
             audio_outputs_count: 1,
             in_events: &in_events,
             out_events: &out_events,
@@ -282,8 +295,10 @@ impl Host {
         let mut start = 0;
         while start < frames {
             let n = (frames - start).min(block);
-            for (ch, buf) in self.input.iter_mut().enumerate() {
-                match input.get(ch).or(input.last()) {
+            let main = self.input.len();
+            let all = self.input.iter_mut().chain(self.key.iter_mut());
+            for (ch, buf) in all.enumerate() {
+                match kit::source(input, main, ch) {
                     Some(src) => buf[..n].copy_from_slice(&src[start..start + n]),
                     None => buf[..n].fill(0.0),
                 }
@@ -362,6 +377,21 @@ pub fn conforms<P: Plugin>() {
     let mut host = Host::load::<P>(48_000.0, 256);
     let spec = host.spec;
     let params = host.extension::<clap_plugin_params>(CLAP_EXT_PARAMS);
+
+    // The input, and after it a sidechain that is not the main port.
+    let ports = host.extension::<clap_plugin_audio_ports>(CLAP_EXT_AUDIO_PORTS);
+    let wanted = u32::from(spec.info.audio_in > 0) + u32::from(spec.key_in > 0);
+    assert_eq!(
+        unsafe { ports.count.expect("count")(host.plugin, true) },
+        wanted
+    );
+    if spec.key_in > 0 {
+        let mut port: clap_audio_port_info = unsafe { std::mem::zeroed() };
+        assert!(unsafe { ports.get.expect("get")(host.plugin, 1, true, &mut port) });
+        assert_eq!(port.flags & CLAP_AUDIO_PORT_IS_MAIN, 0, "a sidechain");
+        assert_eq!(port.channel_count, spec.key_in);
+        assert_eq!(port.in_place_pair, clap_sys::id::CLAP_INVALID_ID);
+    }
 
     let count = unsafe { params.count.expect("count")(host.plugin) };
     assert_eq!(count as usize, spec.params.len(), "every setting");

@@ -1108,6 +1108,20 @@ export const choice = (handle, opts = {}) => {
   }, buttons))
 }
 
+// A switch as one pill beside the others in a foot, pressed while it
+// is on: for one that belongs with a row of choices, where the large
+// switch would outweigh them.
+export const flag = (handle, opts = {}) => {
+  const button = h('button.kit-option', {
+    type: 'button',
+    onclick: () => handle.set(handle.value > 0.5 ? 0 : 1)
+  }, handle.row.title)
+  const show = () => button.setAttribute('aria-pressed', handle.value > 0.5)
+  handle.on(show)
+  show()
+  return shell(handle, 'flag', opts, button)
+}
+
 // A list as a menu, its choice written as large as a number: for more
 // choices than fit side by side.
 export const menu = (handle, opts = {}) => {
@@ -1475,6 +1489,11 @@ export const foot = (ui, ...children) => {
     about.textContent = title ? (text || '') : HOW
     fitText(line)
   }
+  // What it says before anything is pointed at is fitted too, once
+  // it is on the page and whenever the room for it changes.
+  const fit = () => { if (line.isConnected) fitText(line) }
+  requestAnimationFrame(fit)
+  window.addEventListener('resize', fit)
   // A plugin with a valve or a transformer gets the way into its
   // window here, the same place in every one.
   return h('footer.kit-foot', {}, children, toneButtons(ui), line)

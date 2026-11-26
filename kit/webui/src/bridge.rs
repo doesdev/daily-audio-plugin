@@ -247,6 +247,7 @@ mod tests {
         ],
         meters: &[meter(2, "out", "Output")],
         assets: &[("/main.js", "text/javascript", "export default 1")],
+        key_in: 0,
     };
 
     #[test]

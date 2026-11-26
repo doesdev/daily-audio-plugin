@@ -202,6 +202,8 @@ pub struct Host {
     output: Vec<Vec<f32>>,
     in_ptrs: Vec<*mut f32>,
     out_ptrs: Vec<*mut f32>,
+    key: Vec<Vec<f32>>,
+    key_ptrs: Vec<*mut f32>,
     changes_in: (ComWrapper<Changes>, ComPtr<IParameterChanges>),
     changes_out: (ComWrapper<Changes>, ComPtr<IParameterChanges>),
     notes_in: (ComWrapper<Notes>, ComPtr<IEventList>),
@@ -254,6 +256,8 @@ impl Host {
         let buffers = |n: u32| -> Vec<Vec<f32>> { (0..n).map(|_| vec![0.0; block]).collect() };
         let mut input = buffers(spec.info.audio_in);
         let mut output = buffers(spec.info.audio_out);
+        let mut key = buffers(spec.key_in);
+        let key_ptrs = key.iter_mut().map(|b| b.as_mut_ptr()).collect();
         let in_ptrs = input.iter_mut().map(|b| b.as_mut_ptr()).collect();
         let out_ptrs = output.iter_mut().map(|b| b.as_mut_ptr()).collect();
         let changes = || {
@@ -275,6 +279,8 @@ impl Host {
             controller,
             input,
             output,
+            key,
+            key_ptrs,
             in_ptrs,
             out_ptrs,
             changes_in: changes(),
@@ -288,6 +294,11 @@ impl Host {
     /// Input channel `ch` for the next block.
     pub fn input(&mut self, ch: usize) -> &mut [f32] {
         &mut self.input[ch]
+    }
+
+    /// Sidechain channel `ch` for the next block.
+    pub fn key(&mut self, ch: usize) -> &mut [f32] {
+        &mut self.key[ch]
     }
 
     /// Output channel `ch` of the last block.
@@ -310,13 +321,16 @@ impl Host {
 
     /// Plays `frames` of `input` into `output`. No allocation.
     pub fn block(&mut self, frames: usize) {
-        let mut input = AudioBusBuffers {
-            numChannels: self.in_ptrs.len() as i32,
+        let bus = |ptrs: &mut Vec<*mut f32>| AudioBusBuffers {
+            numChannels: ptrs.len() as i32,
             silenceFlags: 0,
             __field0: AudioBusBuffers__type0 {
-                channelBuffers32: self.in_ptrs.as_mut_ptr(),
+                channelBuffers32: ptrs.as_mut_ptr(),
             },
         };
+        // The input, then the sidechain if the plugin has one.
+        let mut inputs = [bus(&mut self.in_ptrs), bus(&mut self.key_ptrs)];
+        let given = i32::from(!self.in_ptrs.is_empty()) + i32::from(!self.key_ptrs.is_empty());
         let mut output = AudioBusBuffers {
             numChannels: self.out_ptrs.len() as i32,
             silenceFlags: 0,
@@ -330,9 +344,9 @@ impl Host {
             processMode: ProcessModes_::kRealtime as i32,
             symbolicSampleSize: SymbolicSampleSizes_::kSample32 as i32,
             numSamples: frames as i32,
-            numInputs: i32::from(!self.in_ptrs.is_empty()),
+            numInputs: given,
             numOutputs: 1,
-            inputs: &mut input,
+            inputs: inputs.as_mut_ptr(),
             outputs: &mut output,
             inputParameterChanges: self.changes_in.1.as_ptr(),
             outputParameterChanges: self.changes_out.1.as_ptr(),
@@ -352,8 +366,10 @@ impl Host {
         let mut start = 0;
         while start < frames {
             let n = (frames - start).min(block);
-            for (ch, buf) in self.input.iter_mut().enumerate() {
-                match input.get(ch).or(input.last()) {
+            let main = self.input.len();
+            let all = self.input.iter_mut().chain(self.key.iter_mut());
+            for (ch, buf) in all.enumerate() {
+                match kit::source(input, main, ch) {
                     Some(src) => buf[..n].copy_from_slice(&src[start..start + n]),
                     None => buf[..n].fill(0.0),
                 }
@@ -425,6 +441,22 @@ impl Drop for Host {
 pub fn conforms<P: Plugin>() {
     let mut host = Host::load::<P>(48_000.0, 256);
     let spec = host.spec;
+
+    // The input, and after it a sidechain marked as one.
+    let audio = MediaTypes_::kAudio as MediaType;
+    let into = BusDirections_::kInput as BusDirection;
+    let wanted = i32::from(spec.info.audio_in > 0) + i32::from(spec.key_in > 0);
+    assert_eq!(unsafe { host.component.getBusCount(audio, into) }, wanted);
+    if spec.key_in > 0 {
+        let mut bus: BusInfo = unsafe { std::mem::zeroed() };
+        assert_eq!(
+            unsafe { host.component.getBusInfo(audio, into, 1, &mut bus) },
+            kResultOk
+        );
+        assert_eq!(bus.busType, BusTypes_::kAux as BusType, "a sidechain");
+        assert_eq!(bus.channelCount as u32, spec.key_in);
+        assert_eq!(bus.flags, 0, "off until the host routes something to it");
+    }
 
     let count = unsafe { host.controller.getParameterCount() };
     assert_eq!(

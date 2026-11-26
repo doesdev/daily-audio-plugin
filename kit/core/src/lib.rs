@@ -15,10 +15,10 @@ pub mod state;
 pub use learn::{LEARNABLE, Learn};
 pub use param::{
     BYPASS, Kind, MATCH, MIX, Param, balance, bypass, iron_core, iron_grip, iron_roll, iron_weight,
-    level_match, list, listen, meter, mix, range, toggle, tube_bias, tube_glow, tube_grid,
+    key, level_match, list, listen, meter, mix, range, toggle, tube_bias, tube_glow, tube_grid,
     tube_sag,
 };
 pub use plugin::{Asset, Info, Plugin, Role, Spec};
-pub use runner::{Block, EVENTS, Event, Runner, Transport};
+pub use runner::{Block, EVENTS, Event, Runner, Transport, source};
 pub use scope::{SCOPE, Scope};
 pub use shared::{BEGIN, END, SET, Shared};

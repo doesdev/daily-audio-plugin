@@ -532,6 +532,33 @@
         "a valve and a transformer each have a window, the same everywhere",
         "mid and side, a valve and a transformer bring the kit's tools"
       ]
+    },
+    {
+      "id": "sidechain",
+      "what": "Letting another track drive what an effect follows",
+      "covers": [
+        "flag"
+      ],
+      "leaders": [
+        {
+          "who": "FabFilter Pro-C 2",
+          "does": "An external side chain input the host routes another track to, switched between In and Ext in the plugin, with filtering and an audition of the side chain",
+          "source": null
+        },
+        {
+          "who": "oeksound soothe2",
+          "does": "An external sidechain input chosen in the plugin, so one track's spectrum sets what is taken from another",
+          "source": null
+        }
+      ],
+      "ours": "A plugin sets Plugin::KEY_IN and both formats give it a second input: an Aux bus in VST3 and a second, non-main port in CLAP, off until the host routes a track to it, mono or stereo. Block::key reads it, silent when nothing is routed. kit::key(id) is the one Sidechain switch, off by default, the same in every plugin that has one, drawn by flag() as one pill among the foot's others. Under Pro-C 2 in one respect: the sidechain cannot be heard alone from the plugin, and next is to add it to Listen.",
+      "verdict": "meets",
+      "proof": [
+        "a_sidechain_arrives_on_its_own_input_and_is_silent_when_not_fed",
+        "test_channels_past_the_input_are_the_sidechain",
+        "conforms_as_a_vst3",
+        "a switch among a foot's pills is one pill, pressed while on"
+      ]
     }
   ]
 }

@@ -3,7 +3,7 @@
 //! so a plugin's input and output never alias, and it cuts a block
 //! longer than the host promised into pieces that fit.
 
-use crate::{Param, Plugin, Scope};
+use crate::{Param, Plugin, Scope, Spec};
 use std::sync::Arc;
 
 /// MIDI messages a block may carry each way; more are dropped.
@@ -31,6 +31,7 @@ pub struct Transport {
 pub struct Block<'a> {
     frames: usize,
     ins: &'a [Vec<f32>],
+    keys: &'a [Vec<f32>],
     outs: &'a mut [Vec<f32>],
     params: &'a [f64],
     spec: &'static [Param],
@@ -64,9 +65,34 @@ impl Block<'_> {
         }
     }
 
+    /// Sidechain channel `ch`, for a plugin with `KEY_IN`: what the
+    /// host has routed to it, silent if nothing is. A mono sidechain
+    /// answers for every channel. `None` for a plugin without one.
+    pub fn key(&self, ch: usize) -> Option<&[f32]> {
+        let buf = self.keys.get(ch).or(self.keys.last())?;
+        Some(&buf[..self.frames])
+    }
+
     /// Output channel `ch`, silent until written.
     pub fn output(&mut self, ch: usize) -> &mut [f32] {
         &mut self.outs[ch][..self.frames]
+    }
+
+    /// The sidechain's channel `ch` beside `Block::io`'s pair, for a
+    /// plugin that reads it while it writes; empty without one.
+    pub fn keyed_io(&mut self, ch: usize) -> (&[f32], &[f32], &mut [f32]) {
+        let frames = self.frames;
+        fn of(bufs: &[Vec<f32>], ch: usize, frames: usize) -> &[f32] {
+            match bufs.get(ch).or(bufs.last()) {
+                Some(buf) => &buf[..frames],
+                None => &[],
+            }
+        }
+        (
+            of(self.ins, ch, frames),
+            of(self.keys, ch, frames),
+            &mut self.outs[ch][..frames],
+        )
     }
 
     /// Channel `ch` in and out together.
@@ -123,6 +149,7 @@ pub struct Runner<P: Plugin> {
     rate: f32,
     max: usize,
     ins: Vec<Vec<f32>>,
+    keys: Vec<Vec<f32>>,
     outs: Vec<Vec<f32>>,
     /// Every setting, normalized; the host side writes, `run` reads.
     pub params: Vec<f64>,
@@ -141,6 +168,18 @@ pub struct Runner<P: Plugin> {
     scope: Option<Arc<Scope>>,
 }
 
+/// Which of a test's channels feeds channel `ch` of a plugin whose own
+/// input has `main` channels: a narrower input answers for all of
+/// them, and what is past them is the sidechain, silent if not given.
+pub fn source(input: &[Vec<f32>], main: usize, ch: usize) -> Option<&Vec<f32>> {
+    match ch < main {
+        true => input
+            .get(ch)
+            .or(input.len().min(main).checked_sub(1).map(|i| &input[i])),
+        false => input.get(ch),
+    }
+}
+
 /// How long going into and out of bypass takes: long enough not to
 /// click, short enough to feel like a switch.
 pub const BYPASS_FADE_SECONDS: f32 = 0.01;
@@ -157,6 +196,7 @@ impl<P: Plugin> Runner<P> {
             rate,
             max,
             ins: buffers(P::INFO.audio_in),
+            keys: buffers(Spec::of::<P>().key_in),
             outs: buffers(P::INFO.audio_out),
             params: P::PARAMS.iter().map(Param::default_norm).collect(),
             pending: Vec::with_capacity(EVENTS),
@@ -241,6 +281,11 @@ impl<P: Plugin> Runner<P> {
             for (ch, buf) in self.ins.iter_mut().enumerate() {
                 read(ch, start, &mut buf[..n]);
             }
+            // The sidechain's channels are numbered after the input's.
+            let main = self.ins.len();
+            for (k, buf) in self.keys.iter_mut().enumerate() {
+                read(main + k, start, &mut buf[..n]);
+            }
             self.outs.iter_mut().for_each(|buf| buf[..n].fill(0.0));
 
             self.piece.clear();
@@ -257,6 +302,7 @@ impl<P: Plugin> Runner<P> {
             self.plugin.process(&mut Block {
                 frames: n,
                 ins: &self.ins,
+                keys: &self.keys,
                 outs: &mut self.outs,
                 params: &self.params,
                 spec: P::PARAMS,
@@ -317,7 +363,8 @@ impl<P: Plugin> Runner<P> {
     }
 
     /// Runs interleaved-by-channel buffers, for tests and tools:
-    /// `input[ch]` in, the same shape out. Allocates the result.
+    /// `input[ch]` in, the same shape out. Channels past the plugin's
+    /// own input are its sidechain. Allocates the result.
     pub fn render(&mut self, input: &[Vec<f32>], frames: usize, block: usize) -> Vec<Vec<f32>> {
         let mut out = vec![vec![0.0; frames]; P::INFO.audio_out as usize];
         let mut start = 0;
@@ -327,7 +374,7 @@ impl<P: Plugin> Runner<P> {
             self.run(
                 n,
                 Transport::default(),
-                |ch, s, into| match input.get(ch).or(input.last()) {
+                |ch, s, into| match source(input, P::INFO.audio_in as usize, ch) {
                     Some(buf) => into.copy_from_slice(&buf[at + s..at + s + into.len()]),
                     None => into.fill(0.0),
                 },
@@ -517,5 +564,21 @@ mod tests {
         let out = runner.render(&[vec![1.0; 64]], 64, 16);
 
         assert!(out[0].iter().all(|&s| s == 2.0));
+    }
+
+    #[test]
+    fn test_channels_past_the_input_are_the_sidechain() {
+        let ch = |v: f32| vec![v; 4];
+        let four = [ch(1.0), ch(2.0), ch(3.0), ch(4.0)];
+        let picked = |input: &[Vec<f32>], at| source(input, 2, at).map(|c| c[0]);
+
+        assert_eq!(picked(&four, 1), Some(2.0));
+        assert_eq!(picked(&four, 3), Some(4.0));
+        // A mono input answers for both of its channels and for no
+        // part of the sidechain.
+        assert_eq!(picked(&four[..1], 1), Some(1.0));
+        assert_eq!(picked(&four[..1], 2), None);
+        assert_eq!(picked(&four[..2], 2), None);
+        assert_eq!(picked(&[], 0), None);
     }
 }

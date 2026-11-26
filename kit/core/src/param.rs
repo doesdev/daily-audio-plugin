@@ -179,6 +179,14 @@ pub const fn listen(id: u32) -> Param {
     .about("Hear both, the middle alone, or the sides alone")
 }
 
+/// For an effect with a sidechain (`Plugin::KEY_IN`): whether what it
+/// follows is its own input or the sidechain. Off by default, since a
+/// host hands an unrouted sidechain over as silence.
+pub const fn key(id: u32) -> Param {
+    toggle(id, "key", "Sidechain", "Input", false)
+        .about("Follows the track routed to the sidechain in place of its own sound")
+}
+
 /// The valve's own settings, for any effect that models one: they
 /// live in the tube window, and `kit_dsp::Tube` is the valve.
 pub const fn tube_bias(id: u32) -> Param {
