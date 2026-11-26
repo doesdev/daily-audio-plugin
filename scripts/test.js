@@ -259,6 +259,10 @@ test('release notes say what it is, what is new and how to install', (assert) =>
   assert.contains(made, '## What is new about it\n\nIt blooms.')
   assert.contains(made, 'Unzip `tape-bloom-0.1.0.zip`')
   assert.doesNotContain(notes('T', readme, null, 'z'), 'What is new')
+  // A paragraph wrapped over lines is said whole, not cut at the first.
+  const wrapped = '# T\n\nA delay that\nblooms.\n\nMore.'
+  assert.contains(notes('T', wrapped, null, 'z'),
+    '# T\n\nA delay that\nblooms.\n\n')
   assert.is(zipName('tape-bloom', '0.1.0', 'win32'),
     'tape-bloom-0.1.0-windows-x64.zip')
   const args = releaseArgs({

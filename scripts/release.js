@@ -37,8 +37,11 @@ export const zipName = (plugin, version, platform = process.platform) => {
 // What the release says: what the plugin is, what is new about it,
 // and how to install it.
 export const notes = (name, readme, novelty, zip) => {
-  const about = readme.split('\n')
-    .filter((line) => line.trim() && !/^[#!]/.test(line))[0] ?? ''
+  // The README's first paragraph that is not a heading or a picture,
+  // whole: it is usually wrapped over several lines.
+  const about = readme.split(/\n\s*\n/)
+    .map((block) => block.trim())
+    .filter((block) => block && !/^[#!]/.test(block))[0] ?? ''
   const fresh = sectionsOf(novelty ?? '')['What is new'] ?? ''
   return [
     `# ${name}`,
