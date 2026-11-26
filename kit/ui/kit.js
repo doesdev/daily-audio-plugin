@@ -30,16 +30,26 @@ export const snap = (row, norm) => {
   return row.steps > 0 ? Math.round(v * row.steps) / row.steps : v
 }
 
+// A setting with a few steps, each worth feeling: a choice, a count.
+// One with hundreds (a frequency that lands on whole hertz) is a range
+// that happens to round, and moves like any other range.
+const NOTCHED = 24
+const notched = (row) => row.steps > 0 && row.steps <= NOTCHED
+
 // Where a drag of `by` pixels from `from` lands on a control `span`
-// pixels long. A fine drag (shift) moves a tenth as far.
+// pixels long: the whole range in one span, or 24 pixels a step where
+// the steps are few. A fine drag (shift) moves a tenth as far.
 export const dragged = (row, from, by, fine = false, span = 160) => {
-  const length = row.steps > 0 ? Math.max(span, row.steps * 24) : span
+  const length = notched(row) ? Math.max(span, row.steps * 24) : span
   return clamp(from + by / (fine ? length * 10 : length))
 }
 
-// One notch of the wheel or an arrow key: a step, or a fiftieth.
+// One notch of the wheel or an arrow key: a step where the steps are
+// few, else a fiftieth of the range (a five-hundredth when fine), and
+// never less than one step.
 export const nudged = (row, from, by, fine = false) => {
-  const unit = row.steps > 0 ? 1 / row.steps : fine ? 0.002 : 0.02
+  const least = row.steps > 0 ? 1 / row.steps : 0
+  const unit = notched(row) ? least : Math.max(least, fine ? 0.002 : 0.02)
   return snap(row, from + by * unit)
 }
 
@@ -237,10 +247,13 @@ export const presetMoves = (now, to, locked = []) => to
 export const PREFS = {
   hold: ['Off', '2 s', 'Until pressed'],
   motion: ['Full', 'Still'],
-  fine: ['With Shift', 'Always']
+  fine: ['With Shift', 'Always'],
+  fall: ['Fast', 'Medium', 'Slow']
 }
 
-export const PREF_DEFAULTS = { hold: '2 s', motion: 'Full', fine: 'With Shift' }
+export const PREF_DEFAULTS = {
+  hold: '2 s', motion: 'Full', fine: 'With Shift', fall: 'Medium'
+}
 
 // Saved choices over the defaults, dropping any no longer offered.
 export const prefsFor = (saved) => Object.fromEntries(
@@ -311,6 +324,20 @@ export const tagFor = (id, learn, locked) => {
   ].filter(Boolean)
   return said.length ? ` (${said.join(', ')})` : ''
 }
+
+// How fast a meter's bar falls, as a share of its 60 dB a second: it
+// rises at once and comes down at this pace, so it can be read.
+export const fallFor = (choice) =>
+  ({ Fast: 40, Slow: 10 }[choice] ?? 20) / 60
+
+// Where a falling bar is `seconds` later: never under the level now.
+export const fallen = (shown, level, seconds, rate) =>
+  Math.max(level, shown - rate * Math.max(0, seconds))
+
+// The size, as a share of its full size, at which text `wide` across
+// fits in `room`: never under `least`, where it is cut short instead.
+export const textFit = (wide, room, least = 0.6) =>
+  wide <= room || wide <= 0 ? 1 : Math.max(least, room / wide)
 
 // ---- the store: what the host last said, folded message by message
 
@@ -591,14 +618,23 @@ const setTheme = (theme) => {
 
 const switchTheme = () => setTheme(otherTheme(currentTheme()))
 
-// The page is designed at the size the spec gives and scaled whole to
-// whatever window the host makes it, so nothing reflows or gets small.
+// How the page fills a window of any shape. It is scaled, whole, by
+// as much as the tighter of the two directions allows, so nothing gets
+// small; then it is laid out as wide and as tall as the window is at
+// that scale, so a window that is not the design's shape is filled:
+// the glass and its picture take whatever is left over, and no band of
+// empty window is left beside or below.
+export const fitted = (size, base) => {
+  const zoom = fitScale(size, base)
+  return { zoom, width: size[0] / zoom, height: size[1] / zoom }
+}
+
 const fitTo = (root, base) => {
   const fit = () => {
-    const scale = fitScale([window.innerWidth, window.innerHeight], base)
-    root.style.width = `${base[0]}px`
-    root.style.height = `${base[1]}px`
-    root.style.zoom = scale
+    const to = fitted([window.innerWidth, window.innerHeight], base)
+    root.style.width = `${to.width}px`
+    root.style.height = `${to.height}px`
+    root.style.zoom = to.zoom
   }
   window.addEventListener('resize', fit)
   fit()
@@ -744,9 +780,9 @@ export const ICONS = {
   regular: 'M4.5 5.5h11M4.5 10h11M4.5 14.5h11',
   dense: 'M4.5 4.5h11M4.5 8.2h11M4.5 11.8h11M4.5 15.5h11',
   theme: 'M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12M10 4v12',
-  settings: 'M10 7.8a2.2 2.2 0 1 0 0 4.4a2.2 2.2 0 1 0 0-4.4M10 3.5v2M10 ' +
-    '14.5v2M3.5 10h2M14.5 10h2M5.4 5.4l1.4 1.4M13.2 13.2l1.4 1.4M14.6 ' +
-    '5.4l-1.4 1.4M6.8 13.2l-1.4 1.4',
+  // Two sliders: settings. Not a sun, which would say brightness.
+  settings: 'M4 6.5h6M14 6.5h2M12 4.7a1.8 1.8 0 1 0 0 3.6a1.8 1.8 0 1 0 ' +
+    '0-3.6M4 13.5h2M10 13.5h6M8 11.7a1.8 1.8 0 1 0 0 3.6a1.8 1.8 0 1 0 0-3.6',
   help: 'M7.4 7.6a2.7 2.7 0 1 1 3.9 2.4c-.8.5-1.3 1-1.3 2M10 14.6v.2',
   power: 'M10 3.5v6M6.2 5.8a5.5 5.5 0 1 0 7.6 0',
   chevron: 'M6 8l4 4 4-4',
@@ -769,14 +805,96 @@ export const icon = (name) => h('svg.kit-icon', {
 }, h('path', { d: ICONS[name] }))
 
 // The page's own hint for a control: what it is and what it does.
-const hinted = (el, ui, handle) => {
-  if (!ui) return el
-  const say = () => ui.hint(handle.row.title, handle.row.about, handle.row)
-  el.addEventListener('pointerenter', say)
-  el.addEventListener('focusin', say)
-  el.addEventListener('pointerleave', () => ui.hint())
-  el.addEventListener('focusout', () => ui.hint())
+// The one tooltip: the house's own, never the browser's. A short name
+// after a moment over a tool; with help on, sooner and with more.
+let tip = null
+let tipTimer = null
+
+const hideTip = () => {
+  clearTimeout(tipTimer)
+  tip?.remove()
+  tip = null
+}
+
+const showTip = (anchor, said) => {
+  hideTip()
+  const app = document.getElementById('app')
+  if (!app || !anchor.isConnected) return
+  tip = h('div.kit-tip', { role: 'tooltip' },
+    said.title ? h('b', {}, said.title) : null,
+    said.text ? h('span', {}, said.text) : null)
+  app.append(tip)
+  const zoom = Number(app.style.zoom) || 1
+  const frame = app.getBoundingClientRect()
+  const box = anchor.getBoundingClientRect()
+  const centre = ((box.left + box.right) / 2 - frame.left) / zoom
+  const below = (box.bottom - frame.top) / zoom + 8
+  const above = (box.top - frame.top) / zoom - tip.offsetHeight - 8
+  const left = clamp(centre - tip.offsetWidth / 2, 8,
+    app.clientWidth - tip.offsetWidth - 8)
+  const fits = below + tip.offsetHeight < app.clientHeight - 8
+  tip.style.left = `${left}px`
+  tip.style.top = `${fits ? below : Math.max(8, above)}px`
+}
+
+// Gives `el` a tooltip: `say(help)` is `{ title, text }`, or nothing
+// for none; `help` is whether help is on. A press puts it away.
+const tipped = (el, say) => {
+  const open = () => {
+    const help = document.documentElement.dataset.help === 'true'
+    clearTimeout(tipTimer)
+    tipTimer = setTimeout(() => {
+      const said = say(help)
+      if (said) showTip(el, said)
+    }, help ? 120 : 450)
+  }
+  el.addEventListener('pointerenter', open)
+  el.addEventListener('focusin', () => {
+    if (el.matches(':focus-visible')) open()
+  })
+  ;['pointerleave', 'pointerdown', 'focusout'].forEach((name) =>
+    el.addEventListener(name, hideTip))
   return el
+}
+
+// The foot of the sheet says what a control is while the pointer is
+// over it or the keyboard is on it, and stops only when neither is.
+// With help on, a card beside the control says the rest.
+const hinted = (el, ui, handle, card = true) => {
+  if (!ui) return el
+  let over = false
+  let focused = false
+  const tell = () => (over || focused
+    ? ui.hint(handle.row.title, handle.row.about, handle.row)
+    : ui.hint())
+  el.addEventListener('pointerenter', () => { over = true; tell() })
+  el.addEventListener('pointerleave', () => { over = false; tell() })
+  el.addEventListener('focusin', () => { focused = true; tell() })
+  el.addEventListener('focusout', () => { focused = false; tell() })
+  // A tool has its own tip already.
+  if (!card) return el
+  return tipped(el, (help) => (help
+    ? {
+        title: handle.row.title,
+        text: `${stopped(handle.row.about)}${helpFor(handle.row)}`
+      }
+    : null))
+}
+
+// A sentence with its full stop, for when another follows it.
+const stopped = (text) =>
+  (text && !/[.!?]$/.test(text) ? `${text}.` : text || '')
+
+// Shrinks `el`'s text until it fits its box, down to `least` pixels;
+// past that the box cuts it short. The box never grows: nothing else
+// on the page moves because of what a line of text says.
+const fitText = (el, most = 13, least = 10.5) => {
+  let size = most
+  el.style.fontSize = `${size}px`
+  while (size > least && el.scrollHeight > el.clientHeight + 1) {
+    size -= 0.5
+    el.style.fontSize = `${size}px`
+  }
 }
 
 // A value as its number drawn large and its unit small, which can be
@@ -784,7 +902,18 @@ const hinted = (el, ui, handle) => {
 // keeps what was typed if the setting can hold it; Escape, or anything
 // it cannot hold, leaves it as it was.
 const valueText = (handle) => {
-  const out = h('output.kit-value', { title: 'Double-click to type a value' })
+  const out = h('output.kit-value')
+  // A number too wide for its column is drawn smaller, not let run
+  // into the next one.
+  const fit = () => {
+    out.style.setProperty('--fit', 1)
+    const number = out.querySelector('.kit-number')
+    if (!out.isConnected || !number) return
+    // Only the number is scaled: its unit keeps its size and its room.
+    const wide = (el) => el?.getBoundingClientRect().width ?? 0
+    const room = wide(out) - wide(out.querySelector('.kit-unit')) - 1
+    out.style.setProperty('--fit', textFit(wide(number), room).toFixed(3))
+  }
   const show = () => {
     if (out.dataset.editing) return
     const [number, unit] = parts(handle.text)
@@ -792,7 +921,11 @@ const valueText = (handle) => {
       h('span.kit-number', {}, number),
       unit ? h('span.kit-unit', {}, ` ${unit}`) : ''
     )
+    fit()
   }
+  ;['resize', 'kit-density', 'kit-panel'].forEach((name) =>
+    window.addEventListener(name, () => requestAnimationFrame(fit)))
+  requestAnimationFrame(fit)
   const edit = (start) => {
     if (out.dataset.editing) return
     out.dataset.editing = 'true'
@@ -1040,7 +1173,6 @@ export const meter = (handle, opts = {}) => {
   const el = h('div.kit-control.kit-meter', {
     'data-key': handle.row.key,
     'data-meter': handle.row.meter,
-    title: 'Click to clear the clip lamp',
     onclick: () => {
       delete el.dataset.clipped
       hold = { level: 0, at: 0 }
@@ -1052,14 +1184,38 @@ export const meter = (handle, opts = {}) => {
   h('div.kit-segments', { role: 'meter', 'aria-label': handle.row.title },
     segments))
   let hold = { level: 0, at: 0 }
+  let said = handle.text
   let release = null
+  // The bar rises at once and falls at a steady pace, so a level that
+  // jumps about every reading can still be read.
+  let shown = 0
+  let last = 0
+  let falling = null
+  const bar = () => zoneFills(shown).forEach((fill, i) => {
+    segments[i].style.setProperty('--fill', String(Number(fill.toFixed(3))))
+  })
+  const fall = (now) => {
+    falling = null
+    const seconds = last ? (now - last) / 1000 : 0
+    last = now
+    shown = fallen(shown, handle.value, seconds, fallFor(prefs.fall))
+    bar()
+    if (shown > handle.value + 1e-4) falling = requestAnimationFrame(fall)
+    else last = 0
+  }
   const show = (wait = true) => {
     const ms = holdFor(prefs.hold)
+    const before = hold
     hold = held(hold, handle.value, performance.now(), ms)
-    zoneFills(handle.value).forEach((fill, i) => {
-      segments[i].style.setProperty('--fill', String(Number(fill.toFixed(3))))
-    })
-    const [number, unit] = parts(handle.text)
+    // The number is the peak that is held, in the host's own words
+    // for it, not whatever the last reading happened to be.
+    if (hold !== before) said = handle.text
+    shown = Math.max(shown, handle.value)
+    bar()
+    if (shown > handle.value + 1e-4 && !falling) {
+      falling = requestAnimationFrame(fall)
+    }
+    const [number, unit] = parts(said)
     out.replaceChildren(
       h('span.kit-number', {}, number),
       unit ? h('span.kit-unit', {}, ` ${unit}`) : ''
@@ -1206,14 +1362,17 @@ const draggable = (el, ui, { x, y }) => {
 }
 
 // A tool in the header: an icon in a round target, named for a reader.
-const tool = (kind, name, label, onclick) => {
+// `more` is what help adds about it.
+const tool = (kind, name, label, onclick, more = '') => {
   const button = h(`button.kit-tool.kit-${kind}`, { type: 'button', onclick },
     icon(name))
+  let told = label
   const say = (text) => {
+    told = text
     button.setAttribute('aria-label', text)
-    button.title = text
   }
   say(label)
+  tipped(button, (help) => ({ title: told, text: help ? more : '' }))
   return Object.assign(button, { say })
 }
 
@@ -1223,7 +1382,8 @@ const capsule = (...children) => h('div.kit-capsule', {}, children)
 // The switch between the light and the dark theme.
 export const themeSwitch = () => {
   const label = () => `Switch to the ${otherTheme(currentTheme())} theme`
-  const button = tool('theme', 'theme', label(), switchTheme)
+  const button = tool('theme', 'theme', label(), switchTheme,
+    'Light or dark, for every plugin of ours in this host.')
   window.addEventListener('kit-theme', () => button.say(label()))
   return button
 }
@@ -1235,7 +1395,8 @@ export const densitySwitch = () => {
     const now = currentDensity()
     return `Density: ${now}. Switch to ${nextDensity(now)}`
   }
-  const button = tool('density', currentDensity(), label(), switchDensity)
+  const button = tool('density', currentDensity(), label(), switchDensity,
+    'Smaller numbers leave more room for the picture.')
   window.addEventListener('kit-density', () => {
     button.querySelector('path').setAttribute('d', ICONS[currentDensity()])
     button.say(label())
@@ -1247,14 +1408,22 @@ export const densitySwitch = () => {
 // between two sets of settings to hear which is better.
 export const tools = (ui) => {
   const { session } = ui
-  const undo = tool('undo', 'undo', 'Undo (Ctrl+Z)', session.undo)
-  const redo = tool('redo', 'redo', 'Redo (Ctrl+Shift+Z)', session.redo)
+  const undo = tool('undo', 'undo', 'Undo (Ctrl+Z)', session.undo,
+    'Steps back through your own changes, one at a time.')
+  const redo = tool('redo', 'redo', 'Redo (Ctrl+Shift+Z)', session.redo,
+    'Steps forward again through what was undone.')
   const letters = ['A', 'B'].map((name) => h('span.kit-compare-slot', {}, name))
   const compare = h('button.kit-compare', {
     type: 'button',
-    title: 'Compare: keep these settings and flip to the other set',
     onclick: session.flip
   }, letters)
+  tipped(compare, (help) => ({
+    title: 'Compare A and B',
+    text: help
+      ? 'Keeps these settings and flips to the other set, to hear which ' +
+        'is better. B starts as a copy of A.'
+      : ''
+  }))
   const show = () => {
     undo.disabled = !session.canUndo
     redo.disabled = !session.canRedo
@@ -1268,7 +1437,8 @@ export const tools = (ui) => {
   session.on(show)
   show()
   const settings = tool('settings', 'settings', 'Settings', () =>
-    togglePanel('settings', settingsPanel(ui)))
+    togglePanel('settings', settingsPanel(ui)),
+  'Theme, density, how the meters move, and fine drag.')
   return [
     capsule(undo, redo),
     capsule(compare),
@@ -1297,17 +1467,15 @@ const HOW = 'Drag a number to change it. Shift for fine. Double-click it ' +
 export const foot = (ui, ...children) => {
   const what = h('b.kit-hint-what')
   const about = h('span.kit-hint-about', {}, HOW)
-  ui.hint = (title, text, row) => {
-    const help = document.documentElement.dataset.help === 'true'
+  const line = h('p.kit-hint', { 'aria-live': 'polite' }, what, about)
+  // Its box is two lines and stays two lines: a longer text is drawn
+  // smaller, so pointing at a control never moves anything.
+  ui.hint = (title, text) => {
     what.textContent = title ?? ''
-    // An about ends without a full stop; with more after it, it needs one.
-    const more = help ? helpFor(row) : ''
-    const stop = more && text && !/[.!?]$/.test(text) ? '.' : ''
-    about.textContent = title ? (text || '') + stop + more : HOW
+    about.textContent = title ? (text || '') : HOW
+    fitText(line)
   }
-  return h('footer.kit-foot', {},
-    children,
-    h('p.kit-hint', { 'aria-live': 'polite', title: ui.build }, what, about))
+  return h('footer.kit-foot', {}, children, line)
 }
 
 // Every level on the glass, every number on the sheet, every list in
@@ -1715,6 +1883,8 @@ const settingsPanel = (ui) => () => {
       (pick) => setPref('hold', pick)],
     ['Motion', 'Whether anything eases', PREFS.motion, prefs.motion,
       (pick) => setPref('motion', pick)],
+    ['Meter fall', 'How fast a bar comes down', PREFS.fall, prefs.fall,
+      (pick) => setPref('fall', pick)],
     ['Fine drag', 'Hold Shift, or always', PREFS.fine, prefs.fine,
       (pick) => setPref('fine', pick)]
   ]
@@ -1745,7 +1915,8 @@ const power = (ui) => {
   const handle = ui.p.bypass
   if (!handle) return null
   const button = tool('power', 'power', '', () =>
-    handle.set(handle.value > 0.5 ? 0 : 1))
+    handle.set(handle.value > 0.5 ? 0 : 1),
+  'The same bypass as your host\'s own button. It fades, so it does not click.')
   const show = () => {
     const on = handle.value <= 0.5
     button.setAttribute('aria-pressed', on)
@@ -1763,7 +1934,8 @@ const matcher = (ui) => {
   const handle = ui.p.match
   if (!handle) return null
   const button = tool('match', 'match', '', () =>
-    handle.set(handle.value > 0.5 ? 0 : 1))
+    handle.set(handle.value > 0.5 ? 0 : 1),
+  'So a change is heard as tone, not as louder. Output still works on top.')
   const show = () => {
     const on = handle.value > 0.5
     button.setAttribute('aria-pressed', on)
@@ -1773,7 +1945,7 @@ const matcher = (ui) => {
   }
   handle.on(show)
   show()
-  return hinted(button, ui, handle)
+  return hinted(button, ui, handle, false)
 }
 
 // Help: while it is on, names are underlined and the foot of the
@@ -1781,6 +1953,7 @@ const matcher = (ui) => {
 const helpSwitch = () => {
   const root = document.documentElement
   const button = tool('help', 'help', 'Help', () => {
+    hideTip()
     root.dataset.help = String(root.dataset.help !== 'true')
     show()
   })

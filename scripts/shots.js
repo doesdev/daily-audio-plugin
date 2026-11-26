@@ -169,6 +169,8 @@ export const STEPS = {
     await mouse(tab, 'mousePressed', point)
     await mouse(tab, 'mouseMoved', { x: point.x + dx, y: point.y })
   },
+  // Lets a moment pass: for what only shows after one.
+  wait: (tab, [ms]) => new Promise((resolve) => setTimeout(resolve, ms)),
   // A right-click: what opens a control's menu.
   menu: async (tab, [spec]) => {
     const point = await at(tab, spec)

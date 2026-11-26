@@ -198,6 +198,10 @@ is listed in `ASSETS` in `src/lib.rs`; the screenshots are taken from
 the page as the binary serves it, so a file left out shows up as a
 broken scene.
 
+A page must fill a window of any shape: the kit scales it and then
+lays it out as wide and as tall as the window is. Build a picture to
+draw at whatever size its canvas is given, not at the design's.
+
 ## 5. Scenes, pictures and the manual
 
 `docs/scenes.json` lists the states of the editor worth showing:
