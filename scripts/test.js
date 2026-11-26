@@ -2,7 +2,11 @@
 // checked and released.
 
 import test from 'mvt'
-import { mkdtempSync, readFileSync, rmSync, cpSync, existsSync } from 'node:fs'
+import {
+  mkdtempSync, mkdirSync, readFileSync, rmSync, cpSync, existsSync,
+  writeFileSync
+} from 'node:fs'
+import { spawnSync } from 'node:child_process'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { layout, userFolders } from './bundle.js'
@@ -16,7 +20,7 @@ import {
   pascal, pending, plugins, ships, snake, tagOf, versionOf
 } from './lib/plugins.js'
 import { classId, create, rewrite } from './new.js'
-import { notes, releaseArgs, zipName } from './release.js'
+import { notes, releaseArgs, zip, zipEntries, zipName } from './release.js'
 
 test('finds every em and en dash by line', (assert) => {
   const text = `fine - line\nan em${EM_DASH}dash\n\n2${EN_DASH}3 and ${EM_DASH}`
@@ -201,6 +205,40 @@ test('new makes the folder, and refuses a bad or taken name', (assert) => {
   }
 })
 
+test('a release zip names its files with no ./ before them', (assert) => {
+  // Windows' own zip handling shows an archive whose entries start
+  // with ./ as empty: the first Undertow release was one.
+  const root = mkdtempSync(join(tmpdir(), 'kit-zip-'))
+  try {
+    const stage = join(root, 'stage')
+    mkdirSync(join(stage, 'Thing.vst3', 'Contents'), { recursive: true })
+    mkdirSync(join(stage, 'demos'))
+    writeFileSync(join(stage, 'LICENSE.txt'), 'MIT')
+    writeFileSync(join(stage, 'Thing.vst3', 'Contents', 'Thing.vst3'), 'x')
+    writeFileSync(join(stage, 'demos', 'one.wav'), 'y')
+    // This platform's way, and Windows' way wherever bsdtar is found.
+    const bsdtar = process.platform === 'win32' ||
+      spawnSync('bsdtar', ['--version']).status === 0
+    const tar = process.platform === 'win32' ? 'tar' : 'bsdtar'
+    const ways = [{}, ...(bsdtar ? [{ platform: 'win32', tar }] : [])]
+    ways.forEach((way, i) => {
+      const file = join(root, `thing-${i}.zip`)
+      zip(stage, file, way)
+      const names = zipEntries(readFileSync(file))
+        .map((name) => name.replace(/\/$/, ''))
+      const as = way.platform ?? process.platform
+
+      assert.deepEqual(names.filter((n) => /^(\.\/|\/|\.$)/.test(n)), [],
+        `${as}: ${names.join(', ')}`)
+      for (const want of [
+        'LICENSE.txt', 'Thing.vst3/Contents/Thing.vst3', 'demos/one.wav'
+      ]) assert.true(names.includes(want), `${as}: no ${want}`)
+    })
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
 test('a bundle is laid out as hosts expect', (assert) => {
   const win = layout('Tape Bloom', 'win32').vst3.replace(/\\/g, '/')
   const linux = layout('Tape Bloom', 'linux').vst3.replace(/\\/g, '/')
@@ -221,6 +259,10 @@ test('release notes say what it is, what is new and how to install', (assert) =>
   assert.contains(made, '## What is new about it\n\nIt blooms.')
   assert.contains(made, 'Unzip `tape-bloom-0.1.0.zip`')
   assert.doesNotContain(notes('T', readme, null, 'z'), 'What is new')
+  // A paragraph wrapped over lines is said whole, not cut at the first.
+  const wrapped = '# T\n\nA delay that\nblooms.\n\nMore.'
+  assert.contains(notes('T', wrapped, null, 'z'),
+    '# T\n\nA delay that\nblooms.\n\n')
   assert.is(zipName('tape-bloom', '0.1.0', 'win32'),
     'tape-bloom-0.1.0-windows-x64.zip')
   const args = releaseArgs({
