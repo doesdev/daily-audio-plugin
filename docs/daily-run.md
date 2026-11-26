@@ -110,12 +110,16 @@ in every plugin that has it:
   value on the sheet, and runs `kit_dsp::MidSide` last, after the
   match and the trim.
 - **A valve.** A plugin that models one runs it through
-  `kit_dsp::Tube` and ships `kit::tube_bias`, `tube_grid`,
-  `tube_sag` and `tube_glow`. The foot then has the Tube button and
-  its window with no more written. Draw `tubeCurve` where the editor
-  shows the curve.
-- **A transformer.** The same with `kit_dsp::Transformer` and
-  `kit::iron_weight`, `iron_core`, `iron_grip` and `iron_roll`.
+  `kit_dsp::Tube` and ships all seven of its settings (`kit::tube_stage`
+  and the rest: `docs/kit.md` lists them). The foot then has the Tube
+  button and its window with no more written. Draw `tubeCurve` where
+  the editor shows the curve.
+- **A transformer.** The same with `kit_dsp::Transformer` and its
+  seven (`kit::iron_drive` and the rest).
+
+`docs/tone.md` is why the levers are what they are. A plugin does
+not add a lever or a character of its own to either window: a better
+one goes in the kit, with its reason there.
 
 And a **sidechain** wherever what the effect follows could as well be
 another track (a follower, a detector, anything that leans, ducks or

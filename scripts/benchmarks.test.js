@@ -136,7 +136,7 @@ test('mid and side, a valve and a transformer bring the kit\'s tools', (assert) 
     points,
     tools: { mix: true, match: true, ...tools }
   }, 'kit::mix(3), kit::level_match(8), ' + source)
-  const all = 'kit::listen(9), kit::tube_bias(10), kit::iron_weight(14),'
+  const all = 'kit::listen(9), kit::tube_bias(10), kit::iron_drive(14),'
   const no = 'It has none'
 
   assert.deepEqual(

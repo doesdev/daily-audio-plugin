@@ -89,7 +89,7 @@ export const TOOLS = {
   match: 'kit::level_match(',
   mid_side: 'kit::listen(',
   tube: 'kit::tube_bias(',
-  transformer: 'kit::iron_weight('
+  transformer: 'kit::iron_drive('
 }
 
 // A plugin says of each tool either `true`, and then its source has

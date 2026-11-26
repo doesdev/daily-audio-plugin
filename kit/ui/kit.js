@@ -2288,50 +2288,173 @@ export const listen = (handle, opts = {}) => {
 // ---- the tube and the transformer: a window each, the same in every
 // plugin that models one
 
+// How far below its rest each stage cuts off, as kit_dsp::tube has
+// them: Triode, Strapped, and a pentode, which has no such point.
+const CUTOFF = [2.5, 6, null]
+
 // The valve's curve as kit_dsp::tube_curve has it: the picture in the
 // window and the sound are one curve, and a test on each side holds
 // them to the same numbers.
-export const tubeCurve = (x, grid) => {
-  const soft = Math.tanh(x)
-  if (x <= 0 || grid <= 0) return soft
+export const tubeCurve = (x, grid, stage = 2) => {
+  const far = CUTOFF[stage]
+  const up = far ? Math.max(0, 1 + x / far) : 0
+  const p = far ? far / 1.5 * (up * Math.sqrt(up) - 1) : x
+  const soft = Math.tanh(p)
+  if (p <= 0 || grid <= 0) return soft
   const ceiling = 1 - grid / 3
-  return soft + (ceiling * Math.tanh(x / ceiling) - soft) * grid
+  return soft + (ceiling * Math.tanh(p / ceiling) - soft) * grid
 }
 
-// The core's curve, as kit_dsp::iron_curve has it.
-export const ironCurve = (x, weight) => {
-  if (weight <= 0) return x
-  const drive = 1 + weight * 3
-  return Math.tanh(x * drive) / drive
+// The core's curve, as kit_dsp::iron_curve has it: flux through a
+// core pushed by `push`, from nickel (0) to steel (1).
+export const ironCurve = (x, push, iron = 0) => {
+  if (push < 1e-4) return x
+  const u = x * push
+  const nickel = u / Math.pow(1 + u ** 4, 0.25)
+  return (nickel + (Math.tanh(u) - nickel) * iron) / push
 }
 
-// What each window is: its settings by key, and its curve from them.
+// A stage that feeds `back` of itself round `curve`, with what goes
+// in made up so a small sound keeps its level: where the two agree,
+// found by halving, since more out always means less in.
+const fedBack = (curve, back) => (x) => {
+  if (back <= 0) return curve(x)
+  const miss = (y) => curve(x * (1 + back) - back * y) - y
+  const step = ([lo, hi]) => {
+    const mid = (lo + hi) / 2
+    return miss(mid) > 0 ? [mid, hi] : [lo, mid]
+  }
+  const [lo, hi] = Array.from({ length: 30 }).reduce(step, [-3, 3])
+  return (lo + hi) / 2
+}
+
+// What each window is: its settings by key, its curve from them, and
+// its characters: settings of the levers that stand for a kind of
+// part. docs/tone.md says what each is after and how well founded.
 export const TONES = {
   tube: {
     name: 'Tube',
     note: 'The valve itself',
     prefix: 'tube_',
+    order: ['bias', 'grid', 'bloom', 'feedback', 'sag', 'glow'],
     reach: 3,
-    curve: (p) => (x) =>
-      tubeCurve(x + p.tube_bias / 100, p.tube_grid / 100) -
-      tubeCurve(p.tube_bias / 100, p.tube_grid / 100)
+    curve: (p) => {
+      const [bias, grid] = [p.tube_bias / 100, p.tube_grid / 100]
+      const stage = p.tube_stage ?? 2
+      const rest = tubeCurve(bias, grid, stage)
+      return fedBack(
+        (x) => tubeCurve(x + bias, grid, stage) - rest,
+        (p.tube_feedback ?? 0) / 100 * 3)
+    },
+    characters: [
+      {
+        name: 'EF86 pentode, open',
+        values: {
+          tube_stage: 'Pentode', tube_bias: 10, tube_grid: 20,
+          tube_bloom: 25, tube_feedback: 20, tube_sag: 15, tube_glow: 25
+        }
+      },
+      {
+        name: 'EF86 pentode, tight',
+        values: {
+          tube_stage: 'Pentode', tube_grid: 15, tube_bloom: 10,
+          tube_feedback: 35, tube_sag: 5, tube_glow: 10
+        }
+      },
+      {
+        name: 'EF86 strapped',
+        values: {
+          tube_stage: 'Strapped', tube_grid: 5, tube_bloom: 15,
+          tube_feedback: 50
+        }
+      },
+      {
+        name: '12AX7 stage',
+        values: {
+          tube_stage: 'Triode', tube_bias: 15, tube_grid: 50,
+          tube_bloom: 45, tube_sag: 10, tube_glow: 10
+        }
+      },
+      {
+        name: 'Starved plate',
+        values: {
+          tube_stage: 'Triode', tube_bias: -60, tube_grid: 70,
+          tube_bloom: 60, tube_sag: 40
+        }
+      },
+      {
+        name: 'Push-pull pair',
+        values: {
+          tube_stage: 'Pentode', tube_grid: 30, tube_bloom: 30,
+          tube_feedback: 20, tube_sag: 60
+        }
+      }
+    ]
   },
   transformer: {
     name: 'Transformer',
-    note: 'The iron, and what it does to the low end',
+    note: 'The iron',
     prefix: 'iron_',
+    order: ['drive', 'size', 'material', 'source', 'grip', 'top', 'ring'],
     reach: 1.2,
     curve: (p) => (x) => {
-      const lean = (p.iron_grip ?? 0) / 100 * 0.35
-      const weight = (p.iron_weight ?? 0) / 100
-      return ironCurve(x + lean, weight) - ironCurve(lean, weight)
-    }
+      const push = (p.iron_drive ?? 0) / 100 * 4
+      const lean = (p.iron_grip ?? 0) / 100 * 0.35 / Math.max(1, push)
+      const iron = (p.iron_material ?? 0) / 100
+      return ironCurve(x + lean, push, iron) - ironCurve(lean, push, iron)
+    },
+    characters: [
+      {
+        name: 'Mic output, T14 kind',
+        values: {
+          iron_drive: 25, iron_size: 60, iron_material: 15,
+          iron_source: 80, iron_top: 35, iron_ring: 10
+        }
+      },
+      {
+        name: 'Ouncer, O-12 kind',
+        values: {
+          iron_drive: 50, iron_size: 120, iron_material: 25,
+          iron_source: 30, iron_top: 20, iron_ring: 30
+        }
+      },
+      {
+        name: 'Gapped output, LO1166 kind',
+        values: {
+          iron_drive: 25, iron_size: 30, iron_material: 80,
+          iron_source: 5, iron_grip: 60, iron_top: 10, iron_ring: 20
+        }
+      },
+      {
+        name: 'Clean nickel input',
+        values: {
+          iron_drive: 10, iron_size: 20, iron_source: 10, iron_top: 5,
+          iron_ring: 0
+        }
+      },
+      {
+        name: 'Big steel output',
+        values: {
+          iron_drive: 25, iron_size: 25, iron_material: 100,
+          iron_top: 15, iron_ring: 40
+        }
+      }
+    ]
   }
 }
 
-// The handles of a window's settings, in the spec's order.
-const toneHandles = (ui, kind) => Object.values(ui.p)
-  .filter((handle) => handle.row.key.startsWith(TONES[kind].prefix))
+// The handles of a window's settings, in the window's own order
+// whatever order the plugin lists them in.
+const toneHandles = (ui, kind) => {
+  const { prefix, order } = TONES[kind]
+  const place = (handle) => {
+    const at = order.indexOf(handle.row.key.slice(prefix.length))
+    return at < 0 ? order.length : at
+  }
+  return Object.values(ui.p)
+    .filter((handle) => handle.row.key.startsWith(prefix))
+    .sort((a, b) => place(a) - place(b))
+}
 
 // The curve, drawn on the sheet in the sheet's own ink: what goes in
 // across, what comes out up, a straight dashed line for a sound left
@@ -2392,26 +2515,63 @@ const tonePicture = (ui, kind, handles) => {
   return el
 }
 
-// A window's contents: its curve, its settings, and the way back to
-// where they rest.
+// A window's contents: its characters, its curve, its settings, and
+// the way back to where they rest.
 const toneWindow = (ui, kind) => () => {
   const tone = TONES[kind]
   const handles = toneHandles(ui, kind)
-  const reset = () => {
-    const to = [...ui.store.get().values]
-    handles.forEach((handle) => { to[handle.index] = handle.row.default })
-    ui.session.apply(to)
+  // The window's settings as a character has them: what it does not
+  // name is at its rest. Everything outside the window stays put.
+  const as = (values) => {
+    const state = ui.store.get()
+    const all = presetValues(state.params, values)
+    return handles.reduce((to, handle) => {
+      to[handle.index] = all[handle.index]
+      return to
+    }, [...state.values])
   }
+  const matches = (values) => {
+    const want = as(values)
+    return handles.every((handle) =>
+      Math.abs(want[handle.index] - handle.value) < 1e-6)
+  }
+  const named = () => tone.characters.find(({ values }) => matches(values))
+  const lists = handles.filter((handle) => handle.row.kind === 'list')
+  const ranges = handles.filter((handle) => handle.row.kind !== 'list')
+
+  const character = h('button.kit-option.kit-character', {
+    type: 'button',
+    'aria-haspopup': 'menu',
+    onclick: () => {
+      const box = character.getBoundingClientRect()
+      const now = named()
+      popup(tone.characters.map(({ name, values }) => [
+        name, name === now?.name ? 'chosen' : 'blank', '',
+        () => ui.session.apply(as(values))
+      ]), [box.left, box.bottom + 6])
+    }
+  })
+  const show = () => { character.textContent = named()?.name ?? 'Character' }
+  handles.forEach((handle) => handle.on(show))
+  show()
+
   return [
     h('div.kit-panel-bar', {},
       h('b.kit-panel-title', {}, tone.name),
-      h('span.kit-about', {}, tone.note),
+      lists.map((handle) => choice(handle, { ui })),
+      tipped(character, (help) => ({
+        title: 'Character',
+        text: help
+          ? 'Settings of this window that stand for a kind of part. ' +
+            'A start to refine from, not a copy.'
+          : ''
+      })),
       h('span.kit-space'),
-      pill('At rest', false, reset, '.kit-rest'),
+      pill('At rest', false, () => ui.session.apply(as({})), '.kit-rest'),
       pill('Done', false, closePanel, '.kit-done')),
-    h('div.kit-tone', {},
+    h('div.kit-tone', { style: `--count: ${ranges.length}` },
       tonePicture(ui, kind, handles),
-      h('div.kit-values', {}, handles.map((handle) => value(handle, {
+      h('div.kit-values', {}, ranges.map((handle) => value(handle, {
         ui, bipolar: handle.row.lo < 0
       }))))
   ]

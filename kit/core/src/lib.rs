@@ -14,9 +14,9 @@ pub mod state;
 
 pub use learn::{LEARNABLE, Learn};
 pub use param::{
-    BYPASS, Kind, MATCH, MIX, Param, balance, bypass, iron_core, iron_grip, iron_roll, iron_weight,
-    key, level_match, list, listen, meter, mix, range, toggle, tube_bias, tube_glow, tube_grid,
-    tube_sag,
+    BYPASS, Kind, MATCH, MIX, Param, balance, bypass, iron_drive, iron_grip, iron_material,
+    iron_ring, iron_size, iron_source, iron_top, key, level_match, list, listen, meter, mix, range,
+    toggle, tube_bias, tube_bloom, tube_feedback, tube_glow, tube_grid, tube_sag, tube_stage,
 };
 pub use plugin::{Asset, Info, Plugin, Role, Spec};
 pub use runner::{Block, EVENTS, Event, Runner, Transport, source};

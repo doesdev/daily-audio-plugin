@@ -188,7 +188,20 @@ pub const fn key(id: u32) -> Param {
 }
 
 /// The valve's own settings, for any effect that models one: they
-/// live in the tube window, and `kit_dsp::Tube` is the valve.
+/// live in the tube window, and `kit_dsp::Tube` is the valve. Each
+/// rests where the valve is a plain curve.
+pub const fn tube_stage(id: u32) -> Param {
+    list(
+        id,
+        "tube_stage",
+        "Stage",
+        "Tube",
+        &["Triode", "Strapped", "Pentode"],
+        2,
+    )
+    .about("How the valve is wired: a triode adds even harmonics, a pentode odd, strapped between")
+}
+
 pub const fn tube_bias(id: u32) -> Param {
     range(id, "tube_bias", "Bias", "Tube", (-100.0, 100.0, 0.0), "%")
         .decimals(0)
@@ -200,9 +213,19 @@ pub const fn tube_grid(id: u32) -> Param {
         .about("How suddenly the top half of a wave gives out, as a grid starts to conduct")
 }
 
+pub const fn tube_bloom(id: u32) -> Param {
+    share(id, "tube_bloom", "Bloom", "Tube")
+        .about("How far a loud sound pushes the valve off its rest, and how slowly it comes back")
+}
+
+pub const fn tube_feedback(id: u32) -> Param {
+    share(id, "tube_feedback", "Feedback", "Tube")
+        .about("How much the stage holds itself straight: cleaner, then a harder knee")
+}
+
 pub const fn tube_sag(id: u32) -> Param {
     share(id, "tube_sag", "Sag", "Tube")
-        .about("How far a held loud sound eases back as the supply droops, and blooms after")
+        .about("How far a held loud sound eases back as the supply droops")
 }
 
 pub const fn tube_glow(id: u32) -> Param {
@@ -212,34 +235,60 @@ pub const fn tube_glow(id: u32) -> Param {
 
 /// The transformer's own settings, for any effect that models one:
 /// they live in the transformer window, and `kit_dsp::Transformer` is
-/// the iron.
-pub const fn iron_weight(id: u32) -> Param {
-    share(id, "iron_weight", "Weight", "Transformer")
-        .about("How hard the low end is driven into the core: the lows thicken, the highs pass")
+/// the iron. Each rests where the transformer does nothing.
+pub const fn iron_drive(id: u32) -> Param {
+    share(id, "iron_drive", "Drive", "Transformer").about(
+        "How hard the sound is pushed into the core: the lower the note, the sooner it fills",
+    )
 }
 
-pub const fn iron_core(id: u32) -> Param {
+pub const fn iron_size(id: u32) -> Param {
     range(
         id,
-        "iron_core",
-        "Core",
+        "iron_size",
+        "Size",
         "Transformer",
-        (20.0, 1000.0, 120.0),
+        (20.0, 1000.0, 60.0),
         "Hz",
     )
     .skew(2.5)
     .decimals(0)
-    .about("Below what frequency the core is working")
+    .about("How much iron: the note at which a full level fills the core. Lower is bigger")
+}
+
+pub const fn iron_material(id: u32) -> Param {
+    share(id, "iron_material", "Iron", "Transformer").about(
+        "From nickel, clean until a sudden knee, to steel, which lags and is heard when quiet",
+    )
+}
+
+pub const fn iron_source(id: u32) -> Param {
+    share(id, "iron_source", "Source", "Transformer").about(
+        "How much what feeds it resists: more of the core is heard, and less bass until loud",
+    )
 }
 
 pub const fn iron_grip(id: u32) -> Param {
     share(id, "iron_grip", "Grip", "Transformer")
-        .about("How much the core stays magnetised one way: even harmonics in the lows")
+        .about("A standing current in a gapped core: even harmonics, and some bass given up")
 }
 
-pub const fn iron_roll(id: u32) -> Param {
-    share(id, "iron_roll", "Roll", "Transformer")
-        .about("How much of the top end the windings give away")
+pub const fn iron_top(id: u32) -> Param {
+    share(id, "iron_top", "Top", "Transformer")
+        .about("How far down into hearing the windings' resonance comes")
+}
+
+pub const fn iron_ring(id: u32) -> Param {
+    range(
+        id,
+        "iron_ring",
+        "Ring",
+        "Transformer",
+        (0.0, 100.0, 20.0),
+        "%",
+    )
+    .decimals(0)
+    .about("How little the load damps that resonance: a smooth roll, or a peak with an edge")
 }
 
 /// A level meter.

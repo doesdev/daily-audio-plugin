@@ -122,14 +122,23 @@
       "input": 0.8,
       "level": 0.79,
       "lean": 0.42,
-      "swing": 0.2,
-      "tube_grid": 80,
-      "tube_bias": 20
+      "swing": 0.2
     },
     "steps": [
       [
         "click",
         ".kit-open-tube"
+      ],
+      [
+        "click",
+        ".kit-character"
+      ],
+      [
+        "click",
+        {
+          "sel": ".kit-pop button",
+          "text": "12AX7 stage"
+        }
       ],
       [
         "away"

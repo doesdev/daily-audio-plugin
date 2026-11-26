@@ -84,7 +84,7 @@ export const PARAMS = [
     'Toward the middle or the sides: the other is turned down'),
   list(19, 'listen', 'Listen', ['Both', 'Mid', 'Side'],
     'Hear both, the middle alone, or the sides alone'),
-  range(20, 'tube_bias', 'Bias', [-100, 100, 0], '%',
+range(20, 'tube_bias', 'Bias', [-100, 100, 0], '%',
     'Where on its curve the valve rests'),
   range(21, 'tube_grid', 'Grid', [0, 100, 0], '%',
     'How suddenly the top half gives out'),
@@ -92,14 +92,26 @@ export const PARAMS = [
     'How far a held loud sound eases back'),
   range(23, 'tube_glow', 'Glow', [0, 100, 0], '%',
     'How high the harmonics it adds sit'),
-  range(24, 'iron_weight', 'Weight', [0, 100, 0], '%',
-    'How hard the low end is driven into the core'),
-  range(25, 'iron_core', 'Core', [20, 1000, 120], 'Hz',
-    'Below what frequency the core is working'),
-  range(26, 'iron_grip', 'Grip', [0, 100, 0], '%',
-    'How much the core stays magnetised one way'),
-  range(27, 'iron_roll', 'Roll', [0, 100, 0], '%',
-    'How much of the top end the windings give away')
+  { ...list(29, 'tube_stage', 'Stage', ['Triode', 'Strapped', 'Pentode'],
+    'How the valve is wired'), default: 1 },
+  range(30, 'tube_bloom', 'Bloom', [0, 100, 0], '%',
+    'How far a loud sound pushes the valve off its rest'),
+  range(31, 'tube_feedback', 'Feedback', [0, 100, 0], '%',
+    'How much the stage holds itself straight'),
+  range(24, 'iron_drive', 'Drive', [0, 100, 0], '%',
+    'How hard the sound is pushed into the core'),
+  range(25, 'iron_size', 'Size', [20, 1000, 60], 'Hz',
+    'The note at which a full level fills the core'),
+  range(26, 'iron_material', 'Iron', [0, 100, 0], '%',
+    'From nickel to steel'),
+  range(32, 'iron_source', 'Source', [0, 100, 0], '%',
+    'How much what feeds it resists'),
+  range(27, 'iron_grip', 'Grip', [0, 100, 0], '%',
+    'A standing current in a gapped core'),
+  range(33, 'iron_top', 'Top', [0, 100, 0], '%',
+    'How far down the windings\' resonance comes'),
+  range(34, 'iron_ring', 'Ring', [0, 100, 20], '%',
+    'How little the load damps that resonance')
 ]
 
 const text = (row, norm) => row.kind === 'list'
@@ -168,10 +180,8 @@ export const SCENES = [
     page: 'tone',
     steps: [
       ['click', '.kit-open-tube'],
-      ['dblclick', '[data-key="tube_grid"] .kit-value'],
-      ['type', '80', 'Enter'],
-      ['dblclick', '[data-key="tube_bias"] .kit-value'],
-      ['type', '35', 'Enter'],
+      ['click', '.kit-character'],
+      ['click', { sel: '.kit-pop button', text: '12AX7 stage' }],
       ['away']
     ]
   },
@@ -180,8 +190,8 @@ export const SCENES = [
     page: 'tone',
     steps: [
       ['click', '.kit-open-transformer'],
-      ['dblclick', '[data-key="iron_weight"] .kit-value'],
-      ['type', '70', 'Enter'],
+      ['click', '.kit-character'],
+      ['click', { sel: '.kit-pop button', text: 'Gapped output, LO1166 kind' }],
       ['away']
     ]
   },

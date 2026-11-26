@@ -677,13 +677,22 @@ test('the windows draw the curves the sound is made with', (assert) => {
     [0.5, 0, 0.462117], [0.5, 1, 0.423433], [2, 0.5, 0.891878],
     [-2, 1, -0.964028], [3, 1, 0.666502]
   ]
-  const iron = [[0.5, 1, 0.241007], [0.1, 0.5, 0.097967], [-1, 1, -0.249832]]
+  const staged = [
+    [0.5, 0, 0, 0.480953], [-1, 0, 0, -0.712415], [-3, 0, 0, -0.931110],
+    [1, 1, 0, 0.618432], [0.5, 0, 1, 0.470160], [-2, 0.5, 1, -0.949105]
+  ]
+  const iron = [
+    [0.5, 4, 0, 0.246240], [0.5, 4, 1, 0.241007], [0.2, 2, 0.5, 0.194357],
+    [-1, 4, 1, -0.249832], [0.3, 0, 1, 0.3]
+  ]
   const close = (got, want) => Math.abs(got - want) < 1e-5
 
   tube.forEach(([x, grid, want]) =>
     assert.true(close(tubeCurve(x, grid), want), `tube ${x} ${grid}`))
-  iron.forEach(([x, weight, want]) =>
-    assert.true(close(ironCurve(x, weight), want), `iron ${x} ${weight}`))
+  staged.forEach(([x, grid, stage, want]) => assert.true(
+    close(tubeCurve(x, grid, stage), want), `tube ${x} ${grid} ${stage}`))
+  iron.forEach(([x, push, steel, want]) => assert.true(
+    close(ironCurve(x, push, steel), want), `iron ${x} ${push} ${steel}`))
   // At rest a valve is tanh and a transformer is a wire.
   assert.is(tubeCurve(0.7, 0), Math.tanh(0.7))
   assert.is(ironCurve(0.7, 0), 0.7)
@@ -704,7 +713,11 @@ test('a valve and a transformer each have a window, the same everywhere', async 
   const frame = 'new Promise((r) => requestAnimationFrame(() => r(true)))'
   await onGallery('tone', [['click', '.kit-open-tube']], async (tab) => {
     assert.is(await text(tab, '.kit-panel-title'), 'Tube')
-    assert.deepEqual(await tab.evaluate(titles), ['Bias', 'Grid', 'Sag', 'Glow'])
+    assert.deepEqual(await tab.evaluate(titles),
+      ['Bias', 'Grid', 'Bloom', 'Feedback', 'Sag', 'Glow'])
+    // How it is wired is a choice in the window's bar, not a number.
+    assert.is(await text(tab,
+      `.kit-panel-bar ${key('tube_stage')} [aria-pressed="true"]`), 'Pentode')
     assert.is(await tab.evaluate(moved('tube')), 'false')
     await tab.evaluate(frame)
     const before = await tab.evaluate(inked)
@@ -730,7 +743,8 @@ test('a valve and a transformer each have a window, the same everywhere', async 
 
     await click(tab, '.kit-open-transformer')
     assert.is(await text(tab, '.kit-panel-title'), 'Transformer')
-    assert.deepEqual(await tab.evaluate(titles), ['Weight', 'Core', 'Grip', 'Roll'])
+    assert.deepEqual(await tab.evaluate(titles),
+      ['Drive', 'Size', 'Iron', 'Source', 'Grip', 'Top', 'Ring'])
     assert.deepEqual(await tab.evaluate(spills), [])
   })
 })
@@ -786,5 +800,55 @@ test('the foot\'s first words fit their two lines before anything is pointed at'
       return [el.scrollHeight, el.clientHeight]
     })()`)
     assert.true(full <= box + 1, `${full} in ${box}`)
+  })
+})
+
+test('a character sets the whole window in one step, and is named while it holds', async (assert) => {
+  const said = (tab) => text(tab, '.kit-character')
+  const pick = async (tab, name) => {
+    await click(tab, '.kit-character')
+    await click(tab, { sel: '.kit-pop button', text: name })
+  }
+  await onGallery('tone', [['click', '.kit-open-tube']], async (tab) => {
+    assert.is(await said(tab), 'Character')
+    await pick(tab, 'Starved plate')
+
+    assert.is(await said(tab), 'Starved plate')
+    assert.is(await text(tab, `${key('tube_bias')} .kit-value`), '-60 %')
+    assert.is(await text(tab,
+      `${key('tube_stage')} [aria-pressed="true"]`), 'Triode')
+    // What a character does not name goes to its rest.
+    assert.is(await text(tab, `${key('tube_glow')} .kit-value`), '0 %')
+    // Nothing outside the window moves.
+    await click(tab, '.kit-done')
+    assert.is(await text(tab, `${key('drive')} .kit-value`), '12.0 dB')
+    await click(tab, '.kit-open-tube')
+
+    // Refined from there it is no longer that character.
+    await STEPS.dblclick(tab, [`${key('tube_sag')} .kit-value`])
+    await STEPS.type(tab, ['10', 'Enter'])
+    assert.is(await said(tab), 'Character')
+    // And one undo is the whole character.
+    await click(tab, '.kit-undo')
+    assert.is(await said(tab), 'Starved plate')
+    await click(tab, '.kit-undo')
+    assert.is(await text(tab, `${key('tube_bias')} .kit-value`), '0 %')
+    assert.deepEqual(await tab.evaluate(spills), [])
+  })
+})
+
+test('the transformer window names the kinds of iron it stands for', async (assert) => {
+  await onGallery('tone', [['click', '.kit-open-transformer']], async (tab) => {
+    await click(tab, '.kit-character')
+    const names = await tab.evaluate(
+      '[...document.querySelectorAll(".kit-pop button")].map((b) => b.textContent)')
+    assert.deepEqual(names, [
+      'Mic output, T14 kind', 'Ouncer, O-12 kind',
+      'Gapped output, LO1166 kind', 'Clean nickel input', 'Big steel output'
+    ])
+    await click(tab, { sel: '.kit-pop button', text: 'Gapped output, LO1166 kind' })
+    assert.is(await text(tab, `${key('iron_grip')} .kit-value`), '60 %')
+    assert.is(await text(tab, `${key('iron_size')} .kit-value`), '30 Hz')
+    assert.deepEqual(await tab.evaluate(spills), [])
   })
 })

@@ -17,7 +17,9 @@ const SPAN = REACH + 0.4
 
 // The settings that move what is drawn: holding one turns the riding
 // stretch purple.
-const DRAWN = ['push', 'follow', 'drive', 'steer', 'tube_bias', 'tube_grid']
+const DRAWN = [
+  'push', 'follow', 'drive', 'steer', 'tube_bias', 'tube_grid', 'tube_stage'
+]
 
 // From the sound itself, the resting point the bias would give at
 // each of the latest samples: the leaning half's low end, by Push.
@@ -43,7 +45,7 @@ const draw = (ui) => (pen) => {
   // far its Bias has moved where the carried half rests on it.
   const grid = ui.p.tube_grid.plain / 100
   const rest = ui.p.tube_bias.plain / 100
-  const curve = (x) => tubeCurve(x, grid)
+  const curve = (x) => tubeCurve(x, grid, ui.p.tube_stage.plain)
   const along = (from, to, n = 120) => Array.from({ length: n + 1 },
     (_, i) => from + (to - from) * i / n)
   const path = (xs) => {
@@ -139,7 +141,9 @@ const PRESETS = [
 ]
 
 const NOTES = ['The middle leans on the sides', 'The sides lean on the middle']
-const KEYED = ['The sidechain leans on the sides', 'The sidechain leans on the middle']
+const KEYED = [
+  'The sidechain leans on the sides', 'The sidechain leans on the middle'
+]
 
 // The note under the name says which half is leaning.
 const leaning = (ui) => {

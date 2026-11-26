@@ -166,15 +166,19 @@ and the picture can tell when it is held.
   the last thing. On the page, `listen(ui.p.listen, { ui })` is the
   pills, and `column(...)` stacks them over the `readouts`.
 - `kit_dsp::Tube` is the one valve and `kit_dsp::Transformer` the
-  one transformer. Give the plugin `kit::tube_bias`, `tube_grid`,
-  `tube_sag`, `tube_glow` (or `kit::iron_weight`, `iron_core`,
-  `iron_grip`, `iron_roll`), set the shape from them each block, and
-  `foot` adds the button and the window; `auto()` keeps those
-  settings off the sheet. `tubeCurve` and `ironCurve` in `kit.js`
-  are the same curves as `tube_curve` and `iron_curve`, held
-  together by a test on each side with the same numbers: change one
-  and change the other. A plugin that has any of the three says so in
-  `benchmark.json`, as with Mix.
+  one transformer; `docs/tone.md` says what each lever stands for.
+  Give the plugin `kit::tube_stage`, `tube_bias`, `tube_grid`,
+  `tube_bloom`, `tube_feedback`, `tube_sag` and `tube_glow` (or
+  `kit::iron_drive`, `iron_size`, `iron_material`, `iron_source`,
+  `iron_grip`, `iron_top` and `iron_ring`), set the shape from them
+  each block, and `foot` adds the button and the window, with its
+  characters; `auto()` keeps those settings off the sheet. A plugin
+  that moves the valve's resting point itself passes that to
+  `Tube::next` as `swing`: the window's Bias adds to it. `tubeCurve`
+  and `ironCurve` in `kit.js` are the same curves as `tube_curve` and
+  `iron_curve`, held together by a test on each side with the same
+  numbers: change one and change the other. A plugin that has any of
+  the three says so in `benchmark.json`, as with Mix.
 - A sidechain: `const KEY_IN: u32 = 2;` on the plugin gives it a
   second input in both formats, which the host routes another track
   to. `block.key(ch)` reads it (silence if nothing is routed; `None`
