@@ -507,29 +507,45 @@
       ],
       "leaders": [
         {
-          "who": "AudioThing Valve Exciter",
-          "does": "A Bias control that emulates the bias of a valve amplifier, and a switch between triode and pentode",
-          "source": "https://www.musicradar.com/reviews/tech/audiothing-valve-exciter-613131"
+          "who": "Thermionic Culture Vulture",
+          "does": "A switch between triode and three pentode modes, and a Bias control with a meter: the manual puts the cleanest setting at 0.25 mA, with less current thin and more of it fat",
+          "source": "https://www.thermionicculture.com/images/stories/virtuemart/product/CultureVultureValveDistortionUnitManual9.pdf"
         },
         {
           "who": "Kazrog True Iron",
-          "does": "Six modelled line transformers to choose from, Strength for how nonlinear the transformer is, Crush for drive into it, Morph for even harmonics, and a wet/dry Mix",
-          "source": "https://kazrog.com/products/true-iron"
+          "does": "Six modelled line transformers to choose from, Strength for how nonlinear the transformer is (5.0 is the hardware), Crush for drive, Morph for even harmonics, a switch for input impedance, and a Mix",
+          "source": "https://www.barryrudolph.com/recall/manuals/kazrog_true_iron.pdf"
+        },
+        {
+          "who": "Rupert Neve Designs Silk and Texture",
+          "does": "Reduces the feedback round the output transformer, weighted to the highs (Red) or the lows (Blue), continuously variable",
+          "source": "https://www.soundonsound.com/reviews/rupert-neve-designs-500-series"
         }
       ],
-      "ours": "A window each, the same in every plugin that models one, opened from the foot of the sheet: Tube has Bias, Grid, Sag and Glow (kit_dsp::Tube), Transformer has Weight, Core, Grip and Roll (kit_dsp::Transformer). Each draws the curve its sound is made with, from the same numbers on both sides, and the curve moves as a setting does. At rest a valve is the plain curve and a transformer passes the sound exactly, so a plugin that gains a window sounds as it did. The way in shows a dot when anything inside is off its rest, and At rest puts the window back as one step to undo. The settings are ordinary ones: automated, learned, saved and in presets. Under True Iron in one respect: one transformer shaped by four settings, not six measured ones to choose from.",
+      "ours": "A window each, the same in every plugin that models one, opened from the foot of the sheet, with a lever for each cause that makes one part sound unlike another (docs/tone.md). Tube: Stage (triode, strapped, pentode), Bias, Grid, Bloom, Feedback, Sag and Glow. Transformer: Drive, Size, Iron (nickel to steel), Source, Grip, Top and Ring, on a core that works on flux, so what it adds rises as the note falls. Each window draws the curve its sound is made with, from the same numbers on both sides, and has characters: named settings of the levers for kinds of part (an EF86 as a pentode or strapped, a 12AX7 stage; the T14, O-12 and LO1166 kinds of transformer), applied in one step and named while they hold. At rest a valve is the plain curve and a transformer passes the sound exactly. Past the leaders in one respect: the source's resistance is a lever, which is what most decides how the same iron sounds. Under them in two: the characters are settings of one model, not measurements of the parts, and nothing is oversampled.",
       "verdict": "meets",
       "proof": [
         "at_rest_it_is_tanh_and_nothing_else",
         "at_rest_it_passes_the_sound_exactly",
         "the_curve_is_as_the_page_draws_it",
+        "the_stages_curves_are_as_the_page_draws_them",
+        "a_triode_adds_the_second_harmonic_at_rest_and_a_pentode_the_third",
+        "a_triodes_top_is_a_little_darker_and_a_pentodes_is_not",
+        "feedback_keeps_a_small_sound_and_cleans_a_larger_one",
+        "bloom_pushes_the_rest_down_after_a_loud_sound_and_lets_it_back",
         "bias_and_grid_add_the_even_harmonics_a_centred_curve_lacks",
         "sag_eases_a_held_loud_sound_back_and_leaves_a_quiet_one",
         "glow_puts_more_of_what_the_curve_adds_up_high",
-        "the_lows_saturate_and_the_highs_pass_clean",
-        "grip_makes_even_harmonics_and_roll_takes_the_top",
+        "what_it_adds_rises_as_the_frequency_falls",
+        "a_smaller_core_fills_higher_up",
+        "nickel_is_clean_until_its_knee_and_steel_is_heard_on_a_quiet_sound",
+        "a_source_that_resists_shows_more_of_the_bend_and_less_of_the_bass",
+        "grip_adds_even_harmonics_and_takes_some_of_the_bass",
+        "the_top_rolls_smoothly_damped_and_peaks_when_it_rings",
         "the windows draw the curves the sound is made with",
         "a valve and a transformer each have a window, the same everywhere",
+        "a character sets the whole window in one step, and is named while it holds",
+        "the transformer window names the kinds of iron it stands for",
         "mid and side, a valve and a transformer bring the kit's tools"
       ]
     },

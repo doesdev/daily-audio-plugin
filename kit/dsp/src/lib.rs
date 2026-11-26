@@ -21,8 +21,8 @@ pub use level_match::Match;
 pub use mid_side::{BOTH, MID, MidSide, SIDE, mid_side_gains};
 pub use smooth::Smooth;
 pub use svf::{Svf, SvfOut};
-pub use transformer::{IronShape, Transformer, iron_curve};
-pub use tube::{Tube, TubeShape, tube_curve};
+pub use transformer::{IronShape, PUSH, Transformer, iron_curve};
+pub use tube::{PENTODE, STRAPPED, TRIODE, Tube, TubeShape, tube_curve};
 
 /// A number so small it is silence, added and taken away again so a
 /// decaying filter never slows to a crawl on denormals.

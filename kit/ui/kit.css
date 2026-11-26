@@ -1174,7 +1174,7 @@ button { cursor: pointer; }
 .kit-tone-curve {
   position: relative;
   flex: none;
-  width: 150px;
+  width: 124px;
   height: 110px;
 }
 
@@ -1185,10 +1185,29 @@ button { cursor: pointer; }
   height: 100%;
 }
 
-/* Four settings, whatever the plugin's own sheet is laid out as. */
+/* As many columns as the window has settings, whatever the plugin's
+   own sheet is laid out as, and their numbers a size down so six or
+   seven sit in one row. */
+.kit-tone {
+  --num: 26px;
+}
+
 .kit-tone .kit-values {
   flex: 1 1 0;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--count, 4), minmax(0, 1fr));
+  column-gap: 14px;
+}
+
+.kit-tone .kit-unit { font-size: 11px; }
+
+/* The window's own choices sit in its bar, small. */
+.kit-panel-bar .kit-choice { margin: 0 4px 0 8px; }
+
+.kit-panel-bar .kit-options .kit-option {
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 14px;
+  font-size: 12px;
 }
 
 /* A dot, as on a preset: something in the window is not at rest. */
