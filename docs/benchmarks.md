@@ -44,6 +44,8 @@ undo a mistake. For each:
   test that does not exist;
 - a benchmark is `under` without its gap and what is next;
 - a benchmark names no leader, or a leader without what they do;
+- a plugin does not ship a Mix and level matching and does not say,
+  under `tools`, why one makes no sense for it;
 - a plugin has no `benchmark.json`, has one copied from another
   plugin, names fewer than two leaders, or is silent on any of the
   seven points.

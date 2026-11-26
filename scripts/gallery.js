@@ -71,7 +71,9 @@ export const PARAMS = [
   list(15, 'mode', 'Mode', [
     'Ionian', 'Dorian', 'Phrygian', 'Lydian', 'Mixolydian', 'Aeolian'
   ], 'The scale notes are held to'),
-  list(16, 'freeze', 'Freeze', ['Off', 'On'], 'Holds what is sounding')
+  list(16, 'freeze', 'Freeze', ['Off', 'On'], 'Holds what is sounding'),
+  list(17, 'match', 'Match', ['Off', 'On'],
+    'Holds the level going out to the level coming in')
 ]
 
 const text = (row, norm) => row.kind === 'list'

@@ -64,6 +64,11 @@ that could use one and does not should say why.
   voice whose mid and side, bands, or hit and body are made or shaped
   apart.
 
+Two tools they expect on anything they make sense for, which the kit
+now gives every plugin: a **Mix** of the effect against the sound that
+came in, and **level matching**, which holds what goes out as loud as
+what came in.
+
 These combine. A split is a place to put a tone; a tone is a reason
 for a split. The kit's paired controls (linked, mirrored, opposed, a
 span) and the pad were drawn with mid and side and band edges in mind.

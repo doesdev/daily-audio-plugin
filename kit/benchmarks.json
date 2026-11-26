@@ -410,6 +410,55 @@
         "a preset from a newer version asks before it loads what fits",
         "a notice cancelled leaves everything as it was"
       ]
+    },
+    {
+      "id": "wet-and-dry",
+      "what": "Blending the effect with the sound that came in",
+      "covers": [],
+      "leaders": [
+        {
+          "who": "Soundtoys Decapitator",
+          "does": "A Mix knob on the front panel for parallel processing without a second track",
+          "source": null
+        },
+        {
+          "who": "FabFilter Saturn 2",
+          "does": "A mix for each band and for the whole plugin",
+          "source": null
+        }
+      ],
+      "ours": "kit::mix(id) is the one Mix: the same key, name, range and place in every plugin. Every plugin must ship it or say in its benchmark.json why it makes no sense there, and the check fails otherwise. The plugin does the blending, since only it knows what its dry signal is.",
+      "verdict": "meets",
+      "proof": [
+        "a plugin ships a mix and a level match, or says why not"
+      ]
+    },
+    {
+      "id": "level-match",
+      "what": "Judging a change by its tone, not by its being louder",
+      "covers": [],
+      "leaders": [
+        {
+          "who": "FabFilter Pro-Q 4",
+          "does": "Auto Gain, which compensates the output for the level change the processing makes",
+          "source": null
+        },
+        {
+          "who": "iZotope Ozone",
+          "does": "Gain Match, which holds the processed level to the unprocessed for comparison",
+          "source": null
+        }
+      ],
+      "ours": "kit::level_match(id) with kit_dsp::Match: a button in the header, beside the bypass, that holds the level going out to the level coming in. It compares the two over 400 ms, eases over 150 ms so it cannot act as a compressor, holds through silence, reaches at most 24 dB, and sits before the output trim, which stays the person's own. It keeps listening while off, so it is right the moment it is switched on. Every plugin ships it or says why not. It matches level, not loudness as the ear weighs it.",
+      "verdict": "meets",
+      "proof": [
+        "it_undoes_a_change_of_level_whichever_way_it_went",
+        "it_holds_through_silence_and_does_not_chase_noise",
+        "it_moves_too_slowly_to_be_a_compressor",
+        "off_it_listens_but_leaves_the_level_alone_and_on_it_is_ready",
+        "level matching is one press in the header, and says which way it is",
+        "a plugin ships a mix and a level match, or says why not"
+      ]
     }
   ]
 }

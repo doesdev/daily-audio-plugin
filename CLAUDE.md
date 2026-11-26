@@ -33,6 +33,8 @@ npm run gallery                    # the kit's own pictures, both themes
   kit without an entry in `kit/benchmarks.json`, no "meets" without
   a test, and every plugin has a `benchmark.json`. The check fails
   otherwise.
+- Every plugin ships a Mix and level matching wherever they make
+  sense, and says in its `benchmark.json` why not where they do not.
 - An editor is built round a picture only that plugin has, and says
   in `NOVELTY.md` where it is under the bar.
 - An editor follows `docs/design.md`: mostly one tone with depth,

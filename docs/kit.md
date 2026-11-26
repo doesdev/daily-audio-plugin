@@ -152,6 +152,14 @@ and the picture can tell when it is held.
   is told it is the bypass, the runner fades to the sound coming in
   and back, and the header gets an On button. The plugin writes
   nothing for it.
+- `kit::mix(id)` is the one Mix, and `kit::level_match(id)` with
+  `kit_dsp::Match` holds the level going out to the level coming in:
+  feed it the squares of what came in and what would go out, a frame
+  at a time, and multiply by what it returns, before the output trim.
+  The header shows it beside the bypass. Every plugin ships both, or
+  says in its `benchmark.json` under `tools` why one makes no sense
+  for it (an instrument has nothing coming in to match or to mix
+  with). The template does both: copy how.
 - Every setting can learn a MIDI controller from its menu, and what it
   learned is saved with the project. The plugin writes nothing for it.
   Every plugin takes MIDI in for this; notes still reach only one

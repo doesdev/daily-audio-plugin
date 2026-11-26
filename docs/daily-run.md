@@ -94,6 +94,16 @@ npm run new -- NAME "Display Name"      # --instrument if it is played
 8. `examples/demo.rs`: the settings that show what is new.
 9. `npm run check`.
 
+## What every plugin ships with
+
+A Mix (`kit::mix`) and level matching (`kit::level_match`), wherever
+they make sense, which for an effect is nearly always. `npm run new`
+starts a plugin with both. Take one out only for a reason a musician
+would accept, and write that reason in `benchmark.json` under
+`tools` in place of `true`: the check asks for one or the other.
+Matching goes before the output trim, and a test in `tests/sound.rs`
+shows that with it on, what goes out is as loud as what came in.
+
 ## The benchmark comes first
 
 Before the editor, write `plugins/NAME/benchmark.json`

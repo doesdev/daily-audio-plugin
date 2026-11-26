@@ -13,7 +13,9 @@ mod shared;
 pub mod state;
 
 pub use learn::{LEARNABLE, Learn};
-pub use param::{BYPASS, Kind, Param, bypass, list, meter, range, toggle};
+pub use param::{
+    BYPASS, Kind, MATCH, MIX, Param, bypass, level_match, list, meter, mix, range, toggle,
+};
 pub use plugin::{Asset, Info, Plugin, Role, Spec};
 pub use runner::{Block, EVENTS, Event, Runner, Transport};
 pub use scope::{SCOPE, Scope};

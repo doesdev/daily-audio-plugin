@@ -490,3 +490,38 @@ test('a setting learns a controller from its menu, and says so', async (assert) 
     assert.deepEqual((await posted(tab)).at(-1), { type: 'forget', id: 0 })
   })
 })
+
+test('level matching is one press in the header, and says which way it is', async (assert) => {
+  const label = 'document.querySelector(".kit-match").ariaLabel'
+  await onGallery('main', [], async (tab) => {
+    assert.is(await tab.evaluate(label),
+      'Match the level going out to the level coming in')
+    await click(tab, '.kit-match')
+    const sent = await posted(tab)
+
+    assert.is(types(sent), 'begin set end')
+    assert.deepEqual([sent[1].id, sent[1].value], [17, 1])
+    assert.is(await tab.evaluate(label),
+      'Level matched to what comes in. Press to stop')
+    assert.is(await tab.evaluate(
+      'document.querySelector(".kit-match").ariaPressed'), 'true')
+    // It is the header's, not one more switch among the settings.
+    assert.is(await tab.evaluate(
+      'document.querySelectorAll(".kit-sheet [data-key=match]").length'), 0)
+    assert.deepEqual(await tab.evaluate(spills), [])
+  })
+})
+
+test('a long note under the name gives way: the tools stay on the glass', async (assert) => {
+  const fits = `(() => {
+    const glass = document.querySelector('.kit-glass').getBoundingClientRect()
+    const last = document.querySelector('.kit-power').getBoundingClientRect()
+    return glass.right - last.right
+  })()`
+  await onGallery('main', [], async (tab) => {
+    await tab.evaluate(`(document.querySelector('.kit-note').textContent =
+      'A note a good deal longer than the header has any room for') && true`)
+    assert.true(await tab.evaluate(fits) >= 20)
+    assert.deepEqual(await tab.evaluate(spills), [])
+  })
+})

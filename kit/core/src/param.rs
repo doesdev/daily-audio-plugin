@@ -115,6 +115,35 @@ pub const fn bypass(id: u32) -> Param {
     toggle(id, BYPASS, "Bypass", "", false).about("Passes the sound through unchanged")
 }
 
+/// The key of the setting that blends the effect with the sound that
+/// came in.
+pub const MIX: &str = "mix";
+
+/// The key of the setting that holds the level going out to the level
+/// coming in.
+pub const MATCH: &str = "match";
+
+/// How much of what goes out is the effect, 0 to 100%: every effect
+/// it makes sense for has one, with this key, so a person finds it in
+/// the same place and by the same name. The plugin does the blending,
+/// since only it knows what its dry signal is.
+pub const fn mix(id: u32) -> Param {
+    range(id, MIX, "Mix", "Output", (0.0, 100.0, 100.0), "%")
+        .decimals(0)
+        .about("How much of what goes out is the effect, against the sound that came in")
+}
+
+/// Level matching, Off or On: every effect it makes sense for has one,
+/// with this key. On, the level going out is held to the level coming
+/// in, so a change is judged by its tone. `kit_dsp::Match` does the
+/// work in the plugin's `process`, before its output trim; the header
+/// shows it beside the bypass.
+pub const fn level_match(id: u32) -> Param {
+    toggle(id, MATCH, "Match", "Output", false).about(
+        "Holds the level going out to the level coming in, so a change is heard as tone, not as louder",
+    )
+}
+
 /// A level meter.
 pub const fn meter(id: u32, key: &'static str, title: &'static str) -> Param {
     Param {

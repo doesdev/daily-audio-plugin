@@ -140,7 +140,7 @@ button { cursor: pointer; }
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
 }
 
 .kit-heading { min-width: 0; }
@@ -587,7 +587,9 @@ button { cursor: pointer; }
 
 /* ---- the header's preset, bypass and pressed tools */
 
-.kit-heading { flex: none; max-width: 240px; }
+/* The name and its note give way before the tools do: the note is cut
+   short with an ellipsis, the tools are never pushed off the glass. */
+.kit-heading { flex: 0 1 auto; max-width: 240px; }
 
 .kit-preset {
   flex: none;
@@ -630,7 +632,7 @@ button { cursor: pointer; }
 
 .kit-tool[aria-pressed='true']:hover:not(:disabled) { background: var(--g-ink); }
 
-.kit-power { background: var(--g-pill); }
+.kit-power, .kit-match { background: var(--g-pill); }
 
 :root[data-bypassed='true'] .kit-stage { opacity: 0.35; }
 

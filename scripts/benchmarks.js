@@ -79,11 +79,30 @@ export const registerProblems = (register, built, tests) => {
   ]
 }
 
+// The tools every effect ships with where they make sense, and the
+// call in a plugin's source that gives it each.
+export const TOOLS = { mix: 'kit::mix(', match: 'kit::level_match(' }
+
+// A plugin says of each tool either `true`, and then its source has
+// it, or why it does not make sense here.
+const toolProblems = (at, sheet, source) => Object.entries(TOOLS)
+  .flatMap(([tool, call]) => {
+    const said = sheet.tools?.[tool]
+    if (said === true) {
+      const has = source.includes(call) || source.includes(`"${tool}"`)
+      return has ? [] : [`${at}: says it has ${tool}, but its source does not`]
+    }
+    return filled(said)
+      ? []
+      : [`${at}: tools.${tool} must be true, or say why it makes no sense here`]
+  })
+
 // Everything wrong with one plugin's comparison with its field.
-export const pluginProblems = (name, sheet) => {
+export const pluginProblems = (name, sheet, source = '') => {
   const at = `${name}`
   if (!sheet) return [`${at}: has no benchmark.json`]
   return [
+    ...toolProblems(at, sheet, source),
     ...(sheet.plugin === name
       ? []
       : [`${at}: benchmark.json is about "${sheet.plugin}": write this one's`]),
@@ -117,20 +136,23 @@ const RUST = [
   'kit/core/src/runner.rs', 'kit/core/src/scope.rs',
   'kit/webui/src/presets.rs', 'kit/webui/src/feed.rs',
   'kit/vst3/src/connect.rs', 'kit/core/src/learn.rs', 'kit/core/src/state.rs',
-  'kit/vst3/tests/host.rs', 'kit/clap/tests/host.rs'
+  'kit/vst3/tests/host.rs', 'kit/clap/tests/host.rs',
+  'kit/dsp/src/level_match.rs'
 ]
 
 export const allProblems = () => {
   const register = JSON.parse(read('kit/benchmarks.json'))
   const tests = [
-    ...['kit/ui/test.js', 'kit/ui/gallery.test.js']
+    ...['kit/ui/test.js', 'kit/ui/gallery.test.js', 'scripts/benchmarks.test.js']
       .flatMap((file) => testNames(read(file))),
     ...RUST.flatMap((file) => rustTestNames(read(file)))
   ]
   const sheets = plugins().flatMap((name) => {
     const file = join(pluginDir(name), 'benchmark.json')
     const sheet = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null
-    return pluginProblems(name, sheet)
+    const lib = join(pluginDir(name), 'src', 'lib.rs')
+    const source = existsSync(lib) ? readFileSync(lib, 'utf8') : ''
+    return pluginProblems(name, sheet, source)
   })
   return {
     register,

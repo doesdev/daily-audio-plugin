@@ -750,6 +750,7 @@ export const ICONS = {
   help: 'M7.4 7.6a2.7 2.7 0 1 1 3.9 2.4c-.8.5-1.3 1-1.3 2M10 14.6v.2',
   power: 'M10 3.5v6M6.2 5.8a5.5 5.5 0 1 0 7.6 0',
   chevron: 'M6 8l4 4 4-4',
+  match: 'M5 8h10M5 12h10',
   learn: 'M10 4.5a5.5 5.5 0 1 0 0 11a5.5 5.5 0 1 0 0-11M10 10l2.6-2.6',
   chosen: 'M5 10.5l3.2 3.2L15 7',
   blank: '',
@@ -1272,6 +1273,7 @@ export const tools = (ui) => {
     capsule(undo, redo),
     capsule(compare),
     capsule(densitySwitch(), themeSwitch(), settings, helpSwitch()),
+    matcher(ui),
     power(ui)
   ]
 }
@@ -1313,9 +1315,9 @@ export const foot = (ui, ...children) => {
 // a plugin's page should show what the plugin does.
 export const auto = (ui) => {
   const handles = Object.values(ui.p)
-  // The bypass has its place in the header.
+  // The bypass and level matching have their place in the header.
   const lists = handles.filter((handle) =>
-    handle.row.kind === 'list' && handle.row.key !== 'bypass')
+    handle.row.kind === 'list' && !['bypass', 'match'].includes(handle.row.key))
   const ranges = handles.filter((handle) => handle.row.kind !== 'list')
   const meters = Object.values(ui.m).map((handle) => meter(handle))
   return [
@@ -1753,6 +1755,25 @@ const power = (ui) => {
   handle.on(show)
   show()
   return button
+}
+
+// Level matching, where the spec has a setting with the key `match`:
+// pressed in when the level going out is held to the level coming in.
+const matcher = (ui) => {
+  const handle = ui.p.match
+  if (!handle) return null
+  const button = tool('match', 'match', '', () =>
+    handle.set(handle.value > 0.5 ? 0 : 1))
+  const show = () => {
+    const on = handle.value > 0.5
+    button.setAttribute('aria-pressed', on)
+    button.say(on
+      ? 'Level matched to what comes in. Press to stop'
+      : 'Match the level going out to the level coming in')
+  }
+  handle.on(show)
+  show()
+  return hinted(button, ui, handle)
 }
 
 // Help: while it is on, names are underlined and the foot of the

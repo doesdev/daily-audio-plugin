@@ -8,11 +8,13 @@
 
 mod delay;
 mod follower;
+mod level_match;
 mod smooth;
 mod svf;
 
 pub use delay::Delay;
 pub use follower::Follower;
+pub use level_match::Match;
 pub use smooth::Smooth;
 pub use svf::{Svf, SvfOut};
 

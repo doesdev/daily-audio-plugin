@@ -71,15 +71,45 @@ test('it\\'s fine', async () => {})`
 test('a plugin answers on all seven points against two leaders', (assert) => {
   const points = Object.fromEntries(
     POINTS.map((point) => [point, { verdict: 'meets', note: 'Yes' }]))
-  const sheet = { plugin: 'echo', kind: 'Delay', leaders: [leader, leader], points }
+  const tools = { mix: true, match: 'An instrument: nothing comes in to match' }
+  const sheet = {
+    plugin: 'echo', kind: 'Delay', leaders: [leader, leader], points, tools
+  }
+  const source = 'kit::mix(3),'
   const says = (changed, want) => assert.true(
     pluginProblems('echo', changed).some((said) => said.includes(want)), want)
 
-  assert.deepEqual(pluginProblems('echo', sheet), [])
+  assert.deepEqual(pluginProblems('echo', sheet, source), [])
   says(null, 'has no benchmark.json')
   says({ ...sheet, plugin: 'template' }, 'is about "template"')
   says({ ...sheet, leaders: [leader] }, 'fewer than two')
   says({ ...sheet, points: { ...points, picture: undefined } }, 'nothing on picture')
   says({ ...sheet, points: { ...points, presets: { verdict: 'under' } } },
     'presets has no note')
+})
+
+test('a plugin ships a mix and a level match, or says why not', (assert) => {
+  const points = Object.fromEntries(
+    POINTS.map((point) => [point, { verdict: 'meets', note: 'Yes' }]))
+  const sheet = (tools) => ({
+    plugin: 'echo', kind: 'Delay', leaders: [leader, leader], points, tools
+  })
+  const both = 'kit::mix(3), kit::level_match(8),'
+  const said = (tools, source) => pluginProblems('echo', sheet(tools), source)
+
+  assert.deepEqual(said({ mix: true, match: true }, both), [])
+  // A mix under its own name counts: one shipped before the kit's.
+  assert.deepEqual(said({ mix: true, match: true },
+    'range(4, "mix", "Mix"), kit::level_match(8)'), [])
+  assert.deepEqual(said({ mix: 'A tuner: it makes no sound', match: 'The same' }, ''), [])
+
+  const cases = [
+    [undefined, both, 'tools.mix must be true'],
+    [{ mix: true }, both, 'tools.match must be true'],
+    [{ mix: true, match: true }, 'kit::mix(3),', 'says it has match'],
+    [{ mix: true, match: '  ' }, both, 'tools.match must be true'],
+    [{ mix: false, match: true }, both, 'tools.mix must be true']
+  ]
+  cases.forEach(([tools, source, want]) => assert.true(
+    said(tools, source).some((problem) => problem.includes(want)), want))
 })
