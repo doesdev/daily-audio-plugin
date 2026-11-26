@@ -19,7 +19,7 @@
           "source": "https://www.fabfilter.com/help/pro-q"
         }
       ],
-      "ours": "Drag the number or its line; Shift for a tenth the speed, or always fine by preference; wheel and arrows by a step; double-click the number or press Enter to type, with units and k understood; a digit starts a value with no click; Delete or a double-click on the line for the default; the range and the default are shown while it is held. A range that rounds to many steps, such as a frequency in whole hertz, drags and scrolls across its whole range like any other; only a setting of a few steps moves a step at a time. A number too wide for its column is drawn smaller.",
+      "ours": "Drag the number or its line; Shift for a tenth the speed, or always fine by preference; wheel and arrows by a step; double-click the number or press Enter to type, with units and k understood; a digit starts a value with no click; Delete or a double-click on the line for the default; the range and the default are shown while it is held. A range that rounds to many steps, such as a frequency in whole hertz, drags and scrolls across its whole range like any other; only a setting of a few steps moves a step at a time. A number too wide for its column is drawn smaller, in the same box, so its line stays level with its neighbours'.",
       "verdict": "meets",
       "proof": [
         "a slide along a value is one gesture for the host",
@@ -28,7 +28,7 @@
         "a digit starts a value with no click first, and Delete is the default",
         "a setting held is purple, with its range, until it is let go",
         "a frequency in whole hertz drags and nudges like a range, not a hertz at a time",
-        "a number too wide for its column is drawn smaller, not over its neighbour"
+        "a number too wide for its column is drawn smaller, not over its neighbour, and its line stays level with theirs"
       ]
     },
     {

@@ -363,7 +363,20 @@ button { cursor: pointer; }
   white-space: nowrap;
 }
 
-.kit-setting .kit-value { overflow: hidden; }
+/* The box is the full number's height whatever its fit, and what is in
+   it stands on its floor, so a fitted number's line stays level with its
+   neighbours' and its foot nearly so. */
+.kit-setting .kit-value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  align-content: flex-end;
+  overflow: hidden;
+  height: var(--num);
+}
+
+/* The space before a unit is part of it, as the fit measured it. */
+.kit-setting .kit-value .kit-unit { white-space: pre; }
 
 .kit-setting .kit-number {
   font-size: calc(var(--num) * var(--fit, 1));
@@ -1016,7 +1029,11 @@ button { cursor: pointer; }
 }
 
 .kit-pair .kit-setting:last-child { text-align: right; }
+.kit-pair .kit-setting:last-child .kit-value { justify-content: flex-end; }
 .kit-pair .kit-number, .kit-sides .kit-number { font-size: calc(var(--num) * 0.72); }
+.kit-pair .kit-value, .kit-sides .kit-value {
+  height: calc(var(--num) * 0.72);
+}
 
 .kit-link {
   width: var(--target);
@@ -1052,6 +1069,7 @@ button { cursor: pointer; }
 }
 
 .kit-side:last-child { text-align: right; }
+.kit-side:last-child .kit-value { justify-content: flex-end; }
 
 .kit-sides .kit-number {
   font-weight: 500;
