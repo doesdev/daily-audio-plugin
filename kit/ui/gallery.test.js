@@ -6,7 +6,7 @@
 import test from 'mvt'
 import {
   EMPTY, NO_HISTORY, TIES, fallFor, fallen, fingerprint, helpFor, holdFor,
-  prefsFor, textFit,
+  ironCurve, prefsFor, textFit, tubeCurve,
   presetMoves, presetValues, recorded, redone, reduce, tagFor, undone
 } from './kit.js'
 import { withBrowser } from '../../scripts/lib/browser.js'
@@ -668,5 +668,95 @@ test('a number too wide for its column is drawn smaller, not over its neighbour'
     await tab.evaluate('new Promise((r) => requestAnimationFrame(() => r(true)))')
     assert.true(await tab.evaluate(fit) < 1)
     assert.true(await tab.evaluate(inside) >= -1)
+  })
+})
+
+test('the windows draw the curves the sound is made with', (assert) => {
+  // The same numbers are in kit/dsp/src/tube.rs and transformer.rs.
+  const tube = [
+    [0.5, 0, 0.462117], [0.5, 1, 0.423433], [2, 0.5, 0.891878],
+    [-2, 1, -0.964028], [3, 1, 0.666502]
+  ]
+  const iron = [[0.5, 1, 0.241007], [0.1, 0.5, 0.097967], [-1, 1, -0.249832]]
+  const close = (got, want) => Math.abs(got - want) < 1e-5
+
+  tube.forEach(([x, grid, want]) =>
+    assert.true(close(tubeCurve(x, grid), want), `tube ${x} ${grid}`))
+  iron.forEach(([x, weight, want]) =>
+    assert.true(close(ironCurve(x, weight), want), `iron ${x} ${weight}`))
+  // At rest a valve is tanh and a transformer is a wire.
+  assert.is(tubeCurve(0.7, 0), Math.tanh(0.7))
+  assert.is(ironCurve(0.7, 0), 0.7)
+})
+
+test('a valve and a transformer each have a window, the same everywhere', async (assert) => {
+  const titles = `[...document.querySelectorAll('.kit-panel .kit-setting .kit-title')]
+    .map((el) => el.firstChild.textContent)`
+  const moved = (kind) =>
+    `document.querySelector('.kit-open-${kind}').dataset.moved`
+  const inked = `(() => {
+    const c = document.querySelector('.kit-tone-curve canvas')
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data
+    let sum = 0
+    for (let i = 3; i < d.length; i += 4) sum += d[i]
+    return sum
+  })()`
+  const frame = 'new Promise((r) => requestAnimationFrame(() => r(true)))'
+  await onGallery('tone', [['click', '.kit-open-tube']], async (tab) => {
+    assert.is(await text(tab, '.kit-panel-title'), 'Tube')
+    assert.deepEqual(await tab.evaluate(titles), ['Bias', 'Grid', 'Sag', 'Glow'])
+    assert.is(await tab.evaluate(moved('tube')), 'false')
+    await tab.evaluate(frame)
+    const before = await tab.evaluate(inked)
+    assert.true(before > 0)
+
+    // A setting in the window is a setting like any other, the curve
+    // follows it, and the way in says something is no longer at rest.
+    await STEPS.dblclick(tab, [`${key('tube_grid')} .kit-value`])
+    await STEPS.type(tab, ['100', 'Enter'])
+    await tab.evaluate(frame)
+    await tab.evaluate(frame)
+    const sent = await posted(tab)
+    assert.deepEqual([sent[1].id, sent[1].value], [21, 1])
+    assert.not(await tab.evaluate(inked), before)
+    assert.is(await tab.evaluate(moved('tube')), 'true')
+    assert.deepEqual(await tab.evaluate(spills), [])
+
+    // "At rest" puts the whole window back as one step to undo.
+    await click(tab, '.kit-rest')
+    assert.is(await text(tab, `${key('tube_grid')} .kit-value`), '0 %')
+    assert.is(await tab.evaluate(moved('tube')), 'false')
+    await click(tab, '.kit-done')
+
+    await click(tab, '.kit-open-transformer')
+    assert.is(await text(tab, '.kit-panel-title'), 'Transformer')
+    assert.deepEqual(await tab.evaluate(titles), ['Weight', 'Core', 'Grip', 'Roll'])
+    assert.deepEqual(await tab.evaluate(spills), [])
+  })
+})
+
+test('a plugin with neither has no way into a window, and theirs stay off the sheet', async (assert) => {
+  await onGallery('main', [], async (tab) => {
+    // The gallery has both, so both ways in are there, but none of
+    // their settings is among the sheet's own.
+    assert.true(await has(tab, '.kit-open-tube'))
+    assert.is(await tab.evaluate(
+      'document.querySelectorAll(".kit-values [data-key^=tube_]").length'), 0)
+  })
+})
+
+test('either half is soloed from the glass, and one control weighs them', async (assert) => {
+  const pressed = `document.querySelector(
+    '.kit-listen .kit-option[aria-pressed="true"]').textContent`
+  await onGallery('tone', [], async (tab) => {
+    assert.is(await tab.evaluate(pressed), 'Both')
+    await click(tab, { sel: '.kit-listen .kit-option', text: 'Side' })
+    const sent = await posted(tab)
+
+    assert.deepEqual([sent[1].id, sent[1].value], [19, 1])
+    assert.is(await tab.evaluate(pressed), 'Side')
+    // The balance rests in the middle and fills from there.
+    assert.true(await has(tab, `${key('balance')}.kit-bipolar`))
+    assert.deepEqual(await tab.evaluate(spills), [])
   })
 })

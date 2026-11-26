@@ -144,6 +144,96 @@ pub const fn level_match(id: u32) -> Param {
     )
 }
 
+// ---- settings every plugin of a kind shares, so they mean the same
+// thing and sit in the same place everywhere
+
+const fn share(id: u32, key: &'static str, title: &'static str, group: &'static str) -> Param {
+    range(id, key, title, group, (0.0, 100.0, 0.0), "%").decimals(0)
+}
+
+/// Mid and side, for any effect that works on them apart: one control
+/// that turns the other half down, and a solo for each. The work is
+/// `kit_dsp::MidSide`.
+pub const fn balance(id: u32) -> Param {
+    range(
+        id,
+        "balance",
+        "Balance",
+        "Output",
+        (-100.0, 100.0, 0.0),
+        "%",
+    )
+    .decimals(0)
+    .about("Toward the middle or the sides: the other is turned down, neither is turned up")
+}
+
+pub const fn listen(id: u32) -> Param {
+    list(
+        id,
+        "listen",
+        "Listen",
+        "Output",
+        &["Both", "Mid", "Side"],
+        0,
+    )
+    .about("Hear both, the middle alone, or the sides alone")
+}
+
+/// The valve's own settings, for any effect that models one: they
+/// live in the tube window, and `kit_dsp::Tube` is the valve.
+pub const fn tube_bias(id: u32) -> Param {
+    range(id, "tube_bias", "Bias", "Tube", (-100.0, 100.0, 0.0), "%")
+        .decimals(0)
+        .about("Where on its curve the valve rests: off centre adds even harmonics")
+}
+
+pub const fn tube_grid(id: u32) -> Param {
+    share(id, "tube_grid", "Grid", "Tube")
+        .about("How suddenly the top half of a wave gives out, as a grid starts to conduct")
+}
+
+pub const fn tube_sag(id: u32) -> Param {
+    share(id, "tube_sag", "Sag", "Tube")
+        .about("How far a held loud sound eases back as the supply droops, and blooms after")
+}
+
+pub const fn tube_glow(id: u32) -> Param {
+    share(id, "tube_glow", "Glow", "Tube")
+        .about("How high the harmonics it adds sit: the sheen of the top end")
+}
+
+/// The transformer's own settings, for any effect that models one:
+/// they live in the transformer window, and `kit_dsp::Transformer` is
+/// the iron.
+pub const fn iron_weight(id: u32) -> Param {
+    share(id, "iron_weight", "Weight", "Transformer")
+        .about("How hard the low end is driven into the core: the lows thicken, the highs pass")
+}
+
+pub const fn iron_core(id: u32) -> Param {
+    range(
+        id,
+        "iron_core",
+        "Core",
+        "Transformer",
+        (20.0, 1000.0, 120.0),
+        "Hz",
+    )
+    .skew(2.5)
+    .decimals(0)
+    .about("Below what frequency the core is working")
+}
+
+pub const fn iron_grip(id: u32) -> Param {
+    share(id, "iron_grip", "Grip", "Transformer")
+        .about("How much the core stays magnetised one way: even harmonics in the lows")
+}
+
+pub const fn iron_roll(id: u32) -> Param {
+    share(id, "iron_roll", "Roll", "Transformer")
+        .about("How much of the top end the windings give away")
+}
+
 /// A level meter.
 pub const fn meter(id: u32, key: &'static str, title: &'static str) -> Param {
     Param {

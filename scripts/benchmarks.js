@@ -81,7 +81,16 @@ export const registerProblems = (register, built, tests) => {
 
 // The tools every effect ships with where they make sense, and the
 // call in a plugin's source that gives it each.
-export const TOOLS = { mix: 'kit::mix(', match: 'kit::level_match(' }
+// The last three are for a plugin that works on mid and side, models
+// a valve, or models a transformer: one that does none of them says
+// so in a few words.
+export const TOOLS = {
+  mix: 'kit::mix(',
+  match: 'kit::level_match(',
+  mid_side: 'kit::listen(',
+  tube: 'kit::tube_bias(',
+  transformer: 'kit::iron_weight('
+}
 
 // A plugin says of each tool either `true`, and then its source has
 // it, or why it does not make sense here.
@@ -137,7 +146,8 @@ const RUST = [
   'kit/webui/src/presets.rs', 'kit/webui/src/feed.rs',
   'kit/vst3/src/connect.rs', 'kit/core/src/learn.rs', 'kit/core/src/state.rs',
   'kit/vst3/tests/host.rs', 'kit/clap/tests/host.rs',
-  'kit/dsp/src/level_match.rs'
+  'kit/dsp/src/level_match.rs', 'kit/dsp/src/mid_side.rs',
+  'kit/dsp/src/tube.rs', 'kit/dsp/src/transformer.rs'
 ]
 
 export const allProblems = () => {

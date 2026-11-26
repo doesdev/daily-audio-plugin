@@ -101,6 +101,27 @@ they make sense, which for an effect is nearly always. `npm run new`
 starts a plugin with both. Take one out only for a reason a musician
 would accept, and write that reason in `benchmark.json` under
 `tools` in place of `true`: the check asks for one or the other.
+Three more belong to what a plugin is made of, and each is the same
+in every plugin that has it:
+
+- **Mid and side.** A plugin that works on them apart ships
+  `kit::listen` (Both, Mid, Side: `listen(ui.p.listen, { ui })` on
+  the glass, in a `column` over the meters) and `kit::balance`, a
+  value on the sheet, and runs `kit_dsp::MidSide` last, after the
+  match and the trim.
+- **A valve.** A plugin that models one runs it through
+  `kit_dsp::Tube` and ships `kit::tube_bias`, `tube_grid`,
+  `tube_sag` and `tube_glow`. The foot then has the Tube button and
+  its window with no more written. Draw `tubeCurve` where the editor
+  shows the curve.
+- **A transformer.** The same with `kit_dsp::Transformer` and
+  `kit::iron_weight`, `iron_core`, `iron_grip` and `iron_roll`.
+
+Each rests where it changes nothing. `benchmark.json` answers for
+all three under `tools` as `mid_side`, `tube` and `transformer`:
+`true`, or a few words saying the plugin has none. The manual
+documents every one of their settings.
+
 Matching goes before the output trim, and a test in `tests/sound.rs`
 shows that with it on, what goes out is as loud as what came in.
 

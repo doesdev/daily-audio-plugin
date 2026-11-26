@@ -1475,7 +1475,9 @@ export const foot = (ui, ...children) => {
     about.textContent = title ? (text || '') : HOW
     fitText(line)
   }
-  return h('footer.kit-foot', {}, children, line)
+  // A plugin with a valve or a transformer gets the way into its
+  // window here, the same place in every one.
+  return h('footer.kit-foot', {}, children, toneButtons(ui), line)
 }
 
 // Every level on the glass, every number on the sheet, every list in
@@ -1486,7 +1488,11 @@ export const auto = (ui) => {
   // The bypass and level matching have their place in the header.
   const lists = handles.filter((handle) =>
     handle.row.kind === 'list' && !['bypass', 'match'].includes(handle.row.key))
-  const ranges = handles.filter((handle) => handle.row.kind !== 'list')
+  // A valve's and a transformer's own settings live in their windows.
+  const windowed = (handle) => Object.values(TONES)
+    .some((tone) => handle.row.key.startsWith(tone.prefix))
+  const ranges = handles.filter((handle) =>
+    handle.row.kind !== 'list' && !windowed(handle))
   const meters = Object.values(ui.m).map((handle) => meter(handle))
   return [
     glass(header(ui), stage(readouts(meters))),
@@ -2245,3 +2251,174 @@ export const notice = (opts) => h('div.kit-notice', { role: 'status' },
 export const pairs = (...children) => h('div.kit-pairs', {}, children)
 
 export const faders = (...children) => h('div.kit-faders', {}, children)
+
+// ---- mid and side: hear either alone
+
+// What stands beside the picture, one thing over another, at the foot
+// of the glass.
+export const column = (...children) => h('div.kit-column', {}, children)
+
+// Both, Mid, Side: small pills on the glass, since it is for hearing
+// with and not a part of the sound.
+export const listen = (handle, opts = {}) => {
+  const el = choice(handle, opts)
+  el.classList.add('kit-listen')
+  return el
+}
+
+// ---- the tube and the transformer: a window each, the same in every
+// plugin that models one
+
+// The valve's curve as kit_dsp::tube_curve has it: the picture in the
+// window and the sound are one curve, and a test on each side holds
+// them to the same numbers.
+export const tubeCurve = (x, grid) => {
+  const soft = Math.tanh(x)
+  if (x <= 0 || grid <= 0) return soft
+  const ceiling = 1 - grid / 3
+  return soft + (ceiling * Math.tanh(x / ceiling) - soft) * grid
+}
+
+// The core's curve, as kit_dsp::iron_curve has it.
+export const ironCurve = (x, weight) => {
+  if (weight <= 0) return x
+  const drive = 1 + weight * 3
+  return Math.tanh(x * drive) / drive
+}
+
+// What each window is: its settings by key, and its curve from them.
+export const TONES = {
+  tube: {
+    name: 'Tube',
+    note: 'The valve itself',
+    prefix: 'tube_',
+    reach: 3,
+    curve: (p) => (x) =>
+      tubeCurve(x + p.tube_bias / 100, p.tube_grid / 100) -
+      tubeCurve(p.tube_bias / 100, p.tube_grid / 100)
+  },
+  transformer: {
+    name: 'Transformer',
+    note: 'The iron, and what it does to the low end',
+    prefix: 'iron_',
+    reach: 1.2,
+    curve: (p) => (x) => {
+      const lean = (p.iron_grip ?? 0) / 100 * 0.35
+      const weight = (p.iron_weight ?? 0) / 100
+      return ironCurve(x + lean, weight) - ironCurve(lean, weight)
+    }
+  }
+}
+
+// The handles of a window's settings, in the spec's order.
+const toneHandles = (ui, kind) => Object.values(ui.p)
+  .filter((handle) => handle.row.key.startsWith(TONES[kind].prefix))
+
+// The curve, drawn on the sheet in the sheet's own ink: what goes in
+// across, what comes out up, a straight dashed line for a sound left
+// alone, and purple while one of its settings is held.
+const tonePicture = (ui, kind, handles) => {
+  const tone = TONES[kind]
+  const canvas = h('canvas')
+  const el = h('div.kit-tone-curve', {
+    role: 'img', 'aria-label': `The ${tone.name.toLowerCase()}'s curve`
+  }, canvas)
+  const paint = () => {
+    const [width, height] = [canvas.clientWidth, canvas.clientHeight]
+    if (!width || !height) return
+    const app = document.getElementById('app')
+    const density = (window.devicePixelRatio || 1) *
+      (Number(app?.style.zoom) || 1)
+    canvas.width = Math.round(width * density)
+    canvas.height = Math.round(height * density)
+    const ctx = canvas.getContext('2d')
+    ctx.setTransform(density, 0, 0, density, 0, 0)
+    const style = getComputedStyle(el)
+    const ink = (name) => style.getPropertyValue(name).trim()
+    const plain = Object.fromEntries(
+      handles.map((handle) => [handle.row.key, handle.plain]))
+    const curve = tone.curve(plain)
+    const at = (x, y) => [
+      (x / tone.reach + 1) / 2 * width,
+      (1 - (y / tone.reach * 1.6 + 1) / 2) * height
+    ]
+    const line = (points) => {
+      ctx.beginPath()
+      points.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)))
+      ctx.stroke()
+    }
+    const xs = Array.from({ length: 97 }, (_, i) =>
+      (i / 48 - 1) * tone.reach)
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    ctx.strokeStyle = ink('--track')
+    ctx.lineWidth = 1
+    line([at(-tone.reach, 0), at(tone.reach, 0)])
+    line([at(0, -tone.reach), at(0, tone.reach)])
+    ctx.strokeStyle = ink('--soft')
+    ctx.setLineDash([2, 5])
+    ctx.lineWidth = 1.5
+    line(xs.map((x) => at(x, x)))
+    ctx.setLineDash([])
+    const held = handles.some((handle) => handle.row.key === ui.touched())
+    ctx.strokeStyle = ink(held ? '--touch' : '--ink')
+    ctx.lineWidth = 2.5
+    line(xs.map((x) => at(x, curve(x))))
+  }
+  const ask = () => requestAnimationFrame(paint)
+  handles.forEach((handle) => handle.on(ask))
+  ;['kit-touch', 'kit-theme', 'resize'].forEach((name) =>
+    window.addEventListener(name, () => { if (el.isConnected) ask() }))
+  ask()
+  return el
+}
+
+// A window's contents: its curve, its settings, and the way back to
+// where they rest.
+const toneWindow = (ui, kind) => () => {
+  const tone = TONES[kind]
+  const handles = toneHandles(ui, kind)
+  const reset = () => {
+    const to = [...ui.store.get().values]
+    handles.forEach((handle) => { to[handle.index] = handle.row.default })
+    ui.session.apply(to)
+  }
+  return [
+    h('div.kit-panel-bar', {},
+      h('b.kit-panel-title', {}, tone.name),
+      h('span.kit-about', {}, tone.note),
+      h('span.kit-space'),
+      pill('At rest', false, reset, '.kit-rest'),
+      pill('Done', false, closePanel, '.kit-done')),
+    h('div.kit-tone', {},
+      tonePicture(ui, kind, handles),
+      h('div.kit-values', {}, handles.map((handle) => value(handle, {
+        ui, bipolar: handle.row.lo < 0
+      }))))
+  ]
+}
+
+// The pills that open the windows this plugin has, for the foot.
+const toneButtons = (ui) => Object.keys(TONES)
+  .filter((kind) => toneHandles(ui, kind).length)
+  .map((kind) => {
+    const tone = TONES[kind]
+    const button = h(`button.kit-option.kit-open-${kind}`, {
+      type: 'button',
+      'aria-haspopup': 'dialog',
+      onclick: () => togglePanel(kind, toneWindow(ui, kind))
+    }, tone.name)
+    // A dot, as on a preset: something in there is not at rest.
+    const show = () => {
+      const moved = toneHandles(ui, kind).some((handle) =>
+        Math.abs(handle.value - handle.row.default) > 1e-9)
+      button.dataset.moved = String(moved)
+    }
+    ui.store.on((state, prev) => { if (state.values !== prev.values) show() })
+    show()
+    return tipped(button, (help) => ({
+      title: `${tone.name} window`,
+      text: help ? `${tone.note}: the same settings in every plugin of ours ` +
+        'that has one.' : ''
+    }))
+  })

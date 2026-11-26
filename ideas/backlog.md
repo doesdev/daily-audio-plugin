@@ -69,6 +69,13 @@ now gives every plugin: a **Mix** of the effect against the sound that
 came in, and **level matching**, which holds what goes out as loud as
 what came in.
 
+Three more follow from what a plugin is made of. Anything with **mid
+and side** lets either be heard alone and one weighed against the
+other. Anything that models a **valve** has the tube window, and
+anything that models a **transformer** the transformer window: the
+same four settings and the same picture in each plugin, so learning
+one is learning all.
+
 These combine. A split is a place to put a tone; a tone is a reason
 for a split. The kit's paired controls (linked, mirrored, opposed, a
 span) and the pad were drawn with mid and side and band edges in mind.

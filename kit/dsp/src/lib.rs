@@ -9,14 +9,20 @@
 mod delay;
 mod follower;
 mod level_match;
+mod mid_side;
 mod smooth;
 mod svf;
+mod transformer;
+mod tube;
 
 pub use delay::Delay;
 pub use follower::Follower;
 pub use level_match::Match;
+pub use mid_side::{BOTH, MID, MidSide, SIDE, mid_side_gains};
 pub use smooth::Smooth;
 pub use svf::{Svf, SvfOut};
+pub use transformer::{IronShape, Transformer, iron_curve};
+pub use tube::{Tube, TubeShape, tube_curve};
 
 /// A number so small it is silence, added and taken away again so a
 /// decaying filter never slows to a crawl on denormals.

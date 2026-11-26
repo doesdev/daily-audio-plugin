@@ -77,7 +77,27 @@ export const PARAMS = [
   ], 'The scale notes are held to'),
   list(16, 'freeze', 'Freeze', ['Off', 'On'], 'Holds what is sounding'),
   list(17, 'match', 'Match', ['Off', 'On'],
-    'Holds the level going out to the level coming in')
+    'Holds the level going out to the level coming in'),
+  range(18, 'balance', 'Balance', [-100, 100, 0], '%',
+    'Toward the middle or the sides: the other is turned down'),
+  list(19, 'listen', 'Listen', ['Both', 'Mid', 'Side'],
+    'Hear both, the middle alone, or the sides alone'),
+  range(20, 'tube_bias', 'Bias', [-100, 100, 0], '%',
+    'Where on its curve the valve rests'),
+  range(21, 'tube_grid', 'Grid', [0, 100, 0], '%',
+    'How suddenly the top half gives out'),
+  range(22, 'tube_sag', 'Sag', [0, 100, 0], '%',
+    'How far a held loud sound eases back'),
+  range(23, 'tube_glow', 'Glow', [0, 100, 0], '%',
+    'How high the harmonics it adds sit'),
+  range(24, 'iron_weight', 'Weight', [0, 100, 0], '%',
+    'How hard the low end is driven into the core'),
+  range(25, 'iron_core', 'Core', [20, 1000, 120], 'Hz',
+    'Below what frequency the core is working'),
+  range(26, 'iron_grip', 'Grip', [0, 100, 0], '%',
+    'How much the core stays magnetised one way'),
+  range(27, 'iron_roll', 'Roll', [0, 100, 0], '%',
+    'How much of the top end the windings give away')
 ]
 
 const text = (row, norm) => row.kind === 'list'
@@ -141,6 +161,28 @@ export const SCENES = [
   },
   { name: 'bypassed', steps: [['click', '.kit-power'], ['away']] },
   { name: 'groups', page: 'groups' },
+  {
+    name: 'tube',
+    page: 'tone',
+    steps: [
+      ['click', '.kit-open-tube'],
+      ['dblclick', '[data-key="tube_grid"] .kit-value'],
+      ['type', '80', 'Enter'],
+      ['dblclick', '[data-key="tube_bias"] .kit-value'],
+      ['type', '35', 'Enter'],
+      ['away']
+    ]
+  },
+  {
+    name: 'transformer',
+    page: 'tone',
+    steps: [
+      ['click', '.kit-open-transformer'],
+      ['dblclick', '[data-key="iron_weight"] .kit-value'],
+      ['type', '70', 'Enter'],
+      ['away']
+    ]
+  },
   {
     name: 'learn',
     steps: [

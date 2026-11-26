@@ -468,6 +468,70 @@
         "level matching is one press in the header, and says which way it is",
         "a plugin ships a mix and a level match, or says why not"
       ]
+    },
+    {
+      "id": "mid-side-tools",
+      "what": "Hearing the middle or the sides alone, and weighing one against the other",
+      "covers": [
+        "listen",
+        "column"
+      ],
+      "leaders": [
+        {
+          "who": "Brainworx bx_digital V3",
+          "does": "Solo of the mid or the side signal, with Auto-Solo that solos the section whose control is being moved",
+          "source": "https://brainworx.audio/products/brainworx/bx-digital-v3.html"
+        },
+        {
+          "who": "Brainworx bx_solo",
+          "does": "Solo buttons for left, right, mid and side, and a stereo width control",
+          "source": "https://www.plugin-alliance.com/products/bx_solo"
+        }
+      ],
+      "ours": "kit::listen(id) and kit::balance(id) with kit_dsp::MidSide: Both, Mid and Side as pills on the glass beside the meters, and one Balance that turns the other half down and never either up, so with the output trim it sets the level of each. A solo comes in over 20 ms, without a step. Every plugin that works on mid and side ships both or says why not. There is no solo that follows the control being moved, as bx_digital has: the pills stay as set.",
+      "verdict": "meets",
+      "proof": [
+        "the_balance_turns_one_down_and_never_the_other_up",
+        "a_solo_comes_in_without_a_step",
+        "either half is soloed from the glass, and one control weighs them",
+        "mid and side, a valve and a transformer bring the kit's tools"
+      ]
+    },
+    {
+      "id": "tone-windows",
+      "what": "Refining a modelled valve or transformer itself",
+      "covers": [
+        "tubeCurve",
+        "ironCurve",
+        "TONES"
+      ],
+      "leaders": [
+        {
+          "who": "AudioThing Valve Exciter",
+          "does": "A Bias control that emulates the bias of a valve amplifier, and a switch between triode and pentode",
+          "source": "https://www.musicradar.com/reviews/tech/audiothing-valve-exciter-613131"
+        },
+        {
+          "who": "Kazrog True Iron",
+          "does": "Six modelled line transformers to choose from, Strength for how nonlinear the transformer is, Crush for drive into it, Morph for even harmonics, and a wet/dry Mix",
+          "source": "https://kazrog.com/products/true-iron"
+        }
+      ],
+      "ours": "A window each, the same in every plugin that models one, opened from the foot of the sheet: Tube has Bias, Grid, Sag and Glow (kit_dsp::Tube), Transformer has Weight, Core, Grip and Roll (kit_dsp::Transformer). Each draws the curve its sound is made with, from the same numbers on both sides, and the curve moves as a setting does. At rest a valve is the plain curve and a transformer passes the sound exactly, so a plugin that gains a window sounds as it did. The way in shows a dot when anything inside is off its rest, and At rest puts the window back as one step to undo. The settings are ordinary ones: automated, learned, saved and in presets. Under True Iron in one respect: one transformer shaped by four settings, not six measured ones to choose from.",
+      "verdict": "meets",
+      "proof": [
+        "at_rest_it_is_tanh_and_nothing_else",
+        "at_rest_it_passes_the_sound_exactly",
+        "the_curve_is_as_the_page_draws_it",
+        "bias_and_grid_add_the_even_harmonics_a_centred_curve_lacks",
+        "sag_eases_a_held_loud_sound_back_and_leaves_a_quiet_one",
+        "glow_puts_more_of_what_the_curve_adds_up_high",
+        "the_lows_saturate_and_the_highs_pass_clean",
+        "grip_makes_even_harmonics_and_roll_takes_the_top",
+        "the windows draw the curves the sound is made with",
+        "a valve and a transformer each have a window, the same everywhere",
+        "mid and side, a valve and a transformer bring the kit's tools"
+      ]
     }
   ]
 }
