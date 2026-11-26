@@ -45,6 +45,9 @@
   },
   "tools": {
     "mix": true,
-    "match": true
+    "match": true,
+    "mid_side": "It treats left and right alike and never splits them into mid and side",
+    "tube": "Its shaper is a plain curve for showing how a plugin is written, not a model of a valve",
+    "transformer": "It models no transformer"
   }
 }
