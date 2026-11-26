@@ -7,6 +7,7 @@ use kit_vst3::testing::{Host, conforms};
 const GAIN: usize = 0;
 const INVERT: usize = 1;
 
+// Adds whatever is on its sidechain, so a test can see it arrive.
 // Scales what it hears, passes each note through, meters its output.
 struct Gain;
 
@@ -33,6 +34,7 @@ impl Plugin for Gain {
         list(11, "invert", "Invert", "Level", &["Off", "On"], 0),
     ];
     const METERS: &'static [Param] = &[meter(12, "out", "Output")];
+    const KEY_IN: u32 = 2;
 
     fn new() -> Self {
         Self
@@ -45,11 +47,12 @@ impl Plugin for Gain {
         let gain = block.value(GAIN) * sign;
         let mut peak = 0.0;
         for ch in 0..block.outputs() {
-            let (input, output) = block.io(ch);
+            let (input, key, output) = block.keyed_io(ch);
             output
                 .iter_mut()
                 .zip(input)
-                .for_each(|(o, i)| *o = i * gain);
+                .zip(key)
+                .for_each(|((o, i), k)| *o = i * gain + k);
             peak = level::peak(output).max(peak);
         }
         for i in 0..block.events.len() {
@@ -146,4 +149,22 @@ fn a_learned_controller_moves_its_setting_and_the_host_is_told() {
 
     // And what was learned is saved again.
     assert_eq!(kit::state::learnt(&spec, &host.save()), learnt);
+}
+
+#[test]
+fn a_sidechain_arrives_on_its_own_input_and_is_silent_when_not_fed() {
+    let mut host = Host::load::<Gain>(48_000.0, 64);
+    let ramp: Vec<f32> = (0..200).map(|i| i as f32 / 200.0).collect();
+    let key = vec![0.25_f32; 200];
+
+    // Two channels in and nothing else: the sidechain is silence, and
+    // the second input channel is not mistaken for it.
+    let alone = host.render(&[ramp.clone(), ramp.clone()], 200, 64);
+    assert_eq!(alone[1], ramp);
+
+    // Channels past the plugin's own input are its sidechain.
+    let fed = host.render(&[ramp.clone(), ramp.clone(), key.clone(), key], 200, 64);
+    let want: Vec<f32> = ramp.iter().map(|s| s + 0.25).collect();
+    assert_eq!(fed[0], want);
+    assert_eq!(fed[1], want);
 }

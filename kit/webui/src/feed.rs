@@ -154,6 +154,7 @@ mod tests {
         ],
         meters: &[],
         assets: &[],
+        key_in: 0,
     };
 
     fn linked() -> (ScopeLink, Arc<Scope>) {

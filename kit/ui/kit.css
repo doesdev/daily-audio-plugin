@@ -506,6 +506,11 @@ button { cursor: pointer; }
      smaller, and the box is the same whatever size that is. */
   height: 36px;
   overflow: hidden;
+  /* And if the smallest size is still too much, it ends in an
+     ellipsis, never part way through a line. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 /* The house's tooltip. */

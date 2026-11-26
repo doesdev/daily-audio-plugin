@@ -5,7 +5,7 @@
 
 import {
   mount, glass, header, stage, readouts, meter, picture, sheet, values,
-  value, choice, foot, h, column, listen, tubeCurve
+  value, choice, foot, h, column, listen, tubeCurve, flag
 } from './kit/kit.js'
 
 // As src/lib.rs has it.
@@ -55,7 +55,9 @@ const draw = (ui) => (pen) => {
   ctx.lineJoin = 'round'
   ctx.lineCap = 'round'
 
-  const midLeans = ui.p.steer.plain === 0
+  // With the sidechain doing the pushing the editor is not sent
+  // what pushes, so the lean meter draws it.
+  const midLeans = ui.p.steer.plain === 0 && !ui.p.key.plain
   const live = midLeans && pen.signal?.input.length ? pen.signal : null
   const wake = live ? biases(ui, live) : null
   const bias = rest + (wake
@@ -137,12 +139,17 @@ const PRESETS = [
 ]
 
 const NOTES = ['The middle leans on the sides', 'The sides lean on the middle']
+const KEYED = ['The sidechain leans on the sides', 'The sidechain leans on the middle']
 
 // The note under the name says which half is leaning.
 const leaning = (ui) => {
   const note = h('span')
-  const show = () => { note.textContent = NOTES[ui.p.steer.plain] }
+  const show = () => {
+    const from = ui.p.key.plain ? KEYED : NOTES
+    note.textContent = from[ui.p.steer.plain]
+  }
   ui.p.steer.on(show)
+  ui.p.key.on(show)
   show()
   return note
 }
@@ -170,5 +177,5 @@ mount((ui) => [
       value(ui.p.mix, { ui }),
       value(ui.p.balance, { ui, bipolar: true }),
       value(ui.p.output, { ui, bipolar: true })),
-    foot(ui, choice(ui.p.steer, { ui })))
+    foot(ui, choice(ui.p.steer, { ui }), flag(ui.p.key, { ui })))
 ], { presets: PRESETS })

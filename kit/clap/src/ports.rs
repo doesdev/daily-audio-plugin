@@ -1,5 +1,6 @@
 //! The audio and note ports the spec says the plugin has: at most one
-//! of each kind each way, processed in place where the host likes.
+//! of each kind each way, processed in place where the host likes,
+//! and a sidechain input for a plugin that has one.
 
 use crate::instance::Core;
 use clap_sys::ext::audio_ports::*;
@@ -26,7 +27,7 @@ unsafe extern "C" fn audio_count(plugin: *const clap_plugin, is_input: bool) -> 
     let Some(core) = (unsafe { Core::from(plugin) }) else {
         return 0;
     };
-    u32::from(channels(core, is_input) > 0)
+    u32::from(channels(core, is_input) > 0) + u32::from(is_input && core.spec.key_in > 0)
 }
 
 unsafe extern "C" fn audio_get(
@@ -38,20 +39,35 @@ unsafe extern "C" fn audio_get(
     let (Some(core), Some(info)) = (unsafe { Core::from(plugin) }, unsafe { info.as_mut() }) else {
         return false;
     };
-    let count = channels(core, is_input);
-    if index != 0 || count == 0 {
+    let key = is_input && index == 1 && core.spec.key_in > 0;
+    let count = match key {
+        true => core.spec.key_in,
+        false => channels(core, is_input),
+    };
+    if !(index == 0 || key) || count == 0 {
         return false;
+    }
+    let stereo_or_mono = match count {
+        1 => CLAP_PORT_MONO.as_ptr(),
+        2 => CLAP_PORT_STEREO.as_ptr(),
+        _ => std::ptr::null(),
+    };
+    // The sidechain: not the main port, and never processed in place.
+    if key {
+        info.id = 1;
+        copy(c"Sidechain", &mut info.name);
+        info.flags = 0;
+        info.channel_count = count;
+        info.port_type = stereo_or_mono;
+        info.in_place_pair = CLAP_INVALID_ID;
+        return true;
     }
 
     info.id = 0;
     copy(if is_input { c"Input" } else { c"Output" }, &mut info.name);
     info.flags = CLAP_AUDIO_PORT_IS_MAIN;
     info.channel_count = count;
-    info.port_type = match count {
-        1 => CLAP_PORT_MONO.as_ptr(),
-        2 => CLAP_PORT_STEREO.as_ptr(),
-        _ => std::ptr::null(),
-    };
+    info.port_type = stereo_or_mono;
     // In place only when the other side is the same shape.
     let pair = channels(core, !is_input) == count;
     info.in_place_pair = if pair { 0 } else { CLAP_INVALID_ID };

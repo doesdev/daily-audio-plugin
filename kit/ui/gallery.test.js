@@ -760,3 +760,31 @@ test('either half is soloed from the glass, and one control weighs them', async 
     assert.deepEqual(await tab.evaluate(spills), [])
   })
 })
+
+test('a switch among a foot\'s pills is one pill, pressed while on', async (assert) => {
+  const pressed = `document.querySelector('${key('key')} .kit-option')
+    .getAttribute('aria-pressed')`
+  await onGallery('tone', [], async (tab) => {
+    assert.is(await tab.evaluate(pressed), 'false')
+    await click(tab, `${key('key')} .kit-option`)
+    const sent = await posted(tab)
+
+    assert.deepEqual([sent[1].id, sent[1].value], [28, 1])
+    assert.is(await tab.evaluate(pressed), 'true')
+    assert.is(await text(tab, `${key('key')} .kit-option`), 'Sidechain')
+    assert.deepEqual(await tab.evaluate(spills), [])
+  })
+})
+
+test('the foot\'s first words fit their two lines before anything is pointed at', async (assert) => {
+  // The tone page's foot is the fullest: a switch and two windows.
+  await onGallery('tone', [], async (tab) => {
+    await tab.evaluate(
+      'new Promise((r) => requestAnimationFrame(() => r(true)))')
+    const [full, box] = await tab.evaluate(`(() => {
+      const el = document.querySelector('.kit-hint')
+      return [el.scrollHeight, el.clientHeight]
+    })()`)
+    assert.true(full <= box + 1, `${full} in ${box}`)
+  })
+})

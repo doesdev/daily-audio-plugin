@@ -117,6 +117,11 @@ in every plugin that has it:
 - **A transformer.** The same with `kit_dsp::Transformer` and
   `kit::iron_weight`, `iron_core`, `iron_grip` and `iron_roll`.
 
+And a **sidechain** wherever what the effect follows could as well be
+another track (a follower, a detector, anything that leans, ducks or
+keys): `KEY_IN`, `kit::key` and a test that it pushes when on, is
+unheard when off, and that nothing pushes when it is on and unrouted.
+
 Each rests where it changes nothing. `benchmark.json` answers for
 all three under `tools` as `mid_side`, `tube` and `transformer`:
 `true`, or a few words saying the plugin has none. The manual

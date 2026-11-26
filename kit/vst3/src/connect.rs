@@ -181,6 +181,7 @@ mod tests {
         params: &[],
         meters: &[],
         assets: &[],
+        key_in: 0,
     };
 
     fn note(pid: i64, scope: &Arc<Scope>) -> (ComWrapper<Note>, vst3::ComPtr<IMessage>) {

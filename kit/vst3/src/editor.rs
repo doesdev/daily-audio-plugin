@@ -308,6 +308,7 @@ mod tests {
             "text/javascript",
             "import { mount, auto } from './kit/kit.js'\nmount(auto)\n",
         )],
+        key_in: 0,
     };
 
     type Edits = Rc<RefCell<Vec<(char, u32, f64)>>>;

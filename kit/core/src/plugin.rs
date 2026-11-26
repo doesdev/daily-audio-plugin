@@ -56,6 +56,10 @@ pub trait Plugin: Send + 'static {
     const METERS: &'static [Param] = &[];
     /// The editor's own files, beside the kit's (`main.js`, at least).
     const ASSETS: &'static [Asset] = &[];
+    /// Channels of a sidechain: a second input the host can route
+    /// another track to, read with `Block::key`. 0 for none. Only an
+    /// effect has one.
+    const KEY_IN: u32 = 0;
 
     fn new() -> Self;
 
@@ -86,6 +90,8 @@ pub struct Spec {
     pub params: &'static [Param],
     pub meters: &'static [Param],
     pub assets: &'static [Asset],
+    /// Channels of the sidechain input, 0 for none.
+    pub key_in: u32,
 }
 
 impl Spec {
@@ -95,6 +101,10 @@ impl Spec {
             params: P::PARAMS,
             meters: P::METERS,
             assets: P::ASSETS,
+            key_in: match P::INFO.audio_in {
+                0 => 0,
+                _ => P::KEY_IN,
+            },
         }
     }
 

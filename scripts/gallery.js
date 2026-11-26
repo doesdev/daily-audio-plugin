@@ -76,6 +76,8 @@ export const PARAMS = [
     'Ionian', 'Dorian', 'Phrygian', 'Lydian', 'Mixolydian', 'Aeolian'
   ], 'The scale notes are held to'),
   list(16, 'freeze', 'Freeze', ['Off', 'On'], 'Holds what is sounding'),
+  list(28, 'key', 'Sidechain', ['Off', 'On'],
+    'Follows the track routed to the sidechain'),
   list(17, 'match', 'Match', ['Off', 'On'],
     'Holds the level going out to the level coming in'),
   range(18, 'balance', 'Balance', [-100, 100, 0], '%',

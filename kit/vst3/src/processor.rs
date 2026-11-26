@@ -23,6 +23,8 @@ pub struct Processor<P: Plugin> {
     runner: Mutex<Option<Runner<P>>>,
     // Speaker arrangements in force, input then output.
     arrangement: [AtomicU64; 2],
+    // And the sidechain's, for a plugin that has one.
+    key: AtomicU64,
     // Meter values last reported to the host.
     reported: Box<[AtomicU64]>,
     latency: AtomicU32,
@@ -40,6 +42,13 @@ impl<P: Plugin> Class for Processor<P> {
 
 // When the host connects the controller, it is offered the sound to
 // draw: see `connect`.
+impl<P: Plugin> Processor<P> {
+    // Whether buses of this kind and direction include a sidechain.
+    fn keyed(&self, media: MediaType, input: bool) -> bool {
+        input && media as MediaTypes == MediaTypes_::kAudio && self.spec.key_in > 0
+    }
+}
+
 impl<P: Plugin> IConnectionPointTrait for Processor<P> {
     unsafe fn connect(&self, other: *mut IConnectionPoint) -> tresult {
         let Some(other) = (unsafe { ComRef::from_raw(other) }) else {
@@ -91,6 +100,7 @@ impl<P: Plugin> Processor<P> {
                 AtomicU64::new(speakers(spec.info.audio_in)),
                 AtomicU64::new(speakers(spec.info.audio_out)),
             ],
+            key: AtomicU64::new(speakers(spec.key_in)),
             reported: spec.meters.iter().map(|_| AtomicU64::new(0)).collect(),
             latency: AtomicU32::new(0),
             tail: AtomicU32::new(0),
@@ -201,7 +211,8 @@ impl<P: Plugin> IComponentTrait for Processor<P> {
 
     unsafe fn getBusCount(&self, media: MediaType, dir: BusDirection) -> i32 {
         let input = dir as BusDirections == BusDirections_::kInput;
-        bus(&self.spec, media as MediaTypes, input).map_or(0, |_| 1)
+        let main = bus(&self.spec, media as MediaTypes, input).map_or(0, |_| 1);
+        main + i32::from(self.keyed(media, input))
     }
 
     unsafe fn getBusInfo(
@@ -212,6 +223,17 @@ impl<P: Plugin> IComponentTrait for Processor<P> {
         info: *mut BusInfo,
     ) -> tresult {
         let input = dir as BusDirections == BusDirections_::kInput;
+        // The sidechain: a second audio input, marked as one, which
+        // the host leaves off until something is routed to it.
+        if let (true, 1, Some(info)) = (self.keyed(media, input), index, unsafe { info.as_mut() }) {
+            info.mediaType = media;
+            info.direction = dir;
+            info.channelCount = self.key.load(Ordering::Relaxed).count_ones() as i32;
+            copy_wstring("Sidechain", &mut info.name);
+            info.busType = BusTypes_::kAux as BusType;
+            info.flags = 0;
+            return kResultOk;
+        }
         let (Some((channels, name)), Some(info), 0) = (
             bus(&self.spec, media as MediaTypes, input),
             unsafe { info.as_mut() },
@@ -324,10 +346,20 @@ impl<P: Plugin> IAudioProcessorTrait for Processor<P> {
     ) -> tresult {
         let info = self.spec.info;
         let wants_in = i32::from(info.audio_in > 0);
-        if num_ins != wants_in || num_outs != 1 || outputs.is_null() {
+        // A host may leave the sidechain out or name it.
+        let with_key = wants_in + i32::from(self.spec.key_in > 0);
+        if !(num_ins == wants_in || num_ins == with_key) || num_outs != 1 || outputs.is_null() {
             return kResultFalse;
         }
-        if wants_in == 1 && inputs.is_null() {
+        if num_ins > 0 && inputs.is_null() {
+            return kResultFalse;
+        }
+        // The sidechain may be mono, as wide as built, or off.
+        let key = match num_ins {
+            2 => unsafe { *inputs.add(1) },
+            _ => self.key.load(Ordering::Relaxed),
+        };
+        if ![0, SpeakerArr::kMono, speakers(self.spec.key_in)].contains(&key) {
             return kResultFalse;
         }
 
@@ -344,6 +376,7 @@ impl<P: Plugin> IAudioProcessorTrait for Processor<P> {
         }
         self.arrangement[0].store(input, Ordering::Relaxed);
         self.arrangement[1].store(output, Ordering::Relaxed);
+        self.key.store(key, Ordering::Relaxed);
         kResultTrue
     }
 
@@ -353,9 +386,17 @@ impl<P: Plugin> IAudioProcessorTrait for Processor<P> {
         index: i32,
         arr: *mut SpeakerArrangement,
     ) -> tresult {
-        let Some(arr) = (unsafe { arr.as_mut() }).filter(|_| index == 0) else {
+        let Some(arr) = (unsafe { arr.as_mut() }) else {
             return kInvalidArgument;
         };
+        let input = dir as BusDirections == BusDirections_::kInput;
+        if index == 1 && input && self.spec.key_in > 0 {
+            *arr = self.key.load(Ordering::Relaxed);
+            return kResultOk;
+        }
+        if index != 0 {
+            return kInvalidArgument;
+        }
 
         let which = match dir as BusDirections {
             BusDirections_::kInput => 0,
@@ -406,6 +447,12 @@ impl<P: Plugin> IAudioProcessorTrait for Processor<P> {
         unsafe { self.read_param_changes(data.inputParameterChanges) };
         let n = data.numSamples.max(0) as usize;
         let ins = unsafe { channels(data.inputs, data.numInputs) };
+        // The sidechain is the second input bus, when the host gives it.
+        let key = match data.numInputs > 1 && self.spec.key_in > 0 {
+            true => unsafe { channels(data.inputs.add(1), 1) },
+            false => &[],
+        };
+        let main = self.spec.info.audio_in as usize;
         let outs = unsafe { channels(data.outputs, data.numOutputs) };
 
         let Ok(mut slot) = self.runner.try_lock() else {
@@ -437,7 +484,11 @@ impl<P: Plugin> IAudioProcessorTrait for Processor<P> {
             n,
             transport::read(unsafe { data.processContext.as_ref() }),
             |ch, start, into| {
-                let src = ins.get(ch).or(ins.last()).filter(|p| !p.is_null());
+                let src = match ch < main {
+                    true => ins.get(ch).or(ins.last()),
+                    false => key.get(ch - main).or(key.last()),
+                }
+                .filter(|p| !p.is_null());
                 match src {
                     Some(&p) => into.copy_from_slice(unsafe {
                         slice::from_raw_parts(p.add(start), into.len())
