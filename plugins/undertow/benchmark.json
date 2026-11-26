@@ -45,6 +45,9 @@
   },
   "tools": {
     "mix": true,
-    "match": true
+    "match": true,
+    "mid_side": true,
+    "tube": true,
+    "transformer": "Its colour is a valve's curve; there is no transformer in it"
   }
 }

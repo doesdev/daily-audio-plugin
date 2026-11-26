@@ -5,11 +5,10 @@
 
 import {
   mount, glass, header, stage, readouts, meter, picture, sheet, values,
-  value, choice, foot, h
+  value, choice, foot, h, column, listen, tubeCurve
 } from './kit/kit.js'
 
-// As src/lib.rs has them.
-const curve = (x) => Math.tanh(x)
+// As src/lib.rs has it.
 const REACH = 3
 
 // How far either way of the centre the glass shows, on the curve's
@@ -18,7 +17,7 @@ const SPAN = REACH + 0.4
 
 // The settings that move what is drawn: holding one turns the riding
 // stretch purple.
-const DRAWN = ['push', 'follow', 'drive', 'steer']
+const DRAWN = ['push', 'follow', 'drive', 'steer', 'tube_bias', 'tube_grid']
 
 // From the sound itself, the resting point the bias would give at
 // each of the latest samples: the leaning half's low end, by Push.
@@ -40,6 +39,11 @@ const draw = (ui) => (pen) => {
   const tall = height / 2 - 18
   const across = (x) => width / 2 + x / SPAN * (width / 2 - 10)
   const up = (y) => mid - y * tall
+  // The valve's own curve, as the tube window has shaped it, and how
+  // far its Bias has moved where the carried half rests on it.
+  const grid = ui.p.tube_grid.plain / 100
+  const rest = ui.p.tube_bias.plain / 100
+  const curve = (x) => tubeCurve(x, grid)
   const along = (from, to, n = 120) => Array.from({ length: n + 1 },
     (_, i) => from + (to - from) * i / n)
   const path = (xs) => {
@@ -54,9 +58,9 @@ const draw = (ui) => (pen) => {
   const midLeans = ui.p.steer.plain === 0
   const live = midLeans && pen.signal?.input.length ? pen.signal : null
   const wake = live ? biases(ui, live) : null
-  const bias = wake
+  const bias = rest + (wake
     ? wake[wake.length - 1]
-    : ui.m.lean.value * REACH
+    : ui.m.lean.value * REACH)
   const swing = Math.max(0.04, ui.m.swing.value * REACH)
 
   // The axes: the centre of the curve, where the sides rest unpushed.
@@ -73,8 +77,9 @@ const draw = (ui) => (pen) => {
   // or from the lean meter's last seconds, which knows how far but
   // not which way, so it is drawn both ways.
   const been = wake
-    ? wake.filter((_, i) => i % 6 === 0)
-    : pen.trail(ui.m.lean).flatMap((v) => [v * REACH, -v * REACH])
+    ? wake.filter((_, i) => i % 6 === 0).map((x) => x + rest)
+    : pen.trail(ui.m.lean)
+      .flatMap((v) => [rest + v * REACH, rest - v * REACH])
   ctx.fillStyle = pen.soft
   been.forEach((x) => {
     ctx.fillRect(across(x) - 1, up(curve(x)) - 7, 2, 14)
@@ -89,7 +94,7 @@ const draw = (ui) => (pen) => {
   ctx.strokeStyle = pen.soft
   ctx.lineWidth = 2
   ctx.setLineDash([2, 6])
-  path(along(-swing, swing))
+  path(along(rest - swing, rest + swing))
   ctx.setLineDash([])
 
   // The push: from the centre along the axis to where the bass has
@@ -98,7 +103,7 @@ const draw = (ui) => (pen) => {
   ctx.strokeStyle = held ? pen.accent : pen.ink
   ctx.lineWidth = 1.5
   ctx.beginPath()
-  ctx.moveTo(across(0), mid + 0.5)
+  ctx.moveTo(across(rest), mid + 0.5)
   ctx.lineTo(across(bias), mid + 0.5)
   ctx.stroke()
   ctx.setLineDash([2, 4])
@@ -146,9 +151,11 @@ mount((ui) => [
   glass(
     header(ui, { note: leaning(ui) }),
     stage(
-      readouts(
-        meter(ui.m.input, { title: 'In' }),
-        meter(ui.m.level, { title: 'Out' })),
+      column(
+        listen(ui.p.listen, { ui }),
+        readouts(
+          meter(ui.m.input, { title: 'In' }),
+          meter(ui.m.level, { title: 'Out' }))),
       picture(ui, draw(ui), {
         label: 'The valve\'s curve: dashed where the carried half would ' +
           'swing at rest, solid where the leaning half has pushed it. ' +
@@ -161,6 +168,7 @@ mount((ui) => [
       value(ui.p.follow, { ui }),
       value(ui.p.drive, { ui }),
       value(ui.p.mix, { ui }),
+      value(ui.p.balance, { ui, bipolar: true }),
       value(ui.p.output, { ui, bipolar: true })),
     foot(ui, choice(ui.p.steer, { ui })))
 ], { presets: PRESETS })

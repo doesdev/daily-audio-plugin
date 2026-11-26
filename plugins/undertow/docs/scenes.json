@@ -115,5 +115,37 @@
     "crop": [
       ".kit-sheet"
     ]
+  },
+  {
+    "name": "tube",
+    "values": {
+      "input": 0.8,
+      "level": 0.79,
+      "lean": 0.42,
+      "swing": 0.2,
+      "tube_grid": 80,
+      "tube_bias": 20
+    },
+    "steps": [
+      [
+        "click",
+        ".kit-open-tube"
+      ],
+      [
+        "away"
+      ]
+    ]
+  },
+  {
+    "name": "sides",
+    "theme": "light",
+    "values": {
+      "input": 0.8,
+      "level": 0.79,
+      "lean": 0.42,
+      "swing": 0.2,
+      "listen": "Side",
+      "balance": 40
+    }
   }
 ]
