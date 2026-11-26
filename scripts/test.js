@@ -17,7 +17,7 @@ import {
 import { browserPath, readActivePort } from './lib/browser.js'
 import {
   KEBAB, ROOT, displayName, exampleOf, exampleProblems, examplesIn, manifest,
-  pascal, pending, plugins, ships, snake, tagOf, versionOf
+  pageTests, pascal, pending, plugins, ships, snake, tagOf, versionOf
 } from './lib/plugins.js'
 import { classId, create, rewrite } from './new.js'
 import { notes, releaseArgs, zip, zipEntries, zipName } from './release.js'
@@ -283,4 +283,23 @@ test('the browser is found, and its DevTools port read', (assert) => {
   assert.is(readActivePort('9222\n/devtools/browser/abc\n'),
     'ws://127.0.0.1:9222/devtools/browser/abc')
   assert.is(readActivePort('nonsense'), null)
+})
+
+test('finds the page tests of the plugins that have them', (assert) => {
+  const root = mkdtempSync(join(tmpdir(), 'kit-page-tests-'))
+  const make = (name, files) => files.forEach((file) => {
+    const path = join(root, 'plugins', name, file)
+    mkdirSync(join(path, '..'), { recursive: true })
+    writeFileSync(path, '')
+  })
+  try {
+    make('has-one', ['Cargo.toml', 'ui/test.js'])
+    make('has-none', ['Cargo.toml', 'ui/main.js'])
+    make('not-a-crate', ['ui/test.js'])
+
+    assert.deepEqual(pageTests(root),
+      [join(root, 'plugins', 'has-one', 'ui', 'test.js')])
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
 })
