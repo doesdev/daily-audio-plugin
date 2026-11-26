@@ -1,0 +1,3988 @@
+[
+ {
+  "name": "editor",
+  "values": {},
+  "steps": [
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.848,
+      0.799,
+      0
+     ],
+     "levelTexts": [
+      "-9 dB",
+      "-12 dB",
+      "silent"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.795,
+      0.746,
+      0.341
+     ],
+     "levelTexts": [
+      "-12 dB",
+      "-15 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.741,
+      0.692,
+      0.414
+     ],
+     "levelTexts": [
+      "-16 dB",
+      "-18 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.679,
+      0.63,
+      0.45
+     ],
+     "levelTexts": [
+      "-19 dB",
+      "-22 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.623,
+      0.574,
+      0.466
+     ],
+     "levelTexts": [
+      "-23 dB",
+      "-26 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.566,
+      0.517,
+      0.474
+     ],
+     "levelTexts": [
+      "-26 dB",
+      "-29 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.526,
+      0.449,
+      0.478
+     ],
+     "levelTexts": [
+      "-28 dB",
+      "-33 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.527,
+      0.385,
+      0.478
+     ],
+     "levelTexts": [
+      "-28 dB",
+      "-37 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.525,
+      0.315,
+      0.477
+     ],
+     "levelTexts": [
+      "-28 dB",
+      "-41 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.522,
+      0.22,
+      0.474
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-47 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.519,
+      0.108,
+      0.47
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-54 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.514,
+      0,
+      0.466
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "silent",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.509,
+      0,
+      0.46
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "silent",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.504,
+      0.063,
+      0.456
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-56 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.499,
+      0.101,
+      0.45
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-54 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.493,
+      0.122,
+      0.444
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-53 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.488,
+      0.131,
+      0.439
+     ],
+     "levelTexts": [
+      "-31 dB",
+      "-52 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.482,
+      0.135,
+      0.434
+     ],
+     "levelTexts": [
+      "-31 dB",
+      "-52 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.476,
+      0.136,
+      0.427
+     ],
+     "levelTexts": [
+      "-31 dB",
+      "-52 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.47,
+      0.135,
+      0.422
+     ],
+     "levelTexts": [
+      "-32 dB",
+      "-52 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.465,
+      0.133,
+      0.416
+     ],
+     "levelTexts": [
+      "-32 dB",
+      "-52 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.458,
+      0.129,
+      0.41
+     ],
+     "levelTexts": [
+      "-33 dB",
+      "-52 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.453,
+      0.125,
+      0.404
+     ],
+     "levelTexts": [
+      "-33 dB",
+      "-52 dB",
+      "-36 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.447,
+      0.12,
+      0.398
+     ],
+     "levelTexts": [
+      "-33 dB",
+      "-53 dB",
+      "-36 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.441,
+      0.115,
+      0.392
+     ],
+     "levelTexts": [
+      "-34 dB",
+      "-53 dB",
+      "-36 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.435,
+      0.109,
+      0.386
+     ],
+     "levelTexts": [
+      "-34 dB",
+      "-53 dB",
+      "-37 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.429,
+      0.104,
+      0.381
+     ],
+     "levelTexts": [
+      "-34 dB",
+      "-54 dB",
+      "-37 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.423,
+      0.098,
+      0.374
+     ],
+     "levelTexts": [
+      "-35 dB",
+      "-54 dB",
+      "-38 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.417,
+      0.093,
+      0.369
+     ],
+     "levelTexts": [
+      "-35 dB",
+      "-54 dB",
+      "-38 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.412,
+      0.087,
+      0.363
+     ],
+     "levelTexts": [
+      "-35 dB",
+      "-55 dB",
+      "-38 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.405,
+      0.081,
+      0.357
+     ],
+     "levelTexts": [
+      "-36 dB",
+      "-55 dB",
+      "-39 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.4,
+      0.075,
+      0.351
+     ],
+     "levelTexts": [
+      "-36 dB",
+      "-56 dB",
+      "-39 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.394,
+      0.07,
+      0.345
+     ],
+     "levelTexts": [
+      "-36 dB",
+      "-56 dB",
+      "-39 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.387,
+      0.063,
+      0.339
+     ],
+     "levelTexts": [
+      "-37 dB",
+      "-56 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.382,
+      0.058,
+      0.333
+     ],
+     "levelTexts": [
+      "-37 dB",
+      "-57 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.376,
+      0.052,
+      0.327
+     ],
+     "levelTexts": [
+      "-37 dB",
+      "-57 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.37,
+      0.045,
+      0.321
+     ],
+     "levelTexts": [
+      "-38 dB",
+      "-57 dB",
+      "-41 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.364,
+      0.04,
+      0.315
+     ],
+     "levelTexts": [
+      "-38 dB",
+      "-58 dB",
+      "-41 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.358,
+      0.034,
+      0.31
+     ],
+     "levelTexts": [
+      "-39 dB",
+      "-58 dB",
+      "-41 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.352,
+      0.028,
+      0.303
+     ],
+     "levelTexts": [
+      "-39 dB",
+      "-58 dB",
+      "-42 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.801,
+      0.753,
+      0.298
+     ],
+     "levelTexts": [
+      "-12 dB",
+      "-15 dB",
+      "-42 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.749,
+      0.7,
+      0.393
+     ],
+     "levelTexts": [
+      "-15 dB",
+      "-18 dB",
+      "-36 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.695,
+      0.647,
+      0.432
+     ],
+     "levelTexts": [
+      "-18 dB",
+      "-21 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.634,
+      0.585,
+      0.454
+     ],
+     "levelTexts": [
+      "-22 dB",
+      "-25 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.579,
+      0.53,
+      0.464
+     ],
+     "levelTexts": [
+      "-25 dB",
+      "-28 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.523,
+      0.475,
+      0.468
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-32 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.518,
+      0.409,
+      0.47
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-35 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.517,
+      0.349,
+      0.469
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-39 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.515,
+      0.285,
+      0.466
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-43 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.511,
+      0.204,
+      0.462
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-48 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.507,
+      0.12,
+      0.458
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-53 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.502,
+      0.007,
+      0.454
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-60 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.497,
+      0.04,
+      0.448
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-58 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.492,
+      0.085,
+      0.443
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-55 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.486,
+      0.107,
+      0.438
+     ],
+     "levelTexts": [
+      "-31 dB",
+      "-54 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.48,
+      0.121,
+      0.432
+     ],
+     "levelTexts": [
+      "-31 dB",
+      "-53 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.475,
+      0.126,
+      0.426
+     ],
+     "levelTexts": [
+      "-32 dB",
+      "-52 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.469,
+      0.127,
+      0.421
+     ],
+     "levelTexts": [
+      "-32 dB",
+      "-52 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.463,
+      0.127,
+      0.414
+     ],
+     "levelTexts": [
+      "-32 dB",
+      "-52 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.458,
+      0.125,
+      0.409
+     ],
+     "levelTexts": [
+      "-33 dB",
+      "-52 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.452,
+      0.121,
+      0.403
+     ],
+     "levelTexts": [
+      "-33 dB",
+      "-53 dB",
+      "-36 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.446,
+      0.117,
+      0.397
+     ],
+     "levelTexts": [
+      "-33 dB",
+      "-53 dB",
+      "-36 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.44,
+      0.113,
+      0.391
+     ],
+     "levelTexts": [
+      "-34 dB",
+      "-53 dB",
+      "-37 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.434,
+      0.108,
+      0.385
+     ],
+     "levelTexts": [
+      "-34 dB",
+      "-54 dB",
+      "-37 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.428,
+      0.102,
+      0.379
+     ],
+     "levelTexts": [
+      "-34 dB",
+      "-54 dB",
+      "-37 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.422,
+      0.097,
+      0.374
+     ],
+     "levelTexts": [
+      "-35 dB",
+      "-54 dB",
+      "-38 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.416,
+      0.091,
+      0.368
+     ],
+     "levelTexts": [
+      "-35 dB",
+      "-55 dB",
+      "-38 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.41,
+      0.085,
+      0.361
+     ],
+     "levelTexts": [
+      "-35 dB",
+      "-55 dB",
+      "-38 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.405,
+      0.08,
+      0.356
+     ],
+     "levelTexts": [
+      "-36 dB",
+      "-55 dB",
+      "-39 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.399,
+      0.074,
+      0.35
+     ],
+     "levelTexts": [
+      "-36 dB",
+      "-56 dB",
+      "-39 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.392,
+      0.068,
+      0.344
+     ],
+     "levelTexts": [
+      "-36 dB",
+      "-56 dB",
+      "-39 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.387,
+      0.062,
+      0.338
+     ],
+     "levelTexts": [
+      "-37 dB",
+      "-56 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.381,
+      0.057,
+      0.332
+     ],
+     "levelTexts": [
+      "-37 dB",
+      "-57 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.375,
+      0.05,
+      0.326
+     ],
+     "levelTexts": [
+      "-38 dB",
+      "-57 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.369,
+      0.045,
+      0.32
+     ],
+     "levelTexts": [
+      "-38 dB",
+      "-57 dB",
+      "-41 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.363,
+      0.039,
+      0.314
+     ],
+     "levelTexts": [
+      "-38 dB",
+      "-58 dB",
+      "-41 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.357,
+      0.033,
+      0.308
+     ],
+     "levelTexts": [
+      "-39 dB",
+      "-58 dB",
+      "-42 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.351,
+      0.027,
+      0.303
+     ],
+     "levelTexts": [
+      "-39 dB",
+      "-58 dB",
+      "-42 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.83,
+      0.782,
+      0.297
+     ],
+     "levelTexts": [
+      "-10 dB",
+      "-13 dB",
+      "-42 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.777,
+      0.729,
+      0.408
+     ],
+     "levelTexts": [
+      "-13 dB",
+      "-16 dB",
+      "-36 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.724,
+      0.675,
+      0.451
+     ],
+     "levelTexts": [
+      "-17 dB",
+      "-20 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.662,
+      0.614,
+      0.475
+     ],
+     "levelTexts": [
+      "-20 dB",
+      "-23 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.608,
+      0.559,
+      0.485
+     ],
+     "levelTexts": [
+      "-24 dB",
+      "-26 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.552,
+      0.503,
+      0.49
+     ],
+     "levelTexts": [
+      "-27 dB",
+      "-30 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.541,
+      0.437,
+      0.492
+     ],
+     "levelTexts": [
+      "-28 dB",
+      "-34 dB",
+      "-30 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.54,
+      0.376,
+      0.491
+     ],
+     "levelTexts": [
+      "-28 dB",
+      "-37 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.538,
+      0.311,
+      0.489
+     ],
+     "levelTexts": [
+      "-28 dB",
+      "-41 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.534,
+      0.228,
+      0.485
+     ],
+     "levelTexts": [
+      "-28 dB",
+      "-46 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.53,
+      0.139,
+      0.481
+     ],
+     "levelTexts": [
+      "-28 dB",
+      "-52 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.525,
+      0.015,
+      0.477
+     ],
+     "levelTexts": [
+      "-28 dB",
+      "-59 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.52,
+      0.053,
+      0.471
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-57 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.515,
+      0.103,
+      0.466
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-54 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.51,
+      0.128,
+      0.461
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-52 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.504,
+      0.142,
+      0.455
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-51 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.498,
+      0.148,
+      0.449
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-51 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.493,
+      0.15,
+      0.444
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-51 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.486,
+      0.15,
+      0.438
+     ],
+     "levelTexts": [
+      "-31 dB",
+      "-51 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.481,
+      0.147,
+      0.432
+     ],
+     "levelTexts": [
+      "-31 dB",
+      "-51 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.475,
+      0.144,
+      0.426
+     ],
+     "levelTexts": [
+      "-32 dB",
+      "-51 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.469,
+      0.14,
+      0.42
+     ],
+     "levelTexts": [
+      "-32 dB",
+      "-52 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.463,
+      0.136,
+      0.414
+     ],
+     "levelTexts": [
+      "-32 dB",
+      "-52 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.457,
+      0.131,
+      0.409
+     ],
+     "levelTexts": [
+      "-33 dB",
+      "-52 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.451,
+      0.125,
+      0.402
+     ],
+     "levelTexts": [
+      "-33 dB",
+      "-52 dB",
+      "-36 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.445,
+      0.12,
+      0.397
+     ],
+     "levelTexts": [
+      "-33 dB",
+      "-53 dB",
+      "-36 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.44,
+      0.115,
+      0.391
+     ],
+     "levelTexts": [
+      "-34 dB",
+      "-53 dB",
+      "-37 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.433,
+      0.109,
+      0.385
+     ],
+     "levelTexts": [
+      "-34 dB",
+      "-53 dB",
+      "-37 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.428,
+      0.103,
+      0.379
+     ],
+     "levelTexts": [
+      "-34 dB",
+      "-54 dB",
+      "-37 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.422,
+      0.097,
+      0.373
+     ],
+     "levelTexts": [
+      "-35 dB",
+      "-54 dB",
+      "-38 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.416,
+      0.091,
+      0.367
+     ],
+     "levelTexts": [
+      "-35 dB",
+      "-55 dB",
+      "-38 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.41,
+      0.086,
+      0.361
+     ],
+     "levelTexts": [
+      "-35 dB",
+      "-55 dB",
+      "-38 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.404,
+      0.08,
+      0.355
+     ],
+     "levelTexts": [
+      "-36 dB",
+      "-55 dB",
+      "-39 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.398,
+      0.074,
+      0.349
+     ],
+     "levelTexts": [
+      "-36 dB",
+      "-56 dB",
+      "-39 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.392,
+      0.068,
+      0.343
+     ],
+     "levelTexts": [
+      "-36 dB",
+      "-56 dB",
+      "-39 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.386,
+      0.062,
+      0.338
+     ],
+     "levelTexts": [
+      "-37 dB",
+      "-56 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.38,
+      0.056,
+      0.331
+     ],
+     "levelTexts": [
+      "-37 dB",
+      "-57 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.374,
+      0.05,
+      0.326
+     ],
+     "levelTexts": [
+      "-38 dB",
+      "-57 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.369,
+      0.044,
+      0.32
+     ],
+     "levelTexts": [
+      "-38 dB",
+      "-57 dB",
+      "-41 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.362,
+      0.038,
+      0.314
+     ],
+     "levelTexts": [
+      "-38 dB",
+      "-58 dB",
+      "-41 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.357,
+      0.032,
+      0.308
+     ],
+     "levelTexts": [
+      "-39 dB",
+      "-58 dB",
+      "-42 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.351,
+      0.027,
+      0.302
+     ],
+     "levelTexts": [
+      "-39 dB",
+      "-58 dB",
+      "-42 dB"
+     ]
+    }
+   ]
+  ]
+ },
+ {
+  "name": "light",
+  "theme": "light",
+  "values": {},
+  "steps": [
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.848,
+      0.799,
+      0
+     ],
+     "levelTexts": [
+      "-9 dB",
+      "-12 dB",
+      "silent"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.795,
+      0.746,
+      0.341
+     ],
+     "levelTexts": [
+      "-12 dB",
+      "-15 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.741,
+      0.692,
+      0.414
+     ],
+     "levelTexts": [
+      "-16 dB",
+      "-18 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.679,
+      0.63,
+      0.45
+     ],
+     "levelTexts": [
+      "-19 dB",
+      "-22 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.623,
+      0.574,
+      0.466
+     ],
+     "levelTexts": [
+      "-23 dB",
+      "-26 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.566,
+      0.517,
+      0.474
+     ],
+     "levelTexts": [
+      "-26 dB",
+      "-29 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.526,
+      0.449,
+      0.478
+     ],
+     "levelTexts": [
+      "-28 dB",
+      "-33 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.527,
+      0.385,
+      0.478
+     ],
+     "levelTexts": [
+      "-28 dB",
+      "-37 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.525,
+      0.315,
+      0.477
+     ],
+     "levelTexts": [
+      "-28 dB",
+      "-41 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.522,
+      0.22,
+      0.474
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-47 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.519,
+      0.108,
+      0.47
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-54 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.514,
+      0,
+      0.466
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "silent",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.509,
+      0,
+      0.46
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "silent",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.504,
+      0.063,
+      0.456
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-56 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.499,
+      0.101,
+      0.45
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-54 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.493,
+      0.122,
+      0.444
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-53 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.488,
+      0.131,
+      0.439
+     ],
+     "levelTexts": [
+      "-31 dB",
+      "-52 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.482,
+      0.135,
+      0.434
+     ],
+     "levelTexts": [
+      "-31 dB",
+      "-52 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.476,
+      0.136,
+      0.427
+     ],
+     "levelTexts": [
+      "-31 dB",
+      "-52 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.47,
+      0.135,
+      0.422
+     ],
+     "levelTexts": [
+      "-32 dB",
+      "-52 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.465,
+      0.133,
+      0.416
+     ],
+     "levelTexts": [
+      "-32 dB",
+      "-52 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.458,
+      0.129,
+      0.41
+     ],
+     "levelTexts": [
+      "-33 dB",
+      "-52 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.453,
+      0.125,
+      0.404
+     ],
+     "levelTexts": [
+      "-33 dB",
+      "-52 dB",
+      "-36 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.447,
+      0.12,
+      0.398
+     ],
+     "levelTexts": [
+      "-33 dB",
+      "-53 dB",
+      "-36 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.441,
+      0.115,
+      0.392
+     ],
+     "levelTexts": [
+      "-34 dB",
+      "-53 dB",
+      "-36 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.435,
+      0.109,
+      0.386
+     ],
+     "levelTexts": [
+      "-34 dB",
+      "-53 dB",
+      "-37 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.429,
+      0.104,
+      0.381
+     ],
+     "levelTexts": [
+      "-34 dB",
+      "-54 dB",
+      "-37 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.423,
+      0.098,
+      0.374
+     ],
+     "levelTexts": [
+      "-35 dB",
+      "-54 dB",
+      "-38 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.417,
+      0.093,
+      0.369
+     ],
+     "levelTexts": [
+      "-35 dB",
+      "-54 dB",
+      "-38 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.412,
+      0.087,
+      0.363
+     ],
+     "levelTexts": [
+      "-35 dB",
+      "-55 dB",
+      "-38 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.405,
+      0.081,
+      0.357
+     ],
+     "levelTexts": [
+      "-36 dB",
+      "-55 dB",
+      "-39 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.4,
+      0.075,
+      0.351
+     ],
+     "levelTexts": [
+      "-36 dB",
+      "-56 dB",
+      "-39 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.394,
+      0.07,
+      0.345
+     ],
+     "levelTexts": [
+      "-36 dB",
+      "-56 dB",
+      "-39 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.387,
+      0.063,
+      0.339
+     ],
+     "levelTexts": [
+      "-37 dB",
+      "-56 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.382,
+      0.058,
+      0.333
+     ],
+     "levelTexts": [
+      "-37 dB",
+      "-57 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.376,
+      0.052,
+      0.327
+     ],
+     "levelTexts": [
+      "-37 dB",
+      "-57 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.37,
+      0.045,
+      0.321
+     ],
+     "levelTexts": [
+      "-38 dB",
+      "-57 dB",
+      "-41 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.364,
+      0.04,
+      0.315
+     ],
+     "levelTexts": [
+      "-38 dB",
+      "-58 dB",
+      "-41 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.358,
+      0.034,
+      0.31
+     ],
+     "levelTexts": [
+      "-39 dB",
+      "-58 dB",
+      "-41 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.352,
+      0.028,
+      0.303
+     ],
+     "levelTexts": [
+      "-39 dB",
+      "-58 dB",
+      "-42 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.801,
+      0.753,
+      0.298
+     ],
+     "levelTexts": [
+      "-12 dB",
+      "-15 dB",
+      "-42 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.749,
+      0.7,
+      0.393
+     ],
+     "levelTexts": [
+      "-15 dB",
+      "-18 dB",
+      "-36 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.695,
+      0.647,
+      0.432
+     ],
+     "levelTexts": [
+      "-18 dB",
+      "-21 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.634,
+      0.585,
+      0.454
+     ],
+     "levelTexts": [
+      "-22 dB",
+      "-25 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.579,
+      0.53,
+      0.464
+     ],
+     "levelTexts": [
+      "-25 dB",
+      "-28 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.523,
+      0.475,
+      0.468
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-32 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.518,
+      0.409,
+      0.47
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-35 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.517,
+      0.349,
+      0.469
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-39 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.515,
+      0.285,
+      0.466
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-43 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.511,
+      0.204,
+      0.462
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-48 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.507,
+      0.12,
+      0.458
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-53 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.502,
+      0.007,
+      0.454
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-60 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.497,
+      0.04,
+      0.448
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-58 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.492,
+      0.085,
+      0.443
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-55 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.486,
+      0.107,
+      0.438
+     ],
+     "levelTexts": [
+      "-31 dB",
+      "-54 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.48,
+      0.121,
+      0.432
+     ],
+     "levelTexts": [
+      "-31 dB",
+      "-53 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.475,
+      0.126,
+      0.426
+     ],
+     "levelTexts": [
+      "-32 dB",
+      "-52 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.469,
+      0.127,
+      0.421
+     ],
+     "levelTexts": [
+      "-32 dB",
+      "-52 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.463,
+      0.127,
+      0.414
+     ],
+     "levelTexts": [
+      "-32 dB",
+      "-52 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.458,
+      0.125,
+      0.409
+     ],
+     "levelTexts": [
+      "-33 dB",
+      "-52 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.452,
+      0.121,
+      0.403
+     ],
+     "levelTexts": [
+      "-33 dB",
+      "-53 dB",
+      "-36 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.446,
+      0.117,
+      0.397
+     ],
+     "levelTexts": [
+      "-33 dB",
+      "-53 dB",
+      "-36 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.44,
+      0.113,
+      0.391
+     ],
+     "levelTexts": [
+      "-34 dB",
+      "-53 dB",
+      "-37 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.434,
+      0.108,
+      0.385
+     ],
+     "levelTexts": [
+      "-34 dB",
+      "-54 dB",
+      "-37 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.428,
+      0.102,
+      0.379
+     ],
+     "levelTexts": [
+      "-34 dB",
+      "-54 dB",
+      "-37 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.422,
+      0.097,
+      0.374
+     ],
+     "levelTexts": [
+      "-35 dB",
+      "-54 dB",
+      "-38 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.416,
+      0.091,
+      0.368
+     ],
+     "levelTexts": [
+      "-35 dB",
+      "-55 dB",
+      "-38 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.41,
+      0.085,
+      0.361
+     ],
+     "levelTexts": [
+      "-35 dB",
+      "-55 dB",
+      "-38 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.405,
+      0.08,
+      0.356
+     ],
+     "levelTexts": [
+      "-36 dB",
+      "-55 dB",
+      "-39 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.399,
+      0.074,
+      0.35
+     ],
+     "levelTexts": [
+      "-36 dB",
+      "-56 dB",
+      "-39 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.392,
+      0.068,
+      0.344
+     ],
+     "levelTexts": [
+      "-36 dB",
+      "-56 dB",
+      "-39 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.387,
+      0.062,
+      0.338
+     ],
+     "levelTexts": [
+      "-37 dB",
+      "-56 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.381,
+      0.057,
+      0.332
+     ],
+     "levelTexts": [
+      "-37 dB",
+      "-57 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.375,
+      0.05,
+      0.326
+     ],
+     "levelTexts": [
+      "-38 dB",
+      "-57 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.369,
+      0.045,
+      0.32
+     ],
+     "levelTexts": [
+      "-38 dB",
+      "-57 dB",
+      "-41 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.363,
+      0.039,
+      0.314
+     ],
+     "levelTexts": [
+      "-38 dB",
+      "-58 dB",
+      "-41 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.357,
+      0.033,
+      0.308
+     ],
+     "levelTexts": [
+      "-39 dB",
+      "-58 dB",
+      "-42 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.351,
+      0.027,
+      0.303
+     ],
+     "levelTexts": [
+      "-39 dB",
+      "-58 dB",
+      "-42 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.83,
+      0.782,
+      0.297
+     ],
+     "levelTexts": [
+      "-10 dB",
+      "-13 dB",
+      "-42 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.777,
+      0.729,
+      0.408
+     ],
+     "levelTexts": [
+      "-13 dB",
+      "-16 dB",
+      "-36 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.724,
+      0.675,
+      0.451
+     ],
+     "levelTexts": [
+      "-17 dB",
+      "-20 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.662,
+      0.614,
+      0.475
+     ],
+     "levelTexts": [
+      "-20 dB",
+      "-23 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.608,
+      0.559,
+      0.485
+     ],
+     "levelTexts": [
+      "-24 dB",
+      "-26 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.552,
+      0.503,
+      0.49
+     ],
+     "levelTexts": [
+      "-27 dB",
+      "-30 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.541,
+      0.437,
+      0.492
+     ],
+     "levelTexts": [
+      "-28 dB",
+      "-34 dB",
+      "-30 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.54,
+      0.376,
+      0.491
+     ],
+     "levelTexts": [
+      "-28 dB",
+      "-37 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.538,
+      0.311,
+      0.489
+     ],
+     "levelTexts": [
+      "-28 dB",
+      "-41 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.534,
+      0.228,
+      0.485
+     ],
+     "levelTexts": [
+      "-28 dB",
+      "-46 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.53,
+      0.139,
+      0.481
+     ],
+     "levelTexts": [
+      "-28 dB",
+      "-52 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.525,
+      0.015,
+      0.477
+     ],
+     "levelTexts": [
+      "-28 dB",
+      "-59 dB",
+      "-31 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.52,
+      0.053,
+      0.471
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-57 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.515,
+      0.103,
+      0.466
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-54 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.51,
+      0.128,
+      0.461
+     ],
+     "levelTexts": [
+      "-29 dB",
+      "-52 dB",
+      "-32 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.504,
+      0.142,
+      0.455
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-51 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.498,
+      0.148,
+      0.449
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-51 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.493,
+      0.15,
+      0.444
+     ],
+     "levelTexts": [
+      "-30 dB",
+      "-51 dB",
+      "-33 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.486,
+      0.15,
+      0.438
+     ],
+     "levelTexts": [
+      "-31 dB",
+      "-51 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.481,
+      0.147,
+      0.432
+     ],
+     "levelTexts": [
+      "-31 dB",
+      "-51 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.475,
+      0.144,
+      0.426
+     ],
+     "levelTexts": [
+      "-32 dB",
+      "-51 dB",
+      "-34 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.469,
+      0.14,
+      0.42
+     ],
+     "levelTexts": [
+      "-32 dB",
+      "-52 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.463,
+      0.136,
+      0.414
+     ],
+     "levelTexts": [
+      "-32 dB",
+      "-52 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.457,
+      0.131,
+      0.409
+     ],
+     "levelTexts": [
+      "-33 dB",
+      "-52 dB",
+      "-35 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.451,
+      0.125,
+      0.402
+     ],
+     "levelTexts": [
+      "-33 dB",
+      "-52 dB",
+      "-36 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.445,
+      0.12,
+      0.397
+     ],
+     "levelTexts": [
+      "-33 dB",
+      "-53 dB",
+      "-36 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.44,
+      0.115,
+      0.391
+     ],
+     "levelTexts": [
+      "-34 dB",
+      "-53 dB",
+      "-37 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.433,
+      0.109,
+      0.385
+     ],
+     "levelTexts": [
+      "-34 dB",
+      "-53 dB",
+      "-37 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.428,
+      0.103,
+      0.379
+     ],
+     "levelTexts": [
+      "-34 dB",
+      "-54 dB",
+      "-37 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.422,
+      0.097,
+      0.373
+     ],
+     "levelTexts": [
+      "-35 dB",
+      "-54 dB",
+      "-38 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.416,
+      0.091,
+      0.367
+     ],
+     "levelTexts": [
+      "-35 dB",
+      "-55 dB",
+      "-38 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.41,
+      0.086,
+      0.361
+     ],
+     "levelTexts": [
+      "-35 dB",
+      "-55 dB",
+      "-38 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.404,
+      0.08,
+      0.355
+     ],
+     "levelTexts": [
+      "-36 dB",
+      "-55 dB",
+      "-39 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.398,
+      0.074,
+      0.349
+     ],
+     "levelTexts": [
+      "-36 dB",
+      "-56 dB",
+      "-39 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.392,
+      0.068,
+      0.343
+     ],
+     "levelTexts": [
+      "-36 dB",
+      "-56 dB",
+      "-39 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.386,
+      0.062,
+      0.338
+     ],
+     "levelTexts": [
+      "-37 dB",
+      "-56 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.38,
+      0.056,
+      0.331
+     ],
+     "levelTexts": [
+      "-37 dB",
+      "-57 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.374,
+      0.05,
+      0.326
+     ],
+     "levelTexts": [
+      "-38 dB",
+      "-57 dB",
+      "-40 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.369,
+      0.044,
+      0.32
+     ],
+     "levelTexts": [
+      "-38 dB",
+      "-57 dB",
+      "-41 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.362,
+      0.038,
+      0.314
+     ],
+     "levelTexts": [
+      "-38 dB",
+      "-58 dB",
+      "-41 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.357,
+      0.032,
+      0.308
+     ],
+     "levelTexts": [
+      "-39 dB",
+      "-58 dB",
+      "-42 dB"
+     ]
+    }
+   ],
+   [
+    "tell",
+    {
+     "type": "meters",
+     "levels": [
+      0.351,
+      0.027,
+      0.302
+     ],
+     "levelTexts": [
+      "-39 dB",
+      "-58 dB",
+      "-42 dB"
+     ]
+    }
+   ]
+  ]
+ },
+ {
+  "name": "held",
+  "values": {
+   "mid": 0.6,
+   "side": 0.5,
+   "level": 0.68
+  },
+  "steps": [
+   [
+    "press",
+    "[data-key=\"mistune\"] .kit-scrub",
+    30
+   ]
+  ]
+ },
+ {
+  "name": "held-light",
+  "theme": "light",
+  "values": {
+   "mid": 0.6,
+   "side": 0.5,
+   "level": 0.68
+  },
+  "steps": [
+   [
+    "press",
+    "[data-key=\"prompt\"] .kit-scrub",
+    20
+   ]
+  ]
+ },
+ {
+  "name": "beating",
+  "values": {
+   "prompt": 1.2,
+   "after": 9,
+   "mistune": 2.5,
+   "bright": 70,
+   "mid": 0.6,
+   "side": 0.6,
+   "level": 0.7
+  }
+ },
+ {
+  "name": "off-centre",
+  "theme": "light",
+  "values": {
+   "strike": 60,
+   "mistune": 0.3,
+   "prompt": 0.8,
+   "bright": 25,
+   "mid": 0.6,
+   "side": 0.58,
+   "level": 0.7
+  }
+ },
+ {
+  "name": "tuned-alike",
+  "values": {
+   "mistune": 0,
+   "mid": 0.6,
+   "side": 0,
+   "level": 0.6
+  }
+ },
+ {
+  "name": "sides",
+  "theme": "light",
+  "values": {
+   "listen": "Side",
+   "balance": 40,
+   "mid": 0,
+   "side": 0.55,
+   "level": 0.55
+  }
+ },
+ {
+  "name": "dense",
+  "values": {
+   "mid": 0.62,
+   "side": 0.55,
+   "level": 0.7
+  },
+  "steps": [
+   [
+    "click",
+    ".kit-density"
+   ],
+   [
+    "away"
+   ]
+  ]
+ },
+ {
+  "name": "roomy",
+  "values": {
+   "mid": 0.62,
+   "side": 0.55,
+   "level": 0.7
+  },
+  "steps": [
+   [
+    "click",
+    ".kit-density"
+   ],
+   [
+    "click",
+    ".kit-density"
+   ],
+   [
+    "away"
+   ]
+  ],
+  "theme": "light"
+ },
+ {
+  "name": "controls",
+  "theme": "light",
+  "values": {
+   "mid": 0.62,
+   "side": 0.55,
+   "level": 0.7
+  },
+  "steps": [
+   [
+    "hover",
+    "[data-key=\"after\"] .kit-scrub"
+   ]
+  ],
+  "crop": [
+   ".kit-sheet"
+  ]
+ }
+]

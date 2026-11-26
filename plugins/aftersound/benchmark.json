@@ -1,0 +1,53 @@
+{
+  "plugin": "aftersound",
+  "kind": "Physically modelled string instrument",
+  "leaders": [
+    {
+      "who": "Modartt Pianoteq 9",
+      "does": "Real-time physical model of whole pianos and other string instruments: the engine 'models the exact motion of the strings', with unison width, direct sound duration, string length, hammer hardness and soundboard impedance among its settings, sympathetic resonance through its pedals, modelled microphones, undo and redo, A/B comparison, help tooltips, a window resizable by its corner, and preset banks",
+      "source": "https://www.modartt.com/pianoteq_features"
+    },
+    {
+      "who": "Applied Acoustics Systems Chromaphone 3",
+      "does": "Two layers, each a pair of physically modelled resonators (string, beam, drumhead, marimba, membrane, plate, tubes) excited by a mallet or noise and coupled to each other, a Home view of macros over the Synth, Modes and FX pages, and over a thousand presets tagged by pack, sound, category and creator",
+      "source": "https://musicradar.com/reviews/aas-chromaphone-3"
+    }
+  ],
+  "points": {
+    "picture": {
+      "verdict": "exceeds",
+      "note": "The note's two decays drawn from the settings by the same law the strings follow (a test holds the drawing to the sound): the middle falling fast, the side rising out of nothing and lingering, where the side takes over, and the live middle and side laid over them as notes are played. Pianoteq shows panels and a blueprint and Chromaphone its resonators and macros; neither draws how a note decays or where it sits in space."
+    },
+    "precision": {
+      "verdict": "meets",
+      "note": "Every setting is a kit value: drag with fine, wheel and arrows, a default one double-click away, typed values in their own units (seconds, Hz). Neither leader's page says how fine its own controls go."
+    },
+    "compare": {
+      "verdict": "meets",
+      "note": "Undo, redo and A/B from the kit, as Pianoteq lists. Forgotten when the editor closes, where Pianoteq's are not said to be."
+    },
+    "explains": {
+      "verdict": "meets",
+      "note": "Every setting has an about shown at the foot of the sheet, and help adds ranges, as Pianoteq's help tooltips do."
+    },
+    "fits": {
+      "verdict": "meets",
+      "note": "Scales whole to any window shape and has three densities; Pianoteq resizes from its corner."
+    },
+    "character": {
+      "verdict": "meets",
+      "note": "The house look. The curve a setting shapes turns purple while it is held: the middle's for Prompt, the side's for Aftersound, Mistune and Strike."
+    },
+    "presets": {
+      "verdict": "under",
+      "note": "Four of its own, each a different use of the two decays, and a person's own are files to copy and share. Pianoteq ships banks of instruments and Chromaphone over a thousand. Next: more once a person has played it and said which they reach for."
+    }
+  },
+  "tools": {
+    "mix": "An instrument has nothing coming in to mix its sound against",
+    "match": "An instrument has nothing coming in to match its level to",
+    "mid_side": true,
+    "tube": "It models strings and a bridge, with no valve in it",
+    "transformer": "It models strings and a bridge, with no transformer in it"
+  }
+}
