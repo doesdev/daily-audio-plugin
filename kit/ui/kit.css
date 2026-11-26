@@ -287,8 +287,8 @@ button { cursor: pointer; }
 
 .kit-meter[data-zone='yellow'] .kit-number { color: var(--z-yellow); }
 .kit-meter[data-zone='orange'] .kit-number { color: var(--z-orange); }
-.kit-meter[data-zone='red'] .kit-number,
-.kit-meter[data-clipped] .kit-number { color: var(--z-red); }
+/* The lamp remembers a clip; the number says where the level is now. */
+.kit-meter[data-zone='red'] .kit-number { color: var(--z-red); }
 
 .kit-segments {
   display: flex;
@@ -363,8 +363,10 @@ button { cursor: pointer; }
   white-space: nowrap;
 }
 
+.kit-setting .kit-value { overflow: hidden; }
+
 .kit-setting .kit-number {
-  font-size: var(--num);
+  font-size: calc(var(--num) * var(--fit, 1));
   font-weight: 500;
   letter-spacing: -0.04em;
   line-height: 1;
@@ -463,11 +465,12 @@ button { cursor: pointer; }
 
 /* ---- the foot of the sheet */
 
+/* A fixed height, whatever the hint says and whatever the density. */
 .kit-foot {
   display: flex;
   align-items: center;
   gap: 14px;
-  min-height: var(--target);
+  height: max(var(--target), 37px);
 }
 
 .kit-options {
@@ -499,11 +502,33 @@ button { cursor: pointer; }
   margin: 0;
   color: var(--soft);
   line-height: 1.4;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  /* The height of two lines, always: fitText draws a longer text
+     smaller, and the box is the same whatever size that is. */
+  height: 36px;
   overflow: hidden;
 }
+
+/* The house's tooltip. */
+.kit-tip {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 260px;
+  padding: 9px 13px;
+  border-radius: 12px;
+  background: var(--glass);
+  box-shadow: inset 0 0 0 1px #34343B, 0 14px 26px -12px rgba(0, 0, 0, 0.6);
+  color: var(--g-ink);
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: none;
+}
+
+.kit-tip b { font-weight: 600; }
+.kit-tip span { color: var(--g-soft); }
+.kit-tip span:empty { display: none; }
 
 .kit-hint-what {
   color: var(--ink);
@@ -643,7 +668,6 @@ button { cursor: pointer; }
   text-underline-offset: 4px;
 }
 
-:root[data-help='true'] .kit-hint { -webkit-line-clamp: 3; }
 
 /* ---- locked against presets */
 
@@ -826,7 +850,7 @@ button { cursor: pointer; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: calc(var(--target) - 4px);
+  min-height: calc(var(--target) - 8px);
   border-top: 1px solid var(--track);
 }
 

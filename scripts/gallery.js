@@ -53,7 +53,11 @@ const list = (id, key, title, choices, about) => ({
 export const PARAMS = [
   range(0, 'drive', 'Drive', [0, 36, 12], 'dB',
     'How hard the signal is pushed into the shaper', { decimals: 1 }),
-  range(1, 'tone', 'Tone', [200, 16000, 6000], 'Hz', 'Where the top rolls off'),
+  range(1, 'tone', 'Tone', [200, 16000, 6000], 'Hz',
+    'Where the top rolls off: everything above this is turned down, ' +
+    'gently at first and then more steeply, which takes the edge off ' +
+    'what the shaper adds and is a good deal more to say than fits in ' +
+    'two lines at the size the rest of the page is set in'),
   range(2, 'mix', 'Mix', [0, 100, 100], '%', 'How much of it is the effect'),
   range(3, 'output', 'Output', [-24, 12, 0], 'dB',
     'Level after everything else', { decimals: 1 }),
@@ -130,6 +134,10 @@ export const SCENES = [
   {
     name: 'help',
     steps: [['click', '.kit-help'], ['hover', `${DRIVE} .kit-scrub`]]
+  },
+  {
+    name: 'tip',
+    steps: [['click', '.kit-help'], ['hover', '.kit-match'], ['wait', 400]]
   },
   { name: 'bypassed', steps: [['click', '.kit-power'], ['away']] },
   { name: 'groups', page: 'groups' },

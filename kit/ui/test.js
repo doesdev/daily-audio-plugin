@@ -6,7 +6,7 @@
 import test from 'mvt'
 import {
   DENSITIES, EMPTY, HOLD_MS, NO_HISTORY, clamp, densityFor, describe,
-  differences, dragged, fitScale, held, nextDensity, normOf, nudged,
+  differences, dragged, fitScale, fitted, held, nextDensity, normOf, nudged,
   otherTheme, parseValue, parts, plainOf, recorded, redone, reduce, snap,
   spectrum, steady, themeFor, undone, zoneFills, zoneOf
 } from './kit.js'
@@ -47,10 +47,13 @@ test('a drag moves by its length, a fine one a tenth as far', (assert) => {
   assert.is(snap(list, dragged(list, 0, 70)), 0.5)
 })
 
-test('a nudge is a step, or a fiftieth where there are none', (assert) => {
+test('a nudge is a step where they are few, else a fiftieth', (assert) => {
   assert.is(nudged(list, 0, 1), 0.5)
   assert.is(nudged(list, 1, 1), 1)
-  assert.is(nudged(stepped, 0.5, -1), 0.49)
+  // A hundred steps is a range that rounds: a fiftieth, or one step
+  // when fine, where it used to crawl a step at a time.
+  assert.is(nudged(stepped, 0.5, -1), 0.48)
+  assert.is(nudged(stepped, 0.5, -1, true), 0.49)
   assert.is(nudged(range, 0.5, 1), 0.52)
   assert.is(nudged(range, 0.5, 1, true), 0.502)
 })
@@ -449,13 +452,15 @@ test('a clip lights a lamp that stays lit until clicked', async (assert) => {
   const clipped = `document.querySelector('[data-key="level"]').dataset.clipped ?? null`
   await onPage([['tell', hot], ['tell', calm]], async (tab) => {
     assert.is(await tab.evaluate(clipped), 'true')
-    assert.is(await text(tab, '[data-key="level"] .kit-value'), '-30 dB')
+    // The number is the peak that is held, not the reading after it.
+    assert.is(await text(tab, '[data-key="level"] .kit-value'), '0 dB')
     assert.is(await tab.evaluate(
       `document.querySelector('[data-key="input"]').dataset.clipped ?? null`
     ), null)
 
     await tab.evaluate(`document.querySelector('[data-key="level"]').click() ?? true`)
     assert.is(await tab.evaluate(clipped), null)
+    assert.is(await text(tab, '[data-key="level"] .kit-value'), '-30 dB')
   })
 })
 
@@ -685,4 +690,78 @@ test('with audio running, the picture is the sound itself', async (assert) => {
     await tab.evaluate(frame)
     assert.true(await tab.evaluate(row) > 0)
   })
+})
+
+test('a window of another shape is filled, not left with an empty band', (assert) => {
+  const base = [820, 500]
+  const cases = [
+    // The design's own shape, and twice it: scaled, nothing to fill.
+    [[820, 500], { zoom: 1, width: 820, height: 500 }],
+    [[1640, 1000], { zoom: 2, width: 820, height: 500 }],
+    // Taller than the design: no bigger, and the page is as tall.
+    [[820, 900], { zoom: 1, width: 820, height: 900 }],
+    // Wider: as tall as it can be, and the page is as wide.
+    [[1640, 500], { zoom: 1, width: 1640, height: 500 }],
+    // Smaller and squarer: shrunk to fit across, filled downwards.
+    [[410, 500], { zoom: 0.5, width: 820, height: 1000 }]
+  ]
+
+  cases.forEach(([size, want]) => assert.deepEqual(fitted(size, base), want))
+})
+
+test('in a tall or a wide window the glass takes the room and nothing is cut', async (assert) => {
+  const edges = `(() => {
+    const sheet = document.querySelector('.kit-sheet').getBoundingClientRect()
+    const glass = document.querySelector('.kit-glass').getBoundingClientRect()
+    return {
+      below: window.innerHeight - sheet.bottom,
+      beside: window.innerWidth - glass.right,
+      picture: document.querySelector('.kit-picture')
+        .getBoundingClientRect().height
+    }
+  })()`
+  const spills = `[...document.querySelectorAll('#app *')].filter((el) => {
+    const r = el.getBoundingClientRect()
+    return r.width && (r.right > innerWidth + 1 || r.bottom > innerHeight + 1)
+  }).map((el) => el.className)`
+  const shaped = (tab, width, height) => tab.send(
+    'Emulation.setDeviceMetricsOverride',
+    { width, height, deviceScaleFactor: 1, mobile: false })
+  const frame = 'new Promise((r) => requestAnimationFrame(() => r(true)))'
+  await onPage([], async (tab) => {
+    const at = await tab.evaluate(edges)
+    for (const [width, height] of [[820, 900], [1380, 500], [640, 700]]) {
+      await shaped(tab, width, height)
+      await tab.evaluate(frame)
+      const now = await tab.evaluate(edges)
+      const scale = Math.min(width / 820, height / 500)
+      assert.true(now.below < 40 * scale, `${width}x${height} below: ${now.below}`)
+      assert.true(now.beside < 40 * scale, `${width}x${height} beside: ${now.beside}`)
+      assert.deepEqual(await tab.evaluate(spills), [])
+    }
+    await shaped(tab, 820, 900)
+    await tab.evaluate(frame)
+    assert.true((await tab.evaluate(edges)).picture > at.picture + 300)
+  })
+})
+
+test('a frequency in whole hertz drags and nudges like a range, not a hertz at a time', (assert) => {
+  // 30 to 1000 Hz, landing on whole hertz: 970 steps.
+  const follow = { kind: 'range', lo: 30, hi: 1000, skew: 2.5, step: 1, steps: 970 }
+
+  // The whole range in one span, as a setting with no steps has.
+  assert.is(dragged(follow, 0, 160), 1)
+  assert.is(dragged(follow, 0.25, 40), 0.5)
+  // A notch of the wheel is a fiftieth of the range, rounded to a step.
+  assert.is(nudged(follow, 0, 1), Math.round(0.02 * 970) / 970)
+  assert.true(nudged(follow, 0.5, 1) - 0.5 > 0.019)
+  // Fine is a five-hundredth, and never less than one step.
+  assert.is(nudged(follow, 0, 1, true), Math.round(0.002 * 970) / 970)
+  const coarse = { ...follow, steps: 100 }
+  assert.is(nudged(coarse, 0, 1, true), 0.01)
+
+  // A few steps are still felt one at a time.
+  const count = { kind: 'range', steps: 8 }
+  assert.is(nudged(count, 0, 1), 1 / 8)
+  assert.is(dragged(count, 0, 24 * 8, false, 160), 1)
 })

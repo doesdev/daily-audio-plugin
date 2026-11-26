@@ -45,7 +45,7 @@ interaction in the kit as well, one entry each in
 | Precision | Drag a number, Shift to go a tenth as fast, wheel and arrow keys by a step, double-click its line for the default, double-click the number (or Enter) to type one: `8k`, `1.2k Hz`, `-6`, the name of a choice. While it is held, the ends of its range and its default are shown. |
 | Compare and recover | Undo and redo (the buttons, Ctrl+Z, Ctrl+Shift+Z) and an A/B switch, in every header. Each step goes to the host as a proper gesture. |
 | Explains itself | The foot of the sheet says what the control under the pointer is and does, from the spec's `about`. Write an `about` for every setting. |
-| Fits the screen | The page is drawn at the spec's size and scaled whole to whatever window the host gives it. Density (Roomy, Regular, Dense) trades the size of the numbers for room on the glass. |
+| Fits the screen | The page is scaled by as much as the window allows and then laid out to fill it, whatever its shape: the glass and its picture take the room. Density (Roomy, Regular, Dense) trades the size of the numbers for room on the glass. |
 | A character | The house look, below. |
 
 ### Where the kit is still under the bar
@@ -142,6 +142,18 @@ looks the same in every host and in the screenshots. Numbers are set
 at 46 pixels (34, 26 by density), weight 500, tightly spaced; names
 and notes at 13, in sentence case. No capitals for labels, no
 monospace for numbers.
+
+## Nothing moves but what is moved
+
+Pointing at a control, turning help on, a longer hint, a wider number:
+none of them may change where anything else is. Text is given a box
+and made to fit it, drawn smaller within reason and cut short past
+that; the box does not grow. `kit/ui/gallery.test.js` holds every
+control to this at every density. A plugin's own additions to a page
+are held to the same.
+
+No tooltip is the browser's. Nothing carries a `title`; a tool's name
+and what help says of it come from the kit's own tip.
 
 ## What it avoids
 

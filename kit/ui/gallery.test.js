@@ -5,7 +5,8 @@
 
 import test from 'mvt'
 import {
-  EMPTY, NO_HISTORY, TIES, fingerprint, helpFor, holdFor, prefsFor,
+  EMPTY, NO_HISTORY, TIES, fallFor, fallen, fingerprint, helpFor, holdFor,
+  prefsFor, textFit,
   presetMoves, presetValues, recorded, redone, reduce, tagFor, undone
 } from './kit.js'
 import { withBrowser } from '../../scripts/lib/browser.js'
@@ -61,7 +62,10 @@ test('a pair moves together, apart, or one against the other', (assert) => {
 
 test('preferences fall back to their defaults, one by one', (assert) => {
   assert.deepEqual(prefsFor(null),
-    { hold: '2 s', motion: 'Full', fine: 'With Shift' })
+    { hold: '2 s', motion: 'Full', fine: 'With Shift', fall: 'Medium' })
+  assert.is(fallFor('Fast'), 40 / 60)
+  assert.is(fallFor('Medium'), 20 / 60)
+  assert.is(fallFor(undefined), 20 / 60)
   assert.is(prefsFor({ hold: 'Off', motion: 'Wobbly' }).hold, 'Off')
   assert.is(prefsFor({ hold: 'Off', motion: 'Wobbly' }).motion, 'Full')
   assert.is(holdFor('Off'), 0)
@@ -223,7 +227,7 @@ test('settings are chosen in a panel and kept for every editor', async (assert) 
     assert.is(await tab.evaluate(root('theme')), 'light')
     assert.is(await tab.evaluate(root('motion')), 'still')
     assert.deepEqual(await tab.evaluate('JSON.parse(localStorage.getItem("kit-prefs"))'),
-      { hold: 'Until pressed', motion: 'Still', fine: 'With Shift' })
+      { hold: 'Until pressed', motion: 'Still', fine: 'With Shift', fall: 'Medium' })
     assert.deepEqual(await tab.evaluate(spills), [])
 
     await click(tab, pick('theme', 'Match'))
@@ -234,14 +238,32 @@ test('settings are chosen in a panel and kept for every editor', async (assert) 
   })
 })
 
-test('with help on, the foot says a setting\'s range and resting place', async (assert) => {
-  const steps = [['click', '.kit-help'], ['hover', `${key('drive')} .kit-scrub`]]
-  await onGallery('main', steps, async (tab) => {
-    assert.is(await text(tab, '.kit-hint-about'),
-      'How hard the signal is pushed into the shaper.' +
-      ' From 0.0 dB to 36.0 dB. Rests at 12.0 dB.')
+test('help only adds: the foot says the same, and a card says the rest', async (assert) => {
+  const hover = ['hover', `${key('drive')} .kit-scrub`]
+  const foot = 'How hard the signal is pushed into the shaper'
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+  await onGallery('main', [hover], async (tab) => {
+    // Off: the foot explains, and no card comes.
+    assert.is(await text(tab, '.kit-hint-about'), foot)
+    await wait(700)
+    assert.false(await has(tab, '.kit-tip'))
+
+    await click(tab, '.kit-help')
+    await STEPS.hover(tab, hover.slice(1))
+    await wait(300)
+    assert.is(await text(tab, '.kit-hint-about'), foot)
+    assert.is(await text(tab, '.kit-tip b'), 'Drive')
+    assert.is(await text(tab, '.kit-tip span'),
+      `${foot}. From 0.0 dB to 36.0 dB. Rests at 12.0 dB.`)
     assert.is(await tab.evaluate(
       'document.querySelector(".kit-help").ariaPressed'), 'true')
+
+    // And off again is as it was.
+    await click(tab, '.kit-help')
+    await STEPS.hover(tab, hover.slice(1))
+    await wait(700)
+    assert.is(await text(tab, '.kit-hint-about'), foot)
+    assert.false(await has(tab, '.kit-tip'))
   })
 })
 
@@ -523,5 +545,128 @@ test('a long note under the name gives way: the tools stay on the glass', async 
       'A note a good deal longer than the header has any room for') && true`)
     assert.true(await tab.evaluate(fits) >= 20)
     assert.deepEqual(await tab.evaluate(spills), [])
+  })
+})
+
+test('a bar never falls under the level, and a wide text is scaled to fit', (assert) => {
+  assert.is(fallen(0.9, 0.3, 0.5, 20 / 60), 0.9 - 10 / 60)
+  assert.is(fallen(0.9, 0.3, 60, 20 / 60), 0.3)
+  assert.is(fallen(0.2, 0.3, 1, 20 / 60), 0.3)
+  assert.is(fallen(0.9, 0.3, -1, 20 / 60), 0.9)
+
+  assert.is(textFit(80, 100), 1)
+  assert.is(textFit(200, 100), 0.6)
+  assert.is(textFit(125, 100), 0.8)
+  assert.is(textFit(0, 100), 1)
+})
+
+// Where everything on the page is, to tell whether anything moved.
+const places = `JSON.stringify([...document.querySelectorAll(
+  '.kit-glass, .kit-sheet, .kit-foot, .kit-control, .kit-tool, .kit-picture'
+)].map((el) => {
+  const r = el.getBoundingClientRect()
+  return [r.left, r.top, r.width, r.height].map((v) => Math.round(v * 10))
+}))`
+
+test('pointing at anything moves nothing, at any density, help on or off', async (assert) => {
+  const over = [
+    `${key('drive')} .kit-scrub`, `${key('tone')} .kit-scrub`,
+    `${key('output')} .kit-scrub`, '.kit-option', '.kit-undo', '.kit-settings',
+    '.kit-match', '.kit-power', '.kit-preset', `${key('input')}`
+  ]
+  await onGallery('main', [], async (tab) => {
+    for (const help of [false, true]) {
+      if (help) await click(tab, '.kit-help')
+      for (const density of ['roomy', 'regular', 'dense']) {
+        await STEPS.away(tab, [])
+        const before = await tab.evaluate(places)
+        for (const spec of over) {
+          await STEPS.hover(tab, [spec])
+          await new Promise((resolve) => setTimeout(resolve, 160))
+          assert.is(await tab.evaluate(places), before,
+            `${spec}, ${density}, help ${help}`)
+        }
+        await click(tab, '.kit-density')
+      }
+    }
+    assert.deepEqual(await tab.evaluate(spills), [])
+  })
+})
+
+test('a hint too long for its two lines is drawn smaller, in the same box', async (assert) => {
+  const size = 'parseFloat(document.querySelector(".kit-hint").style.fontSize)'
+  const height = 'document.querySelector(".kit-hint").getBoundingClientRect().height'
+  await onGallery('main', [['hover', `${key('drive')} .kit-scrub`]], async (tab) => {
+    const tall = await tab.evaluate(height)
+    assert.is(await tab.evaluate(size), 13)
+
+    await STEPS.hover(tab, [`${key('tone')} .kit-scrub`])
+    assert.true(await tab.evaluate(size) < 13)
+    assert.true(await tab.evaluate(size) >= 10.5)
+    assert.is(await tab.evaluate(height), tall)
+  })
+})
+
+test('every tooltip is the house\'s own, and a press puts it away', async (assert) => {
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+  await onGallery('main', [], async (tab) => {
+    // Nothing anywhere would make the browser draw one of its own.
+    assert.is(await tab.evaluate('document.querySelectorAll("[title]").length'), 0)
+
+    await STEPS.hover(tab, ['.kit-undo'])
+    assert.false(await has(tab, '.kit-tip'))
+    await wait(600)
+    assert.is(await text(tab, '.kit-tip b'), 'Undo (Ctrl+Z)')
+    assert.false(await has(tab, '.kit-tip span'))
+
+    await click(tab, '.kit-help')
+    assert.false(await has(tab, '.kit-tip'))
+    await STEPS.hover(tab, ['.kit-undo'])
+    await wait(300)
+    assert.contains(await text(tab, '.kit-tip span'), 'Steps back')
+    // It stays on the page.
+    assert.deepEqual(await tab.evaluate(spills), [])
+  })
+})
+
+test('a meter holds its number and lets its bar fall at a pace', async (assert) => {
+  const reading = (level, said) => [{
+    type: 'meters', levels: [level, 0.5], levelTexts: [said, '-30 dB']
+  }]
+  const fill = (n) => `Number(getComputedStyle(document.querySelectorAll(
+    '[data-key="level"] .kit-segment')[${n}]).getPropertyValue('--fill'))`
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+  await onGallery('main', [], async (tab) => {
+    await STEPS.tell(tab, reading(0.9, '-6 dB'))
+    await STEPS.tell(tab, reading(0.3, '-42 dB'))
+    await wait(100)
+
+    // The reading dropped 36 dB at once; the bar has only begun to.
+    assert.is(await text(tab, '[data-key="level"] .kit-value'), '-6 dB')
+    assert.true(await tab.evaluate(fill(1)) > 0.5)
+
+    await wait(2400)
+    assert.is(await tab.evaluate(fill(1)), 0)
+    assert.true(Math.abs(await tab.evaluate(fill(0)) - 0.5) < 0.01)
+    // The hold has run out too, and the number says where it is now.
+    assert.is(await text(tab, '[data-key="level"] .kit-value'), '-42 dB')
+  })
+})
+
+test('a number too wide for its column is drawn smaller, not over its neighbour', async (assert) => {
+  const texts = PARAMS.map((row, i) => (i === 1 ? '16000.0 Hz' : 'x'))
+  const state = { type: 'state', values: PARAMS.map((r) => r.default), texts }
+  const fit = `Number(document.querySelector('${key('tone')} .kit-value')
+    .style.getPropertyValue('--fit'))`
+  const inside = `(() => {
+    const box = document.querySelector('${key('tone')}').getBoundingClientRect()
+    const unit = document.querySelector('${key('tone')} .kit-unit')
+      .getBoundingClientRect()
+    return box.right - unit.right
+  })()`
+  await onGallery('main', [['tell', state]], async (tab) => {
+    await tab.evaluate('new Promise((r) => requestAnimationFrame(() => r(true)))')
+    assert.true(await tab.evaluate(fit) < 1)
+    assert.true(await tab.evaluate(inside) >= -1)
   })
 })
