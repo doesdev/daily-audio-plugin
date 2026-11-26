@@ -136,6 +136,21 @@ a wide synth bass under a mono vocal.
 
 ![Steered the other way: the sides lean on the middle](images/steered.png)
 
+### Sidechain
+
+**Sidechain**, at the foot of the sheet, hands the pushing to another
+track. Route that track to Undertow's sidechain input in your host
+(it is the second input, named Sidechain), then switch it on. The
+low end of that track's middle, below Follow, now moves the resting
+point, and nothing of this track's own does: a kick or a bass on
+another channel can lean on a pad's sides. Steer still chooses which
+half of this track is leaned on. The sidechain itself is never heard.
+With it on and nothing routed, nothing pushes. While it is on, the
+picture shows how far the resting point has moved but not which way,
+so the ticks are drawn both sides.
+
+![The sidechain doing the pushing](images/sidechain.png)
+
 ### Valve
 
 **Drive** is how hard the carried half goes into the curve, from 0 to

@@ -349,3 +349,68 @@ fn the_tube_window_changes_the_valve_and_at_rest_changes_nothing() {
     assert!(second(&[(undertow::TUBE_BIAS, 40.0)]) > 0.005);
     assert!(second(&[(undertow::TUBE_GRID, 100.0)]) > 0.001);
 }
+
+// A quiet 1 kHz on the sides, and a 60 Hz bass for whatever is to do
+// the pushing. A bass that moves the sides' resting point shows up
+// beside the tone: 60 Hz either way of it where the valve rests off
+// its centre, 120 Hz where it rests on it.
+// How much of `x` is at exactly `hz`, and nothing either side of it.
+fn only(x: &[f32], hz: f32) -> f32 {
+    let (re, im) = at(x, hz);
+    (re * re + im * im).sqrt()
+}
+
+fn tone_and_bass() -> (Vec<f32>, Vec<f32>, Vec<f32>) {
+    let wave = |hz: f32, gain: f32| -> Vec<f32> {
+        (0..SECOND)
+            .map(|i| gain * (std::f32::consts::TAU * hz * i as f32 / RATE).sin())
+            .collect()
+    };
+    (vec![0.0; SECOND], wave(1000.0, 0.2), wave(60.0, 0.8))
+}
+
+#[test]
+fn the_tube_windows_bias_moves_the_rest_and_the_bass_still_rides_on_it() {
+    let (_, tone, bass) = tone_and_bass();
+    let input = stereo(&bass, &tone);
+    let beside = |settings: &[(usize, f64)]| {
+        let base = [(FOLLOW, 200.0), (DRIVE, 12.0)];
+        let (_, side) = settled(&mut with(&[&base[..], settings].concat()), &input);
+        only(&side, 1060.0)
+    };
+
+    // Bias in the window is where the valve rests; Push is still how
+    // far the bass moves it from there, as much as it ever was.
+    let ridden = beside(&[(PUSH, 80.0), (undertow::TUBE_BIAS, 40.0)]);
+    let still = beside(&[(PUSH, 0.0), (undertow::TUBE_BIAS, 40.0)]);
+    let centred = beside(&[(PUSH, 80.0)]);
+    assert!(still < 1e-5, "nothing rides with no push: {still}");
+    assert!(ridden > 0.002, "the bass rides on the bias: {ridden}");
+    assert!(ridden > centred * 0.3, "{ridden} against {centred}");
+}
+
+#[test]
+fn a_sidechain_does_the_pushing_when_asked_and_only_then() {
+    let (quiet, tone, bass) = tone_and_bass();
+    let own = stereo(&quiet, &tone);
+    let keyed = [own.clone(), vec![bass.clone(), bass.clone()]].concat();
+    let beside = |input: &[Vec<f32>], settings: &[(usize, f64)]| {
+        let base = [(PUSH, 80.0), (FOLLOW, 200.0), (DRIVE, 12.0)];
+        let (_, side) = settled(&mut with(&[&base[..], settings].concat()), input);
+        // Round its centre the curve flattens alike either way, so
+        // the tone is squeezed twice in each wave of the bass.
+        only(&side, 1120.0)
+    };
+    let on = [(undertow::KEY, 1.0)];
+
+    // Another track's bass pushes this one's sides.
+    let pushed = beside(&keyed, &on);
+    assert!(pushed > 0.002, "{pushed}");
+    // Switched off, what is on the sidechain is not heard at all.
+    assert!(beside(&keyed, &[]) < 1e-5);
+    // Switched on with nothing routed, nothing pushes: its own bass
+    // no longer does.
+    let bassy = stereo(&bass, &tone);
+    assert!(beside(&bassy, &on) < 1e-5);
+    assert!(beside(&bassy, &[]) > 0.002);
+}

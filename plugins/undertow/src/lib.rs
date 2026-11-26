@@ -22,6 +22,7 @@ pub const TUBE_BIAS: usize = 10;
 pub const TUBE_GRID: usize = 11;
 pub const TUBE_SAG: usize = 12;
 pub const TUBE_GLOW: usize = 13;
+pub const KEY: usize = 14;
 // Indexes into METERS.
 pub const INPUT: usize = 0;
 pub const LEVEL: usize = 1;
@@ -133,8 +134,11 @@ impl Plugin for Undertow {
         kit::tube_grid(15),
         kit::tube_sag(16),
         kit::tube_glow(17),
+        kit::key(18),
     ];
 
+    // A sidechain: another track can do the pushing.
+    const KEY_IN: u32 = 2;
     const METERS: &'static [Param] = &[
         meter(6, "input", "In"),
         meter(7, "level", "Out"),
@@ -194,6 +198,7 @@ impl Plugin for Undertow {
         let matching = block.choice(MATCH) == 1;
         let balance = block.value(BALANCE) / 100.0;
         let listen = block.choice(LISTEN);
+        let keyed = block.on(KEY);
         // The valve is refined once a block: these are set and left,
         // not ridden.
         self.tube.set(TubeShape {
@@ -216,11 +221,18 @@ impl Plugin for Undertow {
             let (mix, output) = (self.mix.next(mix), self.output.next(output));
             let (left, right) = (sample(block, 0, i), sample(block, 1, i));
             let (mid, side) = ((left + right) * 0.5, (left - right) * 0.5);
-            let (key, carried) = if mid_leans { (mid, side) } else { (side, mid) };
+            let (passed, carried) = if mid_leans { (mid, side) } else { (side, mid) };
+            // What does the pushing: the other half of this sound, or
+            // with the sidechain on, the middle of the track routed
+            // there, and then nothing of this sound's own.
+            let pusher = match keyed {
+                true => (key_sample(block, 0, i) + key_sample(block, 1, i)) * 0.5,
+                false => passed,
+            };
 
             // The bias is the leaning half's own low wave, not an
             // envelope of it: up and down push opposite ways.
-            let bias = self.low.next(key).low * push;
+            let bias = self.low.next(pusher).low * push;
             // With the tube window at rest this is `leaned` exactly.
             let wet = self.tube.next(carried * drive, bias) / drive;
             let carried = carried + (wet - carried) * mix;
@@ -228,9 +240,9 @@ impl Plugin for Undertow {
             self.lean = (self.lean - self.lean_fall).max(bias.abs() / REACH);
             swing = swing.max((carried * drive).abs() / REACH);
             let (mid, side) = if mid_leans {
-                (key, carried)
+                (passed, carried)
             } else {
-                (carried, key)
+                (carried, passed)
             };
             // Matched to what came in before the output trim, which is
             // then the person's own to set on top.
@@ -257,6 +269,12 @@ impl Plugin for Undertow {
         block.meter(LEAN, self.lean.min(1.0) as f64);
         block.meter(SWING, swing.min(1.0) as f64);
     }
+}
+
+// Sample `i` of sidechain channel `ch`: silence if nothing is routed.
+#[inline]
+fn key_sample(block: &Block, ch: usize, i: usize) -> f32 {
+    block.key(ch).map_or(0.0, |buf| buf[i])
 }
 
 // Sample `i` of input `ch`; a mono input answers for both sides.

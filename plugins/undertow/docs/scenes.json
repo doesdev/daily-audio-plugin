@@ -147,5 +147,16 @@
       "listen": "Side",
       "balance": 40
     }
+  },
+  {
+    "name": "sidechain",
+    "values": {
+      "key": "On",
+      "push": 80,
+      "input": 0.8,
+      "level": 0.79,
+      "lean": 0.55,
+      "swing": 0.2
+    }
   }
 ]
