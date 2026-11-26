@@ -1,0 +1,46 @@
+{
+  "plugin": "undertow",
+  "kind": "Stereo saturation: harmonics placed in the middle and the sides",
+  "leaders": [
+    {
+      "who": "FabFilter Saturn 2",
+      "does": "28 distortion styles in up to 6 bands, mid/side processing, a 50-slot modulation matrix with envelope followers, a real-time analyzer under its band display, live modulation visualization, undo, redo and A/B, interface sizes and full screen, curated factory presets",
+      "source": "https://www.fabfilter.com/products/saturn-2-multiband-distortion-saturation-plug-in"
+    },
+    {
+      "who": "Panorama Audio Labs Panoramic",
+      "does": "Parallel stereo sections: Steal derives harmonics from the mid into the stereo image, Character adds odd-order saturation to the side, Density compresses the side, Air excites highs; an interactive diagram of its routes, tooltips through a [?] control, GUI scaling from 75% to 125%",
+      "source": "https://panoramalabs.com.au/panoramic/"
+    }
+  ],
+  "points": {
+    "picture": {
+      "verdict": "exceeds",
+      "note": "The valve's curve with the point the middle's bass has put the sides at riding along it, the swing of the sides drawn round that point, and where it has been over the last seconds. Saturn draws bands over a spectrum and Panoramic a diagram of its routes; neither shows where on its curve the sound sits, which is the whole of what Undertow does."
+    },
+    "precision": {
+      "verdict": "meets",
+      "note": "Every setting is a kit value: drag with fine, wheel and arrows, a default one double-click away, typed values. Saturn's page claims tuned knobs without detail; Panoramic's says nothing of value entry."
+    },
+    "compare": {
+      "verdict": "meets",
+      "note": "Undo, redo and A/B from the kit, as Saturn has. Panoramic's page names neither."
+    },
+    "explains": {
+      "verdict": "meets",
+      "note": "Every setting has an about shown at the foot of the sheet as the pointer moves, and help adds ranges; Saturn has interactive help hints and Panoramic tooltips behind [?]."
+    },
+    "fits": {
+      "verdict": "meets",
+      "note": "Scales whole to any window and has three densities. Saturn also has full screen, which the kit leaves to the host's window."
+    },
+    "character": {
+      "verdict": "meets",
+      "note": "The house look; the riding point and its swing turn purple while Push, Follow or Drive is held."
+    },
+    "presets": {
+      "verdict": "under",
+      "note": "Four of its own, and a person's are files to copy and share. Saturn ships a large curated library; four is enough to show what Undertow is for, not a library. Next: more once a person has listened and said which uses they reach for."
+    }
+  }
+}

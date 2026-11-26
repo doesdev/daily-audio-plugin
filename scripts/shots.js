@@ -23,7 +23,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { withBrowser } from './lib/browser.js'
-import { ROOT, pluginDir } from './lib/plugins.js'
+import { ROOT, exampleOf, pluginDir } from './lib/plugins.js'
 
 const PAD = 8
 
@@ -42,7 +42,8 @@ const cargo = () => process.env.CARGO || 'cargo'
 const spec = (plugin, args, input = '') => {
   const run = spawnSync(
     cargo(),
-    ['run', '-q', '-p', plugin, '--example', 'spec', '--', ...args],
+    ['run', '-q', '-p', plugin, '--example', exampleOf(plugin, 'spec'), '--',
+      ...args],
     { cwd: ROOT, input, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
   )
   if (run.error?.code === 'ENOENT') {

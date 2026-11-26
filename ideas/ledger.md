@@ -8,3 +8,4 @@ which ideas come next.
 | Date | Plugin | The idea, in a sentence | Outcome | Verdict |
 |------|--------|-------------------------|---------|---------|
 | 2026-11-25 | (kit) | The kit, extracted from wispidi, and the template plugin | Built; CI green on Windows, both validators pass | |
+| 2026-11-25 | undertow | The middle's low end biases the sides' valve, sample by sample, so the sides take on even harmonics in time with the bass while the middle and mono pass untouched | Built; check green on Linux; Windows editor and validators left to CI | |

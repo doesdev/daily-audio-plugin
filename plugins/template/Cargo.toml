@@ -15,6 +15,16 @@ release = false
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+# Named after the plugin: cargo puts every package's examples in one
+# folder, so a second plugin's `spec` would overwrite this one's.
+[[example]]
+name = "template-spec"
+path = "examples/spec.rs"
+
+[[example]]
+name = "template-demo"
+path = "examples/demo.rs"
+
 [dependencies]
 kit = { workspace = true }
 kit-dsp = { workspace = true }
