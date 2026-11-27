@@ -1500,14 +1500,21 @@ export const tools = (ui) => {
 // The head of the glass: the plugin's name, a note under it if the
 // page has one to make (`opts.note`), and the tools, always in the
 // same order so the hand learns them once.
-export const header = (ui, opts = {}) => h('header.kit-header', {},
-  h('div.kit-heading', {},
-    tipped(h('h1.kit-name', {}, ui.name), () => ({
-      title: ui.name, text: 'A Daily Audio Plugin: one of DAP\'s.'
-    })),
-    opts.note ? h('p.kit-note', {}, opts.note) : null),
-  presetPill(ui),
-  h('div.kit-tools', {}, tools(ui)))
+export const header = (ui, opts = {}) => {
+  const note = opts.note ? h('p.kit-note', {}, opts.note) : null
+  // The note may be an element a plugin keeps up to date: what is
+  // shown is whatever it says when the name is pointed at.
+  const said = () => note?.textContent || 'A Daily Audio Plugin.'
+  return h('header.kit-header', {},
+    h('div.kit-heading.kit-brand', {},
+      h('span.kit-mark', { role: 'img', 'aria-label': 'DAP' }),
+      tipped(h('h1.kit-name', {}, ui.name), () => ({
+        title: ui.name, text: said()
+      })),
+      note),
+    presetPill(ui),
+    h('div.kit-tools', {}, tools(ui)))
+}
 
 // The foot of the sheet: whatever the page puts there, then what the
 // control under the pointer is and does, or how the controls work

@@ -97,6 +97,9 @@ things only.
   number and line turn purple while it is dragged or typed, and what
   it shapes in the picture turns with it. Let go and it is ink again.
   Nothing is purple at rest but a switch that is on.
+  The one exception is the plugin's name under the DAP mark: it is
+  the brand's own purple, by the owner's choice, and nothing else
+  borrows it.
 - **A level's colour is news.** Ink up to -24 dB, then green, yellow,
   orange and red, in segments with space between and no gradient. The
   number takes its segment's colour from yellow up.

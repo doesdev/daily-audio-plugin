@@ -1014,3 +1014,29 @@ test('the button that links a pair is a circle, whatever else is called a link',
     assert.is(round, '50%')
   })
 })
+
+test('the DAP mark heads every editor, with the name centred under it', async (assert) => {
+  await onGallery('main', [], async (tab) => {
+    const [mark, name, shown, note] = await tab.evaluate(`(() => {
+      const box = (sel) => document.querySelector(sel).getBoundingClientRect()
+      const [m, n] = [box('.kit-mark'), box('.kit-name')]
+      const style = getComputedStyle(document.querySelector('.kit-mark'))
+      const said = document.querySelector('.kit-note')
+      return [
+        [m.width, m.height, m.bottom <= n.top + 1],
+        [n.left >= m.left - 1, n.right <= m.right + 1],
+        style.backgroundImage.startsWith('url("data:image/svg+xml'),
+        said ? said.getBoundingClientRect().width <= 1 : true
+      ]
+    })()`)
+    assert.deepEqual(mark.slice(0, 2).map(Math.round), [128, 36])
+    assert.true(mark[2], 'the name is beneath the mark')
+    assert.deepEqual(name, [true, true])
+    assert.true(shown, 'the mark is drawn')
+    // What the plugin says of itself is kept for reading out, not shown.
+    assert.true(note)
+    assert.is(await tab.evaluate(
+      'document.querySelector(".kit-mark").getAttribute("aria-label")'), 'DAP')
+    assert.deepEqual(await tab.evaluate(spills), [])
+  })
+})
