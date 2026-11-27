@@ -259,6 +259,13 @@ test('release notes say what it is, what is new and how to install', (assert) =>
   assert.contains(made, '## What is new about it\n\nIt blooms.')
   assert.contains(made, 'Unzip `tape-bloom-0.1.0.zip`')
   assert.doesNotContain(notes('T', readme, null, 'z'), 'What is new')
+  // What the version changed is quoted, ahead of what the plugin is
+  // about, and left out where there is nothing to quote.
+  const changed = '## What changed in 0.2.0\n\n- A freeze.'
+  const told = notes('T', readme, novelty, 'z', changed)
+  assert.contains(told, '- A freeze.')
+  assert.true(told.indexOf('What changed') < told.indexOf('What is new'))
+  assert.doesNotContain(notes('T', readme, novelty, 'z'), 'What changed')
   // A paragraph wrapped over lines is said whole, not cut at the first.
   const wrapped = '# T\n\nA delay that\nblooms.\n\nMore.'
   assert.contains(notes('T', wrapped, null, 'z'),

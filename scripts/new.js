@@ -26,6 +26,15 @@ export const classId = (bytes = randomBytes(16)) => {
   return `[${[0, 1, 2, 3].map(word).join(', ')}]`
 }
 
+// A plugin's changelog starts with what it is: the run fills in the
+// line. The check holds the newest entry to the crate's version.
+const CHANGELOG = (display) => `# ${display}: what changed
+
+## 0.1.0 (${new Date().toISOString().slice(0, 10)})
+
+- First release: SAY WHAT IT IS IN A LINE.
+`
+
 const NOVELTY = (display) => `# What is new about ${display}
 
 ## What is new
@@ -100,6 +109,7 @@ export const create = (name, display, { instrument = false, root = ROOT } = {}) 
       readFileSync(file, 'utf8'), { name, display, instrument, ids }
     )))
   writeFileSync(join(dir, 'NOVELTY.md'), NOVELTY(display))
+  writeFileSync(join(dir, 'CHANGELOG.md'), CHANGELOG(display))
   return dir
 }
 

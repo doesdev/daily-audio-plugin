@@ -46,6 +46,11 @@ npm run gallery                    # the kit's own pictures, both themes
   is news, and none of the habits listed under "What it avoids".
 - Say what was not verified. Off Windows that is the WebView2 editor
   tests and both validators.
+- Every change is written down: a plugin's in its `CHANGELOG.md`
+  under the version that ships it, the kit's in `kit/CHANGELOG.md`
+  under the day. Say what a person will notice, not what was edited.
+  A release quotes them. The check fails code that changed without a
+  line.
 - The brand is Daily Audio Plugin, DAP for short (`docs/brand.md`).
   Every plugin's vendor is `kit::VENDOR`.
 - No em or en dashes in any doc.
