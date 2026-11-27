@@ -113,7 +113,11 @@ pub fn create<P: Plugin>(
             },
             host,
             spec,
-            shared: Arc::new(Shared::new(&spec)),
+            shared: {
+                let shared = Arc::new(Shared::new(&spec));
+                kit::link::start(&shared, spec);
+                shared
+            },
             latency: AtomicU32::new(0),
             #[cfg(windows)]
             gui: std::cell::RefCell::new(None),

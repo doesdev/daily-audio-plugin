@@ -8,6 +8,10 @@
 //! id with `LEARNT` set, and the controller's number as the value. A
 //! build from before MIDI learn reads past those as ids it does not
 //! know.
+//!
+//! A setting linked to other instances has a third: its id with
+//! `LINKED` set, and its group as the value. Groups are kept under
+//! 2^52 so a float carries them whole.
 
 use crate::Spec;
 
@@ -18,8 +22,54 @@ const PAIR: usize = 12;
 /// setting's own id may have it.
 pub const LEARNT: u32 = 0x4C00_0000;
 
+/// Set in the id of a pair that holds a setting's link group. It
+/// shares no bit with `LEARNT`, and no setting's own id may have it.
+pub const LINKED: u32 = 0x3100_0000;
+
 pub fn encode(spec: &Spec, values: &[f64]) -> Vec<u8> {
     encode_learnt(spec, values, &[])
+}
+
+/// As `encode_learnt`, with the group each setting is linked in.
+pub fn encode_linked(spec: &Spec, values: &[f64], ccs: &[Option<u8>], groups: &[u64]) -> Vec<u8> {
+    let mut out = encode_learnt(spec, values, ccs);
+    let linked = spec
+        .params
+        .iter()
+        .zip(groups)
+        .filter(|(_, group)| **group != 0);
+    let mut count = u32::from_le_bytes([out[4], out[5], out[6], out[7]]);
+    for (p, group) in linked {
+        out.extend_from_slice(&(p.id | LINKED).to_le_bytes());
+        out.extend_from_slice(&(*group as f64).to_le_bytes());
+        count += 1;
+    }
+    out[4..8].copy_from_slice(&count.to_le_bytes());
+    out
+}
+
+/// The group each setting was linked in when `bytes` was saved: 0,
+/// for a state that is not one or says nothing of it.
+pub fn linked(spec: &Spec, bytes: &[u8]) -> Vec<u64> {
+    let mut groups = vec![0; spec.params.len()];
+    let pairs = bytes
+        .strip_prefix(MAGIC)
+        .and_then(|rest| rest.get(4..))
+        .unwrap_or(&[]);
+    for pair in pairs.as_chunks::<PAIR>().0 {
+        let id = u32::from_le_bytes([pair[0], pair[1], pair[2], pair[3]]);
+        let mut value = [0; 8];
+        value.copy_from_slice(&pair[4..]);
+        let group = f64::from_le_bytes(value);
+        let index = Some(id)
+            .filter(|id| id & LINKED == LINKED && id & LEARNT == 0)
+            .and_then(|id| spec.setting_of(id & !LINKED));
+        let whole = (1.0..4_503_599_627_370_496.0).contains(&group) && group.fract() == 0.0;
+        if let Some(index) = index.filter(|_| whole) {
+            groups[index] = group as u64;
+        }
+    }
+    groups
 }
 
 /// As `encode`, with the controller each setting has learned.
@@ -205,5 +255,24 @@ mod tests {
         other.set_learnt(&shared.learnt());
         other.controller(74, 127);
         assert_eq!(other.value(0), Some(1.0));
+    }
+
+    #[test]
+    fn link_groups_are_saved_beside_the_settings_and_harm_nothing_else() {
+        let spec = spec(&[MIX, MODE]);
+        let values = spec.defaults();
+        let mut groups = vec![0; spec.params.len()];
+        groups[0] = 4_503_599_627_370_495;
+        let ccs = vec![Some(7); spec.params.len()];
+        let saved = encode_linked(&spec, &values, &ccs, &groups);
+
+        assert_eq!(linked(&spec, &saved), groups);
+        // The settings and the controllers read as they did.
+        assert_eq!(decode(&spec, &saved), Some(values.clone()));
+        assert_eq!(learnt(&spec, &saved), ccs);
+        // A state from before linking says nothing of it.
+        let old = encode_learnt(&spec, &values, &ccs);
+        assert!(linked(&spec, &old).iter().all(|g| *g == 0));
+        assert!(linked(&spec, b"junk").iter().all(|g| *g == 0));
     }
 }

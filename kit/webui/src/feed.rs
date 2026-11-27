@@ -33,22 +33,36 @@ const RETELL: u32 = 30;
 pub fn live(spec: Spec, link: ScopeLink) -> Feed {
     let sound = signal(link.clone());
     let told = Cell::new(None);
+    let tied = Cell::new(None);
     let ticks = Cell::new(0);
     Box::new(move || {
-        let version = link.borrow().as_ref().map(|scope| scope.learn.version());
-        let due = ticks.replace((ticks.get() + 1) % RETELL) == 0;
-        if version.is_some() && (due || told.get() != version) {
-            told.set(version);
+        let versions = link
+            .borrow()
+            .as_ref()
+            .map(|scope| (scope.learn.version(), scope.links.version()));
+        let tick = ticks.replace((ticks.get() + 1) % RETELL);
+        let (learnt, linked) = (versions.map(|v| v.0), versions.map(|v| v.1));
+        if learnt.is_some() && (tick == 0 || told.get() != learnt) {
+            told.set(learnt);
             let link = link.borrow();
             return Some(bridge::learn(&spec, &link.as_ref()?.learn));
+        }
+        // Who is linked, half a turn after: one message a tick.
+        if linked.is_some() && (tick == RETELL / 2 || tied.get() != linked) {
+            tied.set(linked);
+            let link = link.borrow();
+            return Some(bridge::links(&spec, &link.as_ref()?.links));
         }
         sound()
     })
 }
 
-/// Does what the page asks of MIDI learn: `learn` with a setting's id
-/// has it wait for a controller, `learn` with none stops the waiting,
-/// and `forget` frees a setting from its controller.
+/// Does what the page asks of MIDI learn and of linking. `learn`
+/// with a setting's id has it wait for a controller, `learn` with
+/// none stops the waiting, and `forget` frees a setting from its
+/// controller. `tie` links a setting with the same one of the
+/// instance `peer`; `untie` takes that peer's out of the group, or
+/// with no peer this instance's own.
 pub fn learner(spec: Spec, link: ScopeLink) -> Hear {
     Box::new(move |text| {
         let Ok(msg) = serde_json::from_str::<serde_json::Value>(text) else {
@@ -59,11 +73,27 @@ pub fn learner(spec: Spec, link: ScopeLink) -> Hear {
             .get("id")
             .and_then(|id| u32::try_from(id.as_u64()?).ok())
             .and_then(|id| spec.setting_of(id));
+        let peer = msg
+            .get("peer")
+            .and_then(|p| p.as_str())
+            .and_then(|p| p.parse::<u64>().ok());
+        let key = index.map(|i| spec.params[i].key);
         let link = link.borrow();
         match (kind, link.as_ref(), index) {
             (Some("learn"), Some(scope), index) => scope.learn.listen(index),
             (Some("forget"), Some(scope), Some(index)) => scope.learn.bind(index, None),
-            (Some("learn" | "forget"), _, _) => {}
+            (Some("tie"), Some(scope), Some(index)) => {
+                if let (Some(peer), Some(key)) = (peer, key) {
+                    scope.links.tie(index, key, peer);
+                }
+            }
+            (Some("untie"), Some(scope), Some(index)) => {
+                let alone = msg.get("peer").is_none();
+                if peer.is_some() || alone {
+                    scope.links.untie(index, key.unwrap_or(""), peer);
+                }
+            }
+            (Some("learn" | "forget" | "tie" | "untie"), _, _) => {}
             _ => return false,
         }
         true
@@ -193,6 +223,8 @@ mod tests {
         let first = told(feed()).expect("told at once");
         assert_eq!(first["type"], "learn");
         assert_eq!(first["waiting"], Value::Null);
+        // Then who is linked, and then nothing.
+        assert_eq!(told(feed()).expect("and links")["type"], "links");
         assert_eq!(feed(), None);
 
         scope.learn.listen(Some(1));
@@ -203,7 +235,40 @@ mod tests {
         assert_eq!(bound["map"], serde_json::json!({ "9": 74 }));
 
         // Nothing changes, yet within a second it is said again.
-        let again = (0..RETELL).filter_map(|_| told(feed())).count();
+        let again = (0..RETELL)
+            .filter_map(|_| told(feed()))
+            .filter(|msg| msg["type"] == "learn")
+            .count();
         assert_eq!(again, 1);
+    }
+
+    #[test]
+    fn the_page_is_told_who_is_linked_and_can_link_and_unlink() {
+        let scope = Arc::new(Scope::default());
+        let link: ScopeLink = Rc::new(RefCell::new(Some(scope.clone())));
+        let hear = learner(SPEC, link.clone());
+        let feed = live(SPEC, link);
+        // Until something says `links`.
+        let told = || {
+            (0..80).find_map(|_| {
+                let msg: Value = serde_json::from_str(&feed()?).ok()?;
+                (msg["type"] == "links").then_some(msg)
+            })
+        };
+
+        assert!(hear(r#"{"type":"tie","id":4,"peer":"42"}"#));
+        let group = scope.links.group(0);
+        assert_ne!(group, 0);
+        let msg = told().expect("told");
+        assert_eq!(msg["groups"]["4"], group.to_string());
+        assert_eq!(msg["peers"], serde_json::json!([]));
+
+        assert!(hear(r#"{"type":"untie","id":4}"#));
+        assert_eq!(scope.links.group(0), 0);
+        assert_eq!(told().expect("told")["groups"], serde_json::json!({}));
+        // A peer given as anything but its number in text links nothing.
+        assert!(hear(r#"{"type":"tie","id":4,"peer":7}"#));
+        assert!(hear(r#"{"type":"untie","id":4,"peer":7}"#));
+        assert_eq!(scope.links.group(0), 0);
     }
 }

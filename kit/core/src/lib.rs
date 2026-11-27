@@ -5,6 +5,7 @@
 
 mod learn;
 pub mod level;
+pub mod link;
 mod param;
 mod plugin;
 mod runner;
@@ -13,6 +14,7 @@ mod shared;
 pub mod state;
 
 pub use learn::{LEARNABLE, Learn};
+pub use link::{Links, Peer};
 pub use param::{
     BYPASS, Kind, MATCH, MIX, Param, balance, bypass, iron_drive, iron_grip, iron_material,
     iron_ring, iron_size, iron_source, iron_top, key, level_match, list, listen, meter, mix, range,
