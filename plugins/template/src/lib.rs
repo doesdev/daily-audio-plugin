@@ -50,6 +50,8 @@ pub fn shaped(shape: usize, x: f32) -> f32 {
 }
 
 impl Plugin for Template {
+    // Where a host files it: say what the plugin is.
+    const CATEGORY: kit::Category = kit::Category::Distortion;
     const INFO: &'static Info = &Info {
         name: "Template",
         vendor: kit::VENDOR,

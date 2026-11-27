@@ -145,6 +145,8 @@ impl Plugin for Undertow {
 
     // A sidechain: another track can do the pushing.
     const KEY_IN: u32 = 2;
+    // A valve's saturation is what it adds.
+    const CATEGORY: kit::Category = kit::Category::Distortion;
     const METERS: &'static [Param] = &[
         meter(6, "input", "In"),
         meter(7, "level", "Out"),

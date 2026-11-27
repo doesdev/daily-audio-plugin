@@ -411,6 +411,8 @@ impl Aftersound {
 }
 
 impl Plugin for Aftersound {
+    // Strings that are made, not played back.
+    const CATEGORY: kit::Category = kit::Category::Synth;
     const INFO: &'static Info = &Info {
         name: "Aftersound",
         vendor: kit::VENDOR,
