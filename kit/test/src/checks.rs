@@ -62,6 +62,19 @@ fn all_at<P: Plugin>(mut at: impl FnMut(usize) -> f64) -> Vec<f64> {
 
 /// The spec is one a host can load and a later build can keep.
 pub fn spec_is_sound<P: Plugin>() {
+    // A host files a plugin by its kind: unsaid, Cubase has it under
+    // "Other" with everything else that did not say.
+    let kind = P::CATEGORY;
+    assert!(
+        kind != kit::Category::Other,
+        "say what kind of plugin this is: `const CATEGORY` in its `impl Plugin`"
+    );
+    assert_eq!(
+        kind.plays(),
+        P::INFO.role == kit::Role::Instrument,
+        "{kind:?} is not a kind of {:?}",
+        P::INFO.role
+    );
     let problems = Spec::of::<P>().problems();
     assert!(problems.is_empty(), "{}", problems.join("\n"));
     for p in P::PARAMS.iter().filter(|p| !p.read_only()) {

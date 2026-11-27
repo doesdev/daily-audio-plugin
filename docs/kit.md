@@ -179,6 +179,16 @@ and the picture can tell when it is held.
   `iron_curve`, held together by a test on each side with the same
   numbers: change one and change the other. A plugin that has any of
   the three says so in `benchmark.json`, as with Mix.
+- `const CATEGORY: kit::Category` says what kind of thing the plugin
+  is, which is where a host files it: `Distortion`, `Dynamics`, `Eq`,
+  `Filter`, `Delay`, `Reverb`, `Modulation`, `Spatial`, `PitchShift`,
+  `Mastering`, `Restoration`, `Analyzer` or `Tools` for an effect;
+  `Synth`, `Sampler`, `Drum` or `Piano` for an instrument. It becomes
+  the VST3 subcategories Cubase sorts its menus by (`Fx|Distortion`,
+  `Instrument|Synth`) and a CLAP feature. Unsaid, a plugin lands
+  under "Other", so the suite fails one that does not say. Pick by
+  what a person would look under to find it, and `Tools` only when
+  nothing else is true.
 - Linking is the kit's and needs nothing from a plugin: every
   setting of every DAP instance can be linked to the same setting, by
   key, of any others (`kit/core/src/link.rs`). So a key means one

@@ -58,6 +58,7 @@ fn fault(f: u8) -> Fault {
 }
 
 impl<const F: u8> Plugin for Bad<F> {
+    const CATEGORY: kit::Category = kit::Category::Tools;
     const INFO: &'static Info = &info("dev.kit.bad", F as u32 + 100);
     const PARAMS: &'static [Param] = &[GAIN];
 
@@ -148,6 +149,7 @@ fn a_plugin_that_makes_no_sound_is_caught() {
 struct Muddled;
 
 impl Plugin for Muddled {
+    const CATEGORY: kit::Category = kit::Category::Tools;
     const INFO: &'static Info = &info("muddled", 1);
     const PARAMS: &'static [Param] = &[GAIN, range(0, "tone", "Tone", "", (0.0, 1.0, 5.0), "")];
 
@@ -173,4 +175,48 @@ fn a_muddled_spec_is_caught_for_each_thing_wrong() {
         assert!(problems.iter().any(|p| p == want), "{want}: {problems:?}");
     }
     assert_eq!(problems.len(), wanted.len(), "{problems:?}");
+}
+
+// A plugin that does not say what kind it is, and one that says an
+// instrument's kind while being an effect.
+struct Unsaid;
+struct Miscast;
+
+impl Plugin for Unsaid {
+    const INFO: &'static Info = &info("dev.kit.unsaid", 300);
+    const PARAMS: &'static [Param] = &[GAIN];
+
+    fn new() -> Self {
+        Self
+    }
+
+    fn prepare(&mut self, _rate: f32, _max_block: usize) {}
+
+    fn process(&mut self, _block: &mut Block) {}
+}
+
+impl Plugin for Miscast {
+    const CATEGORY: kit::Category = kit::Category::Synth;
+    const INFO: &'static Info = &info("dev.kit.miscast", 301);
+    const PARAMS: &'static [Param] = &[GAIN];
+
+    fn new() -> Self {
+        Self
+    }
+
+    fn prepare(&mut self, _rate: f32, _max_block: usize) {}
+
+    fn process(&mut self, _block: &mut Block) {}
+}
+
+#[test]
+#[should_panic(expected = "say what kind of plugin this is")]
+fn a_plugin_that_does_not_say_its_kind_is_caught() {
+    checks::spec_is_sound::<Unsaid>();
+}
+
+#[test]
+#[should_panic(expected = "Synth is not a kind of Effect")]
+fn an_effect_filed_as_an_instrument_is_caught() {
+    checks::spec_is_sound::<Miscast>();
 }

@@ -29,7 +29,7 @@ pub use param::{
     iron_ring, iron_size, iron_source, iron_top, key, level_match, list, listen, meter, mix, range,
     toggle, tube_bias, tube_bloom, tube_feedback, tube_glow, tube_grid, tube_sag, tube_stage,
 };
-pub use plugin::{Asset, Info, Plugin, Role, Spec};
+pub use plugin::{Asset, Category, Info, Plugin, Role, Spec};
 pub use runner::{Block, EVENTS, Event, Runner, Transport, source};
 pub use scope::{SCOPE, Scope};
 pub use shared::{BEGIN, END, SET, Shared};

@@ -101,6 +101,10 @@ they make sense, which for an effect is nearly always. `npm run new`
 starts a plugin with both. Take one out only for a reason a musician
 would accept, and write that reason in `benchmark.json` under
 `tools` in place of `true`: the check asks for one or the other.
+Say what kind of thing it is with `const CATEGORY` (`docs/kit.md`
+lists them): it is where a host files the plugin, and the suite fails
+one that does not say.
+
 Three more belong to what a plugin is made of, and each is the same
 in every plugin that has it:
 

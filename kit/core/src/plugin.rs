@@ -12,6 +12,91 @@ pub enum Role {
     Instrument,
 }
 
+/// What kind of thing a plugin is, which is where a host files it:
+/// without one, Cubase puts every plugin under "Other". The first
+/// group is for effects and the second for instruments.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Category {
+    /// Not said. The suite every plugin runs refuses this.
+    Other,
+    Distortion,
+    Dynamics,
+    Eq,
+    Filter,
+    Delay,
+    Reverb,
+    Modulation,
+    Spatial,
+    PitchShift,
+    Mastering,
+    Restoration,
+    Analyzer,
+    Tools,
+    Synth,
+    Sampler,
+    Drum,
+    Piano,
+}
+
+impl Category {
+    /// Whether this is a kind of instrument, not of effect.
+    pub const fn plays(self) -> bool {
+        matches!(self, Self::Synth | Self::Sampler | Self::Drum | Self::Piano)
+    }
+
+    /// The VST3 subcategories: Steinberg's own strings, which Cubase
+    /// and Nuendo sort their plugin menus by.
+    pub const fn vst3(self, role: Role) -> &'static str {
+        match self {
+            Self::Distortion => "Fx|Distortion",
+            Self::Dynamics => "Fx|Dynamics",
+            Self::Eq => "Fx|EQ",
+            Self::Filter => "Fx|Filter",
+            Self::Delay => "Fx|Delay",
+            Self::Reverb => "Fx|Reverb",
+            Self::Modulation => "Fx|Modulation",
+            Self::Spatial => "Fx|Spatial",
+            Self::PitchShift => "Fx|Pitch Shift",
+            Self::Mastering => "Fx|Mastering",
+            Self::Restoration => "Fx|Restoration",
+            Self::Analyzer => "Fx|Analyzer",
+            Self::Tools => "Fx|Tools",
+            Self::Synth => "Instrument|Synth",
+            Self::Sampler => "Instrument|Sampler",
+            Self::Drum => "Instrument|Drum",
+            Self::Piano => "Instrument|Piano",
+            Self::Other => match role {
+                Role::Instrument => "Instrument",
+                Role::Effect => "Fx",
+            },
+        }
+    }
+
+    /// The CLAP feature that says the same, where CLAP has one.
+    pub const fn clap(self) -> Option<&'static str> {
+        Some(match self {
+            Self::Distortion => "distortion",
+            Self::Dynamics => "compressor",
+            Self::Eq => "equalizer",
+            Self::Filter => "filter",
+            Self::Delay => "delay",
+            Self::Reverb => "reverb",
+            Self::Modulation => "chorus",
+            Self::Spatial => "stereo",
+            Self::PitchShift => "pitch-shifter",
+            Self::Mastering => "mastering",
+            Self::Restoration => "restoration",
+            Self::Analyzer => "analyzer",
+            Self::Tools => "utility",
+            Self::Synth => "synthesizer",
+            Self::Sampler => "sampler",
+            Self::Drum => "drum",
+            Self::Piano => "synthesizer",
+            Self::Other => return None,
+        })
+    }
+}
+
 /// Who the plugin is. Everything a host or an installer shows comes
 /// from here.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -60,6 +145,10 @@ pub trait Plugin: Send + 'static {
     /// another track to, read with `Block::key`. 0 for none. Only an
     /// effect has one.
     const KEY_IN: u32 = 0;
+    /// What kind of thing it is, for a host's menus. Every plugin in
+    /// `plugins/` says: the suite fails one that leaves it at `Other`
+    /// or names an instrument's kind for an effect.
+    const CATEGORY: Category = Category::Other;
 
     fn new() -> Self;
 
@@ -92,6 +181,8 @@ pub struct Spec {
     pub assets: &'static [Asset],
     /// Channels of the sidechain input, 0 for none.
     pub key_in: u32,
+    /// What kind of thing it is, for a host's menus.
+    pub category: Category,
 }
 
 impl Spec {
@@ -105,6 +196,7 @@ impl Spec {
                 0 => 0,
                 _ => P::KEY_IN,
             },
+            category: P::CATEGORY,
         }
     }
 
