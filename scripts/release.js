@@ -5,7 +5,8 @@
 //                                    version has no tag yet, as JSON
 //   npm run release -- dist PLUGIN   target/dist/PLUGIN/: the zip
 //                                    (VST3, CLAP, manual, demos),
-//                                    SHA256SUMS and NOTES.md
+//                                    SHA256SUMS and NOTES.md, which
+//                                    quotes the changelogs
 //   npm run release -- publish       `dist` and a GitHub release for
 //                                    each pending plugin, through the
 //                                    gh CLI
@@ -21,6 +22,7 @@ import {
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { bundle } from './bundle.js'
+import { changes } from './changelog.js'
 import { buildPdf, checkDocs, sectionsOf } from './docs.js'
 import {
   ROOT, exampleOf, manifest, pending, pluginDir, plugins, tagOf, tags,
@@ -36,7 +38,7 @@ export const zipName = (plugin, version, platform = process.platform) => {
 
 // What the release says: what the plugin is, what is new about it,
 // and how to install it.
-export const notes = (name, readme, novelty, zip) => {
+export const notes = (name, readme, novelty, zip, changed = '') => {
   // The README's first paragraph that is not a heading or a picture,
   // whole: it is usually wrapped over several lines.
   const about = readme.split(/\n\s*\n/)
@@ -47,6 +49,9 @@ export const notes = (name, readme, novelty, zip) => {
     `# ${name}`,
     '',
     about,
+    // What this version changed comes before what the plugin is
+    // about: it is what someone who already has it came to read.
+    ...(changed ? ['', changed] : []),
     ...(fresh ? ['', '## What is new about it', '', fresh] : []),
     '',
     '## Install',
@@ -128,7 +133,11 @@ export const dist = async (plugin) => {
     name,
     read(join(dir, 'README.md')) ?? '',
     read(join(dir, 'NOVELTY.md')),
-    zipName(plugin, version)
+    zipName(plugin, version),
+    changes(
+      read(join(dir, 'CHANGELOG.md')),
+      read(join(ROOT, 'kit', 'CHANGELOG.md')),
+      version)
   ))
   rmSync(stage, { recursive: true, force: true })
   return { out, file, tag: tagOf(plugin, version), name, version }

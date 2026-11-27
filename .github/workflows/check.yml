@@ -36,7 +36,11 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 45
     steps:
+      # The whole history: the check compares the branch with main to
+      # see that what changed is in a changelog.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc

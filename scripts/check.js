@@ -75,6 +75,8 @@ export const STEPS = [
   ['each plugin\'s own page', pages],
   ['the benchmark rule', node('scripts/benchmarks.test.js')],
   ['held to the best of the field', node('scripts/benchmarks.js')],
+  ['changelogs', node('scripts/changelog.test.js')],
+  ['every change is written down', node('scripts/changelog.js')],
   ['manuals', docs],
   ['scenes', scenes]
 ]

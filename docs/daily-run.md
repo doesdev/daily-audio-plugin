@@ -101,6 +101,14 @@ they make sense, which for an effect is nearly always. `npm run new`
 starts a plugin with both. Take one out only for a reason a musician
 would accept, and write that reason in `benchmark.json` under
 `tools` in place of `true`: the check asks for one or the other.
+Write its `CHANGELOG.md`: `npm run new` starts one, and its one
+entry says what the plugin is in a line. A later change to a plugin
+bumps its version and adds an entry above, `## VERSION (DATE)`, of
+what someone using it will notice. A change to the kit adds to
+today's entry in `kit/CHANGELOG.md`, and each plugin it reaches gets
+a version and an entry of its own, in that plugin's words. The
+release's notes quote both.
+
 Say what kind of thing it is with `const CATEGORY` (`docs/kit.md`
 lists them): it is where a host files the plugin, and the suite fails
 one that does not say.
