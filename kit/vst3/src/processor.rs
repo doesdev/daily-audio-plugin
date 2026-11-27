@@ -327,6 +327,13 @@ impl<P: Plugin> IComponentTrait for Processor<P> {
 
 /// Everything left in `stream`, a chunk at a time.
 ///
+/// Hosts disagree about the end of a stream. Some answer a read that
+/// could not be filled with success and a short count; others call
+/// that a failure, though they have handed over what there was. So
+/// what a read returns is kept whatever it answers, and the stream is
+/// over when a read brings nothing or fails. Treating that failure as
+/// "no state" loses a whole project's settings in the second kind.
+///
 /// # Safety
 /// `stream` must be a live stream.
 pub unsafe fn read_all(stream: &ComRef<'_, IBStream>) -> Result<Vec<u8>, tresult> {
@@ -335,13 +342,11 @@ pub unsafe fn read_all(stream: &ComRef<'_, IBStream>) -> Result<Vec<u8>, tresult
     loop {
         let mut read = 0;
         let rc = unsafe { stream.read(buf.as_mut_ptr().cast(), buf.len() as i32, &mut read) };
-        if rc != kResultOk {
-            return Err(rc);
-        }
-        if read <= 0 {
+        let got = read.clamp(0, buf.len() as i32) as usize;
+        bytes.extend_from_slice(&buf[..got]);
+        if rc != kResultOk || got == 0 {
             return Ok(bytes);
         }
-        bytes.extend_from_slice(&buf[..read as usize]);
     }
 }
 

@@ -179,6 +179,14 @@ and the picture can tell when it is held.
   `iron_curve`, held together by a test on each side with the same
   numbers: change one and change the other. A plugin that has any of
   the three says so in `benchmark.json`, as with Mix.
+- Linking is the kit's and needs nothing from a plugin: every
+  setting of every DAP instance can be linked to the same setting, by
+  key, of any others (`kit/core/src/link.rs`). So a key means one
+  thing everywhere: use the kit's shared settings where there is one
+  (`bypass`, `mix`, `output`, `match`, the `tube_` and `iron_` ones),
+  and give a plugin's own setting a key another plugin would only
+  share if it meant the same. Instances find each other over UDP on
+  this machine alone, ports 47310 to 47373, so at most 64 at once.
 - A sidechain: `const KEY_IN: u32 = 2;` on the plugin gives it a
   second input in both formats, which the host routes another track
   to. `block.key(ch)` reads it (silence if nothing is routed; `None`

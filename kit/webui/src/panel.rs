@@ -131,7 +131,8 @@ fn data_dir(spec: &Spec) -> PathBuf {
         .ok()
         .and_then(|exe| exe.file_stem().map(|s| s.to_string_lossy().into_owned()))
         .unwrap_or_else(|| "host".into());
-    base.join(spec.info.vendor).join("webview2").join(host)
+    let _ = spec;
+    base.join(kit::HOME).join("webview2").join(host)
 }
 
 fn bounds((w, h): (i32, i32)) -> Rect {

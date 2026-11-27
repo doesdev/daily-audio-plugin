@@ -1,6 +1,6 @@
-# daily-audio-plugin
+# Daily Audio Plugin
 
-A new audio plugin every day, each doing something no plugin found
+DAP: a new audio plugin every day, each doing something no plugin found
 does yet. VST3 and CLAP, Windows 11 x64. Every plugin is in this one
 repo, built on one kit, and released from here.
 

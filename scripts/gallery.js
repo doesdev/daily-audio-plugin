@@ -122,7 +122,7 @@ export const hello = (levels = [0.8, 0.6]) => ({
   type: 'hello',
   version: 1,
   name: 'Gallery',
-  vendor: 'doesdev',
+  vendor: 'Daily Audio Plugin',
   build: '0.0.0',
   size: SIZE,
   params: PARAMS,
@@ -200,6 +200,26 @@ export const SCENES = [
     steps: [
       ['tell', { type: 'learn', waiting: 1, map: { 0: 74 } }],
       ['menu', '[data-key="drive"] .kit-scrub']
+    ]
+  },
+  {
+    name: 'link',
+    page: 'tone',
+    steps: [
+      ['tell', {
+        type: 'links',
+        me: '9',
+        groups: { 0: '700' },
+        peers: [
+          { uid: '1', name: 'Undertow', keys: { drive: '700', bypass: '0' } },
+          { uid: '2', name: 'Undertow', keys: { drive: '0', bypass: '0' } },
+          { uid: '3', name: 'Aftersound', keys: { bypass: '0', mix: '0' } },
+          { uid: '4', name: 'Gallery', keys: { drive: '700' } }
+        ]
+      }],
+      ['menu', '[data-key="drive"] .kit-scrub'],
+      ['click', { sel: '.kit-pop button', text: 'Link Drive with other instances' }],
+      ['away']
     ]
   },
   { name: 'lists', page: 'lists', steps: [['click', '.kit-chooser']] },

@@ -169,7 +169,12 @@ impl IBStreamTrait for Stream {
         if !read.is_null() {
             unsafe { *read = take as i32 };
         }
-        kResultOk
+        // As the stricter hosts do: a read that could not be filled
+        // is a failure, though what there was has been handed over.
+        match take == n.max(0) as usize {
+            true => kResultOk,
+            false => kResultFalse,
+        }
     }
 
     unsafe fn write(&self, buffer: *mut c_void, n: i32, written: *mut i32) -> tresult {

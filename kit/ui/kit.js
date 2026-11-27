@@ -361,7 +361,11 @@ export const EMPTY = {
   // MIDI learn, where the host side has it: { waiting, map }, the id
   // of the setting waiting for a controller and each setting's
   // controller by its id. Null until the host says.
-  learn: null
+  learn: null,
+  // Linking, where the host side has it: { me, groups, peers }. This
+  // instance's number, the group of each linked setting by its id,
+  // and every other instance as { uid, name, keys: { key: group } }.
+  links: null
 }
 
 export const reduce = (state, msg) => {
@@ -383,6 +387,10 @@ export const reduce = (state, msg) => {
   }
   if (msg.type === 'learn') {
     return { ...state, learn: { waiting: msg.waiting, map: msg.map ?? {} } }
+  }
+  if (msg.type === 'links') {
+    const { me, groups = {}, peers = [] } = msg
+    return { ...state, links: { me, groups, peers } }
   }
   if (msg.type === 'presets') {
     return { ...state, files: msg.list, filesDir: msg.dir }
@@ -748,6 +756,12 @@ export const mount = (build, opts = {}) => {
     if (event.shiftKey) session.redo()
     else session.undo()
   })
+  // The browser's own menu is never ours: where a right-click has a
+  // menu it has opened by now, and anywhere else nothing opens. A box
+  // being typed in keeps its own, for its copy and paste.
+  window.addEventListener('contextmenu', (event) => {
+    if (!event.target.closest?.('input, textarea')) event.preventDefault()
+  })
   post({ type: 'ready' })
   return store
 }
@@ -785,6 +799,8 @@ export const ICONS = {
     '0-3.6M4 13.5h2M10 13.5h6M8 11.7a1.8 1.8 0 1 0 0 3.6a1.8 1.8 0 1 0 0-3.6',
   help: 'M7.4 7.6a2.7 2.7 0 1 1 3.9 2.4c-.8.5-1.3 1-1.3 2M10 14.6v.2',
   power: 'M10 3.5v6M6.2 5.8a5.5 5.5 0 1 0 7.6 0',
+  link: 'M8.6 11.4a2.8 2.8 0 0 0 4 0l2.2-2.2a2.8 2.8 0 0 0-4-4l-.9.9' +
+    'M11.4 8.6a2.8 2.8 0 0 0-4 0l-2.2 2.2a2.8 2.8 0 0 0 4 4l.9-.9',
   chevron: 'M6 8l4 4 4-4',
   match: 'M5 8h10M5 12h10',
   learn: 'M10 4.5a5.5 5.5 0 1 0 0 11a5.5 5.5 0 1 0 0-11M10 10l2.6-2.6',
@@ -962,12 +978,32 @@ const valueText = (handle) => {
 }
 
 // A control's shell: its key, for the page and its tests to find it by.
-const shell = (handle, kind, opts, ...children) => hinted(
-  h(`div.kit-control.kit-${kind}`, {
+const shell = (handle, kind, opts, ...children) => {
+  const el = h(`div.kit-control.kit-${kind}`, {
     'data-key': handle.row.key, 'data-id': handle.row.id
-  }, children),
-  opts.ui, handle
-)
+  }, children)
+  const { ui } = opts
+  if (ui) {
+    // A control that has no menu of its own still has this one.
+    // A value opens its own, fuller one, and marks the event: this
+    // waits a moment to see, since either may hear the click first.
+    el.addEventListener('contextmenu', (event) => {
+      event.preventDefault()
+      setTimeout(() => {
+        const item = !event.kitMenu && linkItem(ui, handle.row.title, [handle])
+        if (item) popup([item], [event.clientX, event.clientY])
+      }, 0)
+    })
+    // And says so while it is linked to another instance.
+    const show = () => {
+      const linked = linkedTo(ui.store.get().links, [handle.row]).length > 0
+      el.toggleAttribute('data-linked', linked)
+    }
+    ui.store.on((state, prev) => { if (state.links !== prev.links) show() })
+    show()
+  }
+  return hinted(el, ui, handle)
+}
 
 // Dragging along it, the wheel, the arrow keys and double-click for
 // the default, on the element that stands for a setting's value.
@@ -1064,6 +1100,7 @@ export const value = (handle, opts = {}) => {
   })
   el.addEventListener('contextmenu', (event) => {
     event.preventDefault()
+    event.kitMenu = true
     valueMenu(el, handle, out, opts.ui, [event.clientX, event.clientY])
   })
   if (opts.ui) {
@@ -1467,7 +1504,9 @@ export const tools = (ui) => {
 // same order so the hand learns them once.
 export const header = (ui, opts = {}) => h('header.kit-header', {},
   h('div.kit-heading', {},
-    h('h1.kit-name', {}, ui.name),
+    tipped(h('h1.kit-name', {}, ui.name), () => ({
+      title: ui.name, text: 'A Daily Audio Plugin: one of DAP\'s.'
+    })),
     opts.note ? h('p.kit-note', {}, opts.note) : null),
   presetPill(ui),
   h('div.kit-tools', {}, tools(ui)))
@@ -1595,7 +1634,8 @@ const valueMenu = (el, handle, out, ui, at) => {
     learn && [waiting ? 'Stop waiting for a controller' : 'Learn a controller',
       'learn', '', () => post({ type: 'learn', id: waiting ? null : row.id })],
     learn && cc != null && [`Forget controller ${cc}`, 'close', '',
-      () => post({ type: 'forget', id: row.id })]
+      () => post({ type: 'forget', id: row.id })],
+    ui && linkItem(ui, row.title, [handle])
   ], at)
 }
 
@@ -1727,6 +1767,110 @@ const makePresets = (store, session, plugin, factory) => {
       tell()
     }
   }
+}
+
+// ---- linking: a setting that moves with the same one elsewhere
+
+// Other instances by the names a person tells them apart by: several
+// of one plugin are numbered in the order they were made.
+export const linkNames = (peers) => {
+  const count = (name) => peers.filter((peer) => peer.name === name).length
+  return peers.reduce(({ seen, named }, peer) => {
+    const nth = (seen[peer.name] ?? 0) + 1
+    const name = count(peer.name) > 1 ? `${peer.name} ${nth}` : peer.name
+    return {
+      seen: { ...seen, [peer.name]: nth },
+      named: [...named, { ...peer, label: name }]
+    }
+  }, { seen: {}, named: [] }).named
+}
+
+// How one other instance stands to these settings of ours: `can` are
+// the settings it has too, by key, and `tied` those of them in the
+// same group as ours. 'none' has no such setting, and cannot link.
+export const linkState = (links, rows, peer) => {
+  const can = rows.filter((row) => row.key in peer.keys)
+  const tied = can.filter((row) => {
+    const group = links.groups[row.id]
+    return group && peer.keys[row.key] === group
+  })
+  const state = !can.length
+    ? 'none'
+    : tied.length === can.length ? 'all' : tied.length ? 'some' : 'off'
+  return { can, tied, state }
+}
+
+// The instances any of these settings is linked to.
+export const linkedTo = (links, rows) => (links?.peers ?? [])
+  .filter((peer) => linkState(links, rows, peer).tied.length)
+
+// The menu's way in, where the host side can link at all.
+const linkItem = (ui, title, handles, back) => ui.store.get().links && [
+  `Link ${title} with other instances`, 'link', '',
+  () => togglePanel('link', linkPanel(ui, title, handles, back))
+]
+
+// The sheet turned over to who these settings are linked with: every
+// other DAP instance there is, ticked if linked, and dimmed if it has
+// no such setting. `back`, if given, is where Done returns to.
+const linkPanel = (ui, title, handles, back) => () => {
+  const rows = handles.map((handle) => handle.row)
+  const list = h('div.kit-links', { role: 'group', 'aria-label': 'Instances' })
+  const count = h('span.kit-about')
+  const tie = (peer, can) => can.forEach((row) =>
+    post({ type: 'tie', id: row.id, peer: peer.uid }))
+  const untie = (peer, can) => can.forEach((row) =>
+    post({ type: 'untie', id: row.id, peer: peer.uid }))
+  const all = pill('All', false, () => {
+    const links = ui.store.get().links
+    links.peers.forEach((peer) => tie(peer, linkState(links, rows, peer).can))
+  }, '.kit-link-all')
+  const none = pill('None', false, () => {
+    const links = ui.store.get().links
+    links.peers.forEach((peer) =>
+      untie(peer, linkState(links, rows, peer).tied))
+    rows.forEach((row) => post({ type: 'untie', id: row.id }))
+  }, '.kit-link-none')
+  const draw = () => {
+    const links = ui.store.get().links
+    const peers = linkNames(links.peers)
+    const tied = peers.filter((peer) =>
+      linkState(links, rows, peer).state === 'all').length
+    count.textContent = !peers.length
+      ? 'No other DAP instance is open'
+      : tied ? `${tied} linked` : 'Not linked'
+    list.replaceChildren(...peers.map((peer) => {
+      const { can, state } = linkState(links, rows, peer)
+      const button = h('button.kit-option.kit-link', {
+        type: 'button',
+        role: 'checkbox',
+        'aria-checked': state === 'all' ? 'true' : state === 'some'
+          ? 'mixed' : 'false',
+        disabled: state === 'none',
+        onclick: () => (state === 'all' ? untie(peer, can) : tie(peer, can))
+      }, h('span.kit-check', {}, icon('chosen')), peer.label)
+      return state === 'none'
+        ? tipped(button, () => ({
+            title: peer.label, text: `It has no ${title}.`
+          }))
+        : button
+    }))
+  }
+  const off = ui.store.on((state, prev) => {
+    if (!list.isConnected) return off?.()
+    if (state.links !== prev.links) draw()
+  })
+  draw()
+  return [
+    h('div.kit-panel-bar', {},
+      h('b.kit-panel-title', {}, `Link ${title}`),
+      count,
+      h('span.kit-space'),
+      all,
+      none,
+      pill('Done', false, back ?? closePanel, '.kit-done')),
+    list
+  ]
 }
 
 // ---- panels: the sheet turned over to something else for a moment
@@ -1949,6 +2093,22 @@ const power = (ui) => {
     document.documentElement.dataset.bypassed = String(!on)
   }
   handle.on(show)
+  show()
+  return linkable(ui, button, 'Bypass', [handle])
+}
+
+// A tool or a button that stands for settings: a right-click links
+// them, and it says so while any of them is linked.
+const linkable = (ui, button, title, handles) => {
+  button.addEventListener('contextmenu', (event) => {
+    event.preventDefault()
+    const item = linkItem(ui, title, handles)
+    if (item) popup([item], [event.clientX, event.clientY])
+  })
+  const rows = handles.map((handle) => handle.row)
+  const show = () => button.toggleAttribute('data-linked',
+    linkedTo(ui.store.get().links, rows).length > 0)
+  ui.store.on((state, prev) => { if (state.links !== prev.links) show() })
   show()
   return button
 }
@@ -2515,6 +2675,37 @@ const tonePicture = (ui, kind, handles) => {
   return el
 }
 
+// The way from a window to who it is linked with: only where linking
+// can be done, and marked while anything in the window is linked.
+// Done, there, comes back here.
+const linkButton = (ui, title, handles, back) => {
+  if (!ui.store.get().links) return null
+  const rows = handles.map((handle) => handle.row)
+  const button = h('button.kit-tool.kit-link-open', {
+    type: 'button',
+    onclick: () => togglePanel('link', linkPanel(ui, title, handles, back))
+  }, icon('link'))
+  const names = () => linkNames(ui.store.get().links.peers)
+    .filter((peer) => linkedTo(ui.store.get().links, rows)
+      .some((tied) => tied.uid === peer.uid))
+    .map((peer) => peer.label)
+  const show = () => {
+    const tied = names()
+    button.toggleAttribute('data-linked', tied.length > 0)
+    button.setAttribute('aria-label', tied.length
+      ? `Linked with ${tied.join(', ')}`
+      : `Link ${title} with other instances`)
+  }
+  const off = ui.store.on((state, prev) => {
+    if (!button.isConnected) return off?.()
+    if (state.links !== prev.links) show()
+  })
+  show()
+  return tipped(button, () => ({
+    title: button.getAttribute('aria-label'), text: ''
+  }))
+}
+
 // A window's contents: its characters, its curve, its settings, and
 // the way back to where they rest.
 const toneWindow = (ui, kind) => () => {
@@ -2567,6 +2758,8 @@ const toneWindow = (ui, kind) => () => {
           : ''
       })),
       h('span.kit-space'),
+      linkButton(ui, tone.name, handles,
+        () => togglePanel(kind, toneWindow(ui, kind))),
       pill('At rest', false, () => ui.session.apply(as({})), '.kit-rest'),
       pill('Done', false, closePanel, '.kit-done')),
     h('div.kit-tone', { style: `--count: ${ranges.length}` },
@@ -2595,6 +2788,7 @@ const toneButtons = (ui) => Object.keys(TONES)
     }
     ui.store.on((state, prev) => { if (state.values !== prev.values) show() })
     show()
+    linkable(ui, button, tone.name, toneHandles(ui, kind))
     return tipped(button, (help) => ({
       title: `${tone.name} window`,
       text: help ? `${tone.note}: the same settings in every plugin of ours ` +

@@ -3,6 +3,15 @@
 //! format crates (`kit-vst3`, `kit-clap`) turn a `Plugin` into something
 //! a host loads; nothing here knows about a host.
 
+/// The brand every plugin here ships under: Daily Audio Plugin, DAP
+/// for short. `VENDOR` is what a host shows as the maker.
+pub const VENDOR: &str = "Daily Audio Plugin";
+pub const BRAND: &str = "DAP";
+/// The folder a person's presets and the editor's own data are kept
+/// under. It is the name the first plugins shipped with and stays so:
+/// renaming it would strand what people have already saved there.
+pub const HOME: &str = "doesdev";
+
 mod learn;
 pub mod level;
 pub mod link;
