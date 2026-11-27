@@ -413,7 +413,7 @@ impl Aftersound {
 impl Plugin for Aftersound {
     const INFO: &'static Info = &Info {
         name: "Aftersound",
-        vendor: "doesdev",
+        vendor: kit::VENDOR,
         url: "https://github.com/doesdev/daily-audio-plugin",
         description: "Two coupled strings a note, one in each channel",
         version: env!("CARGO_PKG_VERSION"),

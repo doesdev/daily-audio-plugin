@@ -52,7 +52,7 @@ pub fn shaped(shape: usize, x: f32) -> f32 {
 impl Plugin for Template {
     const INFO: &'static Info = &Info {
         name: "Template",
-        vendor: "doesdev",
+        vendor: kit::VENDOR,
         url: "https://github.com/doesdev/daily-audio-plugin",
         description: "Drive, tone and mix",
         version: env!("CARGO_PKG_VERSION"),
