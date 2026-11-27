@@ -9,11 +9,10 @@ made (to the ledger) or dropped (to Dropped, below, with why).
 
 Nothing that survived its search yet. The run of 2026-11-25 looked for
 eight and made one (Undertow); the rest are under Dropped. The run of
-2026-11-26 made the first of the ideas below (Aftersound). Ideas not
-yet searched, to start from:
+2026-11-26 made the first of the ideas below (Aftersound), and the
+run of 2026-11-27 the next (Hand-Me-Down). Ideas not yet searched, to
+start from:
 
-- Hit and body exchanged between notes: each note's attack played
-  with the previous note's body.
 - Mid and side wound on one shared transformer core, so the middle's
   bass saturates the core the sides pass through. Searched on
   2026-11-25 and not found built: AnyTesla and RSL Dual Core

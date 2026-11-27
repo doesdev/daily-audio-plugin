@@ -1,0 +1,7 @@
+/* Hand-Me-Down's own look, over the kit's. Its nine settings sit in
+   one row rather than the kit's four, so the glass keeps the height
+   the family line needs: how notes are found, the hit, the body, then
+   the way out. */
+.kit-values {
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+}

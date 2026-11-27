@@ -1,0 +1,44 @@
+[
+  {
+    "name": "editor",
+    "values": { "input": 0.78, "level": 0.84 }
+  },
+  {
+    "name": "light",
+    "theme": "light",
+    "values": { "input": 0.78, "level": 0.84 }
+  },
+  {
+    "name": "two-back",
+    "values": { "back": "Two", "hit": 60, "fade": 80, "input": 0.7, "level": 0.8 }
+  },
+  {
+    "name": "sides",
+    "theme": "light",
+    "values": { "into": "Sides", "input": 0.7, "level": 0.8 }
+  },
+  {
+    "name": "held",
+    "theme": "light",
+    "values": { "input": 0.78, "level": 0.84 },
+    "steps": [["press", "[data-key=\"body_gain\"] .kit-scrub", 30]]
+  },
+  {
+    "name": "held-dark",
+    "values": { "input": 0.78, "level": 0.84 },
+    "steps": [["press", "[data-key=\"hit\"] .kit-scrub", 40]]
+  },
+  {
+    "name": "dense",
+    "theme": "light",
+    "values": { "body_gain": -6, "hit_gain": 4, "input": 0.7, "level": 0.8 },
+    "steps": [["click", ".kit-density"], ["click", ".kit-density"], ["away"]]
+  },
+  {
+    "name": "controls",
+    "theme": "light",
+    "values": { "input": 0.8, "level": 0.9 },
+    "steps": [["hover", "[data-key=\"hit\"] .kit-scrub"]],
+    "crop": [".kit-sheet"]
+  }
+]

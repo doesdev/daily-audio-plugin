@@ -1,0 +1,31 @@
+[package]
+name = "hand-me-down"
+version = "0.1.0"
+description = "Each note keeps its own hit, then plays the body an earlier note left"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+# Named after the plugin: cargo puts every package's examples in one
+# folder, so a second plugin's `spec` would overwrite this one's.
+[[example]]
+name = "hand-me-down-spec"
+path = "examples/spec.rs"
+
+[[example]]
+name = "hand-me-down-demo"
+path = "examples/demo.rs"
+
+[dependencies]
+kit = { workspace = true }
+kit-dsp = { workspace = true }
+kit-vst3 = { workspace = true }
+kit-clap = { workspace = true }
+kit-webui = { workspace = true }
+
+[dev-dependencies]
+kit-test = { workspace = true }
