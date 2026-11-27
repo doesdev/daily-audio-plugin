@@ -799,8 +799,6 @@ export const ICONS = {
     '0-3.6M4 13.5h2M10 13.5h6M8 11.7a1.8 1.8 0 1 0 0 3.6a1.8 1.8 0 1 0 0-3.6',
   help: 'M7.4 7.6a2.7 2.7 0 1 1 3.9 2.4c-.8.5-1.3 1-1.3 2M10 14.6v.2',
   power: 'M10 3.5v6M6.2 5.8a5.5 5.5 0 1 0 7.6 0',
-  link: 'M8.6 11.4a2.8 2.8 0 0 0 4 0l2.2-2.2a2.8 2.8 0 0 0-4-4l-.9.9' +
-    'M11.4 8.6a2.8 2.8 0 0 0-4 0l-2.2 2.2a2.8 2.8 0 0 0 4 4l.9-.9',
   chevron: 'M6 8l4 4 4-4',
   match: 'M5 8h10M5 12h10',
   learn: 'M10 4.5a5.5 5.5 0 1 0 0 11a5.5 5.5 0 1 0 0-11M10 10l2.6-2.6',
@@ -1841,7 +1839,7 @@ const linkPanel = (ui, title, handles, back) => () => {
       : tied ? `${tied} linked` : 'Not linked'
     list.replaceChildren(...peers.map((peer) => {
       const { can, state } = linkState(links, rows, peer)
-      const button = h('button.kit-option.kit-link', {
+      const button = h('button.kit-option.kit-peer', {
         type: 'button',
         role: 'checkbox',
         'aria-checked': state === 'all' ? 'true' : state === 'some'

@@ -1213,7 +1213,7 @@ button { cursor: pointer; }
   min-height: 0;
 }
 
-.kit-link {
+.kit-peer {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -1237,16 +1237,16 @@ button { cursor: pointer; }
 
 .kit-check .kit-icon { width: 14px; height: 14px; visibility: hidden; }
 
-.kit-link[aria-checked='true'] .kit-check { opacity: 1; }
-.kit-link[aria-checked='true'] .kit-check .kit-icon { visibility: visible; }
+.kit-peer[aria-checked='true'] .kit-check { opacity: 1; }
+.kit-peer[aria-checked='true'] .kit-check .kit-icon { visibility: visible; }
 
 /* Some of what could be linked is: a bar, not a tick. */
-.kit-link[aria-checked='mixed'] .kit-check {
+.kit-peer[aria-checked='mixed'] .kit-check {
   background: linear-gradient(currentColor, currentColor)
     center / 8px 1.6px no-repeat;
 }
 
-.kit-link:disabled { opacity: 0.35; }
+.kit-peer:disabled { opacity: 0.35; }
 
 /* ---- beside the picture, and the solo for mid and side */
 

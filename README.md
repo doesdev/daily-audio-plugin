@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="brand/dap-dark.svg">
+  <img src="brand/dap-light.svg" alt="DAP: Daily Audio Plugin" width="420">
+</picture>
+
 # Daily Audio Plugin
 
 DAP: a new audio plugin every day, each doing something no plugin found

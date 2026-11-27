@@ -18,6 +18,16 @@ It ships everywhere a plugin does, and it is said one way.
   (`kit::HOME`). It is the name the first releases used, and moving it
   would strand what people have saved.
 
-Not decided: a drawn mark. The editor has none, since how DAP looks
-is chosen on the design canvas before it is built, as the rest of
-the look was. Until then the name set in the house face is the mark.
+## The mark
+
+`brand/dap-dark.svg` is for a dark ground and `brand/dap-light.svg`
+for a light one; `brand/dap.svg` takes its letters' colour from the
+text round it. They are drawn from the owner's draft: the letters
+and the line of words are traced from it, and the dots, dashes and
+trails are placed by eye where it has them, in its three colours.
+The draft's light version had a pair of chevrons in the P that its
+dark version did not; they are left out until one way is chosen.
+
+The mark is in the README. It is not yet in an editor: where it sits
+there is chosen on the design canvas before it is built, as the rest
+of the look was.

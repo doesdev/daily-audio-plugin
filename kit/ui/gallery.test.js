@@ -892,7 +892,7 @@ test('instances are told apart, and each stands somewhere to a setting', (assert
 
 test('any control links to other instances from its menu, and says while it is', async (assert) => {
   const item = { sel: '.kit-pop button', text: 'Link Drive with other instances' }
-  const boxes = `[...document.querySelectorAll('.kit-link')].map((el) =>
+  const boxes = `[...document.querySelectorAll('.kit-peer')].map((el) =>
     [el.textContent, el.getAttribute('aria-checked'), el.disabled])`
   const items = `[...document.querySelectorAll('.kit-pop button')]
     .map((el) => el.querySelector('span').textContent)`
@@ -918,10 +918,10 @@ test('any control links to other instances from its menu, and says while it is',
     assert.is(await text(tab, '.kit-panel-bar .kit-about'), '1 linked')
 
     // Ticking one asks the host to link it; unticking, to unlink.
-    await click(tab, { sel: '.kit-link', text: 'Undertow 2' })
+    await click(tab, { sel: '.kit-peer', text: 'Undertow 2' })
     assert.deepEqual((await posted(tab)).at(-1),
       { type: 'tie', id: 0, peer: '2' })
-    await click(tab, { sel: '.kit-link', text: 'Undertow 1' })
+    await click(tab, { sel: '.kit-peer', text: 'Undertow 1' })
     assert.deepEqual((await posted(tab)).at(-1),
       { type: 'untie', id: 0, peer: '1' })
     // All takes every instance that has it, and no other.
@@ -948,7 +948,7 @@ test('bypass and a whole window link as one, and the window says who with', asyn
     await STEPS.menu(tab, ['.kit-power'])
     await click(tab, { sel: '.kit-pop button', text: 'Link Bypass with other instances' })
     assert.is(await text(tab, '.kit-panel-title'), 'Link Bypass')
-    await click(tab, { sel: '.kit-link', text: 'Aftersound' })
+    await click(tab, { sel: '.kit-peer', text: 'Aftersound' })
     assert.deepEqual((await posted(tab)).at(-1),
       { type: 'tie', id: 5, peer: '3' })
     await click(tab, '.kit-done')
@@ -967,7 +967,7 @@ test('bypass and a whole window link as one, and the window says who with', asyn
     assert.true(await has(tab, '.kit-open-tube[data-linked]'))
     await STEPS.menu(tab, ['.kit-open-tube'])
     await click(tab, { sel: '.kit-pop button', text: 'Link Tube with other instances' })
-    const boxes = `[...document.querySelectorAll('.kit-link')].map((el) =>
+    const boxes = `[...document.querySelectorAll('.kit-peer')].map((el) =>
       [el.textContent, el.getAttribute('aria-checked'), el.disabled])`
     assert.deepEqual(await tab.evaluate(boxes), [
       ['Undertow 1', 'true', false], ['Undertow 2', 'false', true],
@@ -1000,5 +1000,17 @@ test('a right-click with no menu of ours opens no menu of the browser\'s', async
     assert.false(await allowed('.kit-name'))
     assert.false(await allowed('.kit-hint'))
     assert.false(await has(tab, '.kit-pop'))
+  })
+})
+
+test('the button that links a pair is a circle, whatever else is called a link', async (assert) => {
+  await onGallery('pairs', [], async (tab) => {
+    const [wide, high, round] = await tab.evaluate(`(() => {
+      const el = document.querySelector('.kit-link')
+      const box = el.getBoundingClientRect()
+      return [box.width, box.height, getComputedStyle(el).borderRadius]
+    })()`)
+    assert.is(Math.round(wide), Math.round(high))
+    assert.is(round, '50%')
   })
 })
