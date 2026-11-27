@@ -1,0 +1,58 @@
+{
+  "plugin": "hand-me-down",
+  "kind": "Transient and sustain splitting",
+  "leaders": [
+    {
+      "who": "Image-Line Transmitter",
+      "does": "Splits a sound into transient and sustain with complementary gating envelopes, low or zero latency with an optional 5 ms lookahead; Sensitivity, Mode, Hold and Release set the detector, a sidechain can drive it; each half gets saturation, bounce, diffusion and delay with its own level, mix and tilt, or its own mixer track; a scrolling display shows the input with the two envelopes in different colours; themes from the gear menu",
+      "source": "https://www.image-line.com/fl-studio-learning/fl-studio-online-manual/html/plugins/Transmitter.htm"
+    },
+    {
+      "who": "iZotope Neutron Transient Shaper",
+      "does": "Attack and Sustain sliders per band, up to three bands with Learn for the crossovers, Sharp, Medium or Smooth contour per band, Precise, Balanced and Loose modes, a Mix, bypass and solo per band, and a scrolling gain trace over the incoming waveform; undo history in the host plugin",
+      "source": "https://s3.amazonaws.com/izotopedownloads/docs/neutron202/en/transient-shaper/index.html"
+    },
+    {
+      "who": "NoiseWorks TranSplit",
+      "does": "Divides a sound into transients and sustain, with one horizontal Balance fader from transients to sustain and three focus modes: bass, highs or full band",
+      "source": "https://www.kvraudio.com/product/transplit-by-noiseworks"
+    }
+  ],
+  "points": {
+    "picture": {
+      "verdict": "exceeds",
+      "note": "The family line: the last notes along time, each one's own hit as a solid mark and its body as a span, with an arc from each body back to the note it came from. No leader draws where a sustain came from, because none moves one. Under Transmitter in one way: it draws notes from the meters, not the waveform itself."
+    },
+    "precision": {
+      "verdict": "meets",
+      "note": "Every setting is a kit value: dragged, nudged, typed, reset with a double-click. Hit and Fade in whole milliseconds, Threshold to a tenth of a dB."
+    },
+    "compare": {
+      "verdict": "meets",
+      "note": "Undo, redo and A/B from the kit; Neutron has undo history, Transmitter states neither."
+    },
+    "explains": {
+      "verdict": "meets",
+      "note": "Every setting has an about, shown in the foot; the note under the name says how far back the body comes from and into which half."
+    },
+    "fits": {
+      "verdict": "meets",
+      "note": "Scales whole and fills any window; three densities."
+    },
+    "character": {
+      "verdict": "meets",
+      "note": "The house look; arcs and hits turn purple with the setting that shapes them."
+    },
+    "presets": {
+      "verdict": "meets",
+      "note": "Four of its own, each for a use: a line one note late, a slower inheritance two back, the old ring in the sides, and drums passing bodies on. Transmitter's page lists none."
+    }
+  },
+  "tools": {
+    "mix": true,
+    "match": true,
+    "mid_side": true,
+    "tube": "It colours nothing: it moves a sound's body in time, with no valve in it",
+    "transformer": "It models no transformer"
+  }
+}
