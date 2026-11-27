@@ -19,7 +19,7 @@
 use crate::{BEGIN, END, SET, Shared};
 use crate::{Kind, Spec};
 use std::net::{Ipv4Addr, SocketAddrV4, UdpSocket};
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, Weak};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
@@ -425,18 +425,33 @@ impl Station {
     }
 }
 
-/// Starts linking for one instance: a thread that lives as long as
-/// `shared` does. Nothing happens, and nothing is linked, if every
-/// port is taken or the machine will not give one.
-pub fn start(shared: &Arc<Shared>, spec: Spec) {
-    let Some((socket, port)) = (FIRST_PORT..FIRST_PORT + PORTS)
-        .find_map(|port| Some((UdpSocket::bind(to(port)).ok()?, port)))
-    else {
-        return;
-    };
-    if socket.set_read_timeout(Some(TICK)).is_err() {
-        return;
+/// Linking, running for one instance. Dropping it stops the thread and
+/// waits for it to end. An instance must hold this for as long as it
+/// lives and no longer: a host may unload the plugin's library the
+/// moment its last instance is gone, and a thread still running then
+/// would be running code that is no longer there.
+pub struct Running {
+    stop: Arc<AtomicBool>,
+    thread: Option<std::thread::JoinHandle<()>>,
+}
+
+impl Drop for Running {
+    fn drop(&mut self) {
+        self.stop.store(true, Ordering::Release);
+        if let Some(thread) = self.thread.take() {
+            let _ = thread.join();
+        }
     }
+}
+
+/// Starts linking for one instance. `None`, and nothing is linked, if
+/// every port is taken or the machine will not give one.
+pub fn start(shared: &Arc<Shared>, spec: Spec) -> Option<Running> {
+    let (socket, port) = (FIRST_PORT..FIRST_PORT + PORTS)
+        .find_map(|port| Some((UdpSocket::bind(to(port)).ok()?, port)))?;
+    socket.set_read_timeout(Some(TICK)).ok()?;
+    let stop = Arc::new(AtomicBool::new(false));
+    let stopped = stop.clone();
     let weak = Arc::downgrade(shared);
     let links = &shared.scope().links;
     links
@@ -455,6 +470,9 @@ pub fn start(shared: &Arc<Shared>, spec: Spec) {
         let mut buf = [0u8; 8192];
         let mut first = true;
         loop {
+            if stopped.load(Ordering::Acquire) {
+                return;
+            }
             let Some(shared) = station.shared.upgrade() else {
                 return;
             };
@@ -486,9 +504,14 @@ pub fn start(shared: &Arc<Shared>, spec: Spec) {
             station.tell(&shared, links);
         }
     };
-    let _ = std::thread::Builder::new()
+    let thread = std::thread::Builder::new()
         .name("dap-link".into())
-        .spawn(run);
+        .spawn(run)
+        .ok()?;
+    Some(Running {
+        stop,
+        thread: Some(thread),
+    })
 }
 
 /// Whether a setting may be linked at all: a meter is not a setting.
@@ -539,10 +562,21 @@ mod tests {
         }
     }
 
-    fn instance(params: &'static [Param]) -> Arc<Shared> {
+    // An instance, and its linking for as long as this is held.
+    struct Instance(Arc<Shared>, #[allow(dead_code)] Option<Running>);
+
+    impl std::ops::Deref for Instance {
+        type Target = Shared;
+        fn deref(&self) -> &Shared {
+            &self.0
+        }
+    }
+
+    fn instance(params: &'static [Param]) -> Instance {
         let shared = Arc::new(Shared::new(&spec(params)));
-        start(&shared, spec(params));
-        shared
+        let running = start(&shared, spec(params));
+        assert!(running.is_some(), "a port to link on");
+        Instance(shared, running)
     }
 
     // Waits up to three seconds for `done`: the threads are real.

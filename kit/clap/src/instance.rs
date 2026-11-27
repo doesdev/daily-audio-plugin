@@ -26,6 +26,8 @@ pub struct Core {
     pub spec: Spec,
     /// Settings and meters, readable from any thread.
     pub shared: Arc<Shared>,
+    // Stopped, and waited for, when the instance goes.
+    _linking: Option<kit::link::Running>,
     // The latency activate last told the host of.
     latency: AtomicU32,
     #[cfg(windows)]
@@ -95,6 +97,7 @@ pub fn create<P: Plugin>(
     host: *const clap_host,
 ) -> *const clap_plugin {
     let spec = Spec::of::<P>();
+    let shared = Arc::new(Shared::new(&spec));
     let instance = Box::new(Instance::<P> {
         core: Core {
             raw: clap_plugin {
@@ -113,11 +116,8 @@ pub fn create<P: Plugin>(
             },
             host,
             spec,
-            shared: {
-                let shared = Arc::new(Shared::new(&spec));
-                kit::link::start(&shared, spec);
-                shared
-            },
+            _linking: kit::link::start(&shared, spec),
+            shared,
             latency: AtomicU32::new(0),
             #[cfg(windows)]
             gui: std::cell::RefCell::new(None),

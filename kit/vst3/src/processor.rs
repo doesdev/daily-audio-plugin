@@ -19,6 +19,8 @@ const METER_STEP: f64 = 0.0005;
 pub struct Processor<P: Plugin> {
     spec: Spec,
     shared: Arc<Shared>,
+    // Stopped, and waited for, when the processor goes.
+    _linking: Option<kit::link::Running>,
     // Made in setupProcessing; `process` try-locks it.
     runner: Mutex<Option<Runner<P>>>,
     // Speaker arrangements in force, input then output.
@@ -92,13 +94,11 @@ fn bus(spec: &Spec, media: MediaTypes, input: bool) -> Option<(i32, &'static str
 impl<P: Plugin> Processor<P> {
     pub fn new() -> Self {
         let spec = Spec::of::<P>();
+        let shared = Arc::new(Shared::new(&spec));
         Self {
             spec,
-            shared: {
-                let shared = Arc::new(Shared::new(&spec));
-                kit::link::start(&shared, spec);
-                shared
-            },
+            _linking: kit::link::start(&shared, spec),
+            shared,
             runner: Mutex::new(None),
             arrangement: [
                 AtomicU64::new(speakers(spec.info.audio_in)),
