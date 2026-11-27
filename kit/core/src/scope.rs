@@ -4,7 +4,7 @@
 //! reads whenever it likes. A read may straddle a write by a sample or
 //! two, which a picture does not show.
 
-use crate::Learn;
+use crate::{Learn, Links};
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 
 /// How many samples are kept each way: enough for a wave on the glass
@@ -16,6 +16,8 @@ pub struct Scope {
     /// is the one thing the audio thread and the editor both hold in
     /// every format: see `kit-vst3`'s `connect`.
     pub learn: Learn,
+    /// Which settings are linked to other instances' (`link`).
+    pub links: Links,
     input: Box<[AtomicU32]>,
     output: Box<[AtomicU32]>,
     written: AtomicU64,
@@ -27,6 +29,7 @@ impl Default for Scope {
         let ring = || (0..SCOPE).map(|_| AtomicU32::new(0)).collect();
         Self {
             learn: Learn::default(),
+            links: Links::default(),
             input: ring(),
             output: ring(),
             written: AtomicU64::new(0),

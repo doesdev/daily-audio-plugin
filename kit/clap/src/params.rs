@@ -151,7 +151,12 @@ unsafe extern "C" fn save(plugin: *const clap_plugin, stream: *const clap_ostrea
         return false;
     };
 
-    let bytes = state::encode_learnt(&core.spec, &core.shared.values(), &core.shared.learnt());
+    let bytes = state::encode_linked(
+        &core.spec,
+        &core.shared.values(),
+        &core.shared.learnt(),
+        &core.shared.links(),
+    );
     let mut at = 0;
     while at < bytes.len() {
         let rest = &bytes[at..];
@@ -191,6 +196,7 @@ unsafe extern "C" fn load(plugin: *const clap_plugin, stream: *const clap_istrea
     };
     core.shared.set_all(&values);
     core.shared.set_learnt(&state::learnt(&core.spec, &bytes));
+    core.shared.set_links(&state::linked(&core.spec, &bytes));
     core.rescan_values();
     true
 }

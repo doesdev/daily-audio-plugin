@@ -6,7 +6,7 @@
 import test from 'mvt'
 import {
   EMPTY, NO_HISTORY, TIES, fallFor, fallen, fingerprint, helpFor, holdFor,
-  ironCurve, prefsFor, textFit, tubeCurve,
+  ironCurve, linkNames, linkState, linkedTo, prefsFor, textFit, tubeCurve,
   presetMoves, presetValues, recorded, redone, reduce, tagFor, undone
 } from './kit.js'
 import { withBrowser } from '../../scripts/lib/browser.js'
@@ -858,5 +858,159 @@ test('the transformer window names the kinds of iron it stands for', async (asse
     assert.is(await text(tab, `${key('iron_grip')} .kit-value`), '60 %')
     assert.is(await text(tab, `${key('iron_size')} .kit-value`), '30 Hz')
     assert.deepEqual(await tab.evaluate(spills), [])
+  })
+})
+
+const LINKS = {
+  type: 'links',
+  me: '9',
+  groups: { 0: '700' },
+  peers: [
+    { uid: '1', name: 'Undertow', keys: { drive: '700', bypass: '0' } },
+    { uid: '2', name: 'Undertow', keys: { drive: '0', bypass: '0' } },
+    { uid: '3', name: 'Aftersound', keys: { bypass: '0', mix: '0' } }
+  ]
+}
+
+test('instances are told apart, and each stands somewhere to a setting', (assert) => {
+  const links = reduce(EMPTY, LINKS).links
+  const [drive, bypass] = [{ id: 0, key: 'drive' }, { id: 5, key: 'bypass' }]
+
+  assert.is(EMPTY.links, null)
+  assert.deepEqual(linkNames(links.peers).map((peer) => peer.label),
+    ['Undertow 1', 'Undertow 2', 'Aftersound'])
+  const stands = (rows) => links.peers.map((peer) =>
+    linkState(links, rows, peer).state)
+  // Linked, not linked, and without the setting at all.
+  assert.deepEqual(stands([drive]), ['all', 'off', 'none'])
+  // Of two settings, one linked is some; a peer with either can link.
+  assert.deepEqual(stands([drive, bypass]), ['some', 'off', 'off'])
+  assert.deepEqual(linkedTo(links, [drive]).map((peer) => peer.uid), ['1'])
+  assert.deepEqual(linkedTo(links, [bypass]), [])
+  assert.deepEqual(linkedTo(null, [drive]), [])
+})
+
+test('any control links to other instances from its menu, and says while it is', async (assert) => {
+  const item = { sel: '.kit-pop button', text: 'Link Drive with other instances' }
+  const boxes = `[...document.querySelectorAll('.kit-peer')].map((el) =>
+    [el.textContent, el.getAttribute('aria-checked'), el.disabled])`
+  const items = `[...document.querySelectorAll('.kit-pop button')]
+    .map((el) => el.querySelector('span').textContent)`
+  const drive = `${key('drive')} .kit-scrub`
+  await onGallery('tone', [['menu', drive]], async (tab) => {
+    // A host that has said nothing of linking is not offered it.
+    assert.false((await tab.evaluate(items)).some((name) => /Link/.test(name)))
+    await STEPS.key(tab, ['Escape'])
+    assert.false(await has(tab, `${key('drive')}[data-linked]`))
+
+    await STEPS.tell(tab, [LINKS])
+    assert.true(await has(tab, `${key('drive')}[data-linked]`))
+    assert.false(await has(tab, `${key('mix')}[data-linked]`))
+    await STEPS.menu(tab, [drive])
+    await click(tab, item)
+
+    // Every instance is listed; one without the setting is dimmed.
+    assert.is(await text(tab, '.kit-panel-title'), 'Link Drive')
+    assert.deepEqual(await tab.evaluate(boxes), [
+      ['Undertow 1', 'true', false], ['Undertow 2', 'false', false],
+      ['Aftersound', 'false', true]
+    ])
+    assert.is(await text(tab, '.kit-panel-bar .kit-about'), '1 linked')
+
+    // Ticking one asks the host to link it; unticking, to unlink.
+    await click(tab, { sel: '.kit-peer', text: 'Undertow 2' })
+    assert.deepEqual((await posted(tab)).at(-1),
+      { type: 'tie', id: 0, peer: '2' })
+    await click(tab, { sel: '.kit-peer', text: 'Undertow 1' })
+    assert.deepEqual((await posted(tab)).at(-1),
+      { type: 'untie', id: 0, peer: '1' })
+    // All takes every instance that has it, and no other.
+    await click(tab, '.kit-link-all')
+    assert.deepEqual((await posted(tab)).slice(-2), [
+      { type: 'tie', id: 0, peer: '1' }, { type: 'tie', id: 0, peer: '2' }
+    ])
+
+    // The list follows the host as it answers.
+    const both = structuredClone(LINKS)
+    both.peers[1].keys.drive = '700'
+    await STEPS.tell(tab, [both])
+    assert.is(await text(tab, '.kit-panel-bar .kit-about'), '2 linked')
+    assert.deepEqual(await tab.evaluate(spills), [])
+  })
+})
+
+test('bypass and a whole window link as one, and the window says who with', async (assert) => {
+  const told = structuredClone(LINKS)
+  told.groups = { 20: '5', 21: '5' }
+  told.peers[0].keys = { tube_bias: '5', tube_grid: '5', bypass: '0' }
+  await onGallery('tone', [['tell', told]], async (tab) => {
+    // The power button has the menu too.
+    await STEPS.menu(tab, ['.kit-power'])
+    await click(tab, { sel: '.kit-pop button', text: 'Link Bypass with other instances' })
+    assert.is(await text(tab, '.kit-panel-title'), 'Link Bypass')
+    await click(tab, { sel: '.kit-peer', text: 'Aftersound' })
+    assert.deepEqual((await posted(tab)).at(-1),
+      { type: 'tie', id: 5, peer: '3' })
+    await click(tab, '.kit-done')
+
+    // A choice has no menu but this one, and one right-click is
+    // one menu.
+    await STEPS.menu(tab, [`${key('listen')} .kit-option`])
+    await tab.evaluate('new Promise((r) => setTimeout(() => r(true), 30))')
+    assert.deepEqual(await tab.evaluate(`[...document.querySelectorAll(
+      '.kit-pop button span')].map((el) => el.textContent)`),
+    ['Link Listen with other instances'])
+    await STEPS.key(tab, ['Escape'])
+
+    // The Tube button links every setting of the window the other
+    // instance has, and is marked while any of them is linked.
+    assert.true(await has(tab, '.kit-open-tube[data-linked]'))
+    await STEPS.menu(tab, ['.kit-open-tube'])
+    await click(tab, { sel: '.kit-pop button', text: 'Link Tube with other instances' })
+    const boxes = `[...document.querySelectorAll('.kit-peer')].map((el) =>
+      [el.textContent, el.getAttribute('aria-checked'), el.disabled])`
+    assert.deepEqual(await tab.evaluate(boxes), [
+      ['Undertow 1', 'true', false], ['Undertow 2', 'false', true],
+      ['Aftersound', 'false', true]
+    ])
+    await click(tab, '.kit-done')
+
+    // In the window, the link button names who, opens the same list,
+    // and Done there comes back to the window.
+    await click(tab, '.kit-open-tube')
+    assert.is(await tab.evaluate(
+      'document.querySelector(".kit-link-open").getAttribute("aria-label")'),
+    'Linked with Undertow 1')
+    await click(tab, '.kit-link-open')
+    assert.is(await text(tab, '.kit-panel-title'), 'Link Tube')
+    await click(tab, '.kit-done')
+    assert.is(await text(tab, '.kit-panel-title'), 'Tube')
+    assert.deepEqual(await tab.evaluate(spills), [])
+  })
+})
+
+test('a right-click with no menu of ours opens no menu of the browser\'s', async (assert) => {
+  await onGallery('main', [], async (tab) => {
+    const allowed = (sel) => tab.evaluate(`document.querySelector('${sel}')
+      .dispatchEvent(new MouseEvent('contextmenu', {
+        bubbles: true, cancelable: true
+      }))`)
+    // dispatchEvent answers false when the default was prevented.
+    assert.false(await allowed('.kit-glass'))
+    assert.false(await allowed('.kit-name'))
+    assert.false(await allowed('.kit-hint'))
+    assert.false(await has(tab, '.kit-pop'))
+  })
+})
+
+test('the button that links a pair is a circle, whatever else is called a link', async (assert) => {
+  await onGallery('pairs', [], async (tab) => {
+    const [wide, high, round] = await tab.evaluate(`(() => {
+      const el = document.querySelector('.kit-link')
+      const box = el.getBoundingClientRect()
+      return [box.width, box.height, getComputedStyle(el).borderRadius]
+    })()`)
+    assert.is(Math.round(wide), Math.round(high))
+    assert.is(round, '50%')
   })
 })

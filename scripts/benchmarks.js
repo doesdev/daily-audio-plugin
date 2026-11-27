@@ -147,7 +147,8 @@ const RUST = [
   'kit/vst3/src/connect.rs', 'kit/core/src/learn.rs', 'kit/core/src/state.rs',
   'kit/vst3/tests/host.rs', 'kit/clap/tests/host.rs',
   'kit/dsp/src/level_match.rs', 'kit/dsp/src/mid_side.rs',
-  'kit/dsp/src/tube.rs', 'kit/dsp/src/transformer.rs'
+  'kit/dsp/src/tube.rs', 'kit/dsp/src/transformer.rs',
+  'kit/core/src/link.rs'
 ]
 
 export const allProblems = () => {

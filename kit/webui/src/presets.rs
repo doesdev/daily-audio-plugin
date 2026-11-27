@@ -19,9 +19,8 @@ pub fn dir(spec: &Spec) -> Option<PathBuf> {
         .map(PathBuf::from)
         .or_else(home)?;
     Some(
-        base.join(spec.info.vendor)
-            .join(spec.info.name)
-            .join("Presets"),
+        // Not the vendor's name: see `kit::HOME`.
+        base.join(kit::HOME).join(spec.info.name).join("Presets"),
     )
 }
 

@@ -152,6 +152,41 @@ pub fn learn(spec: &Spec, learn: &kit::Learn) -> String {
     json!({ "type": "learn", "waiting": waiting, "map": map }).to_string()
 }
 
+/// Linking as the page shows it: this instance's number, the group
+/// of each of its linked settings by id, and every other instance
+/// with the group of each of its settings by key. Numbers this large
+/// go as text, since a page's numbers cannot hold them all.
+pub fn links(spec: &Spec, links: &kit::Links) -> String {
+    let groups: serde_json::Map<String, Value> = spec
+        .params
+        .iter()
+        .enumerate()
+        .filter_map(|(i, p)| match links.group(i) {
+            0 => None,
+            group => Some((p.id.to_string(), json!(group.to_string()))),
+        })
+        .collect();
+    let peers: Vec<Value> = links
+        .peers()
+        .into_iter()
+        .map(|peer| {
+            let keys: serde_json::Map<String, Value> = peer
+                .keys
+                .into_iter()
+                .map(|(key, group)| (key, json!(group.to_string())))
+                .collect();
+            json!({ "uid": peer.uid.to_string(), "name": peer.name, "keys": keys })
+        })
+        .collect();
+    json!({
+        "type": "links",
+        "me": links.uid().to_string(),
+        "groups": groups,
+        "peers": peers,
+    })
+    .to_string()
+}
+
 /// A sample is sent as a whole number of this many to full scale: it
 /// is shorter to write than a fraction, and fine enough to draw.
 pub const SIGNAL_SCALE: f32 = 16384.0;

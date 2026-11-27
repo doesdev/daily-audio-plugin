@@ -82,7 +82,7 @@ pub struct Undertow {
 impl Plugin for Undertow {
     const INFO: &'static Info = &Info {
         name: "Undertow",
-        vendor: "doesdev",
+        vendor: kit::VENDOR,
         url: "https://github.com/doesdev/daily-audio-plugin",
         description: "The middle's low end biases the sides' valve",
         version: env!("CARGO_PKG_VERSION"),

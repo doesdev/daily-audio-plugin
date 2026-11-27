@@ -575,6 +575,40 @@
         "conforms_as_a_vst3",
         "a switch among a foot's pills is one pill, pressed while on"
       ]
+    },
+    {
+      "id": "linking",
+      "what": "Moving one setting in several instances at once",
+      "covers": [
+        "linkNames",
+        "linkState",
+        "linkedTo"
+      ],
+      "leaders": [
+        {
+          "who": "Slate Digital Virtual Console Collection",
+          "does": "Eight groups: instances set to the same group share their settings, so a console's drive is ridden on every channel at once",
+          "source": null
+        },
+        {
+          "who": "FabFilter Pro-Q 4",
+          "does": "An instance list inside the plugin that shows every other instance in the project and lets each be opened and adjusted from there",
+          "source": null
+        }
+      ],
+      "ours": "Any setting of any DAP instance links to the same setting of any others, across different plugins, from a right-click on it: every open instance is listed with a box, one that has no such setting is dimmed, and All takes every one that has. Bypass links from the power button, and a whole Tube or Transformer window from its button or from inside it, where a mark names who it is linked with. A linked control wears a mark. A value crosses in its own units and stops at the other's range. Links are saved with the project. Nothing touches the audio thread, and the host is told of a linked move as it is of an editor's. Past Slate's groups in linking setting by setting and across different plugins. Under Pro-Q 4 in two respects: instances are told apart by plugin and a number, not by their track's name, and another instance cannot be opened or seen from here. Next is the track's name, which both formats can ask the host for.",
+      "verdict": "meets",
+      "proof": [
+        "two_instances_find_each_other_and_a_linked_setting_moves_both",
+        "a_value_crosses_in_its_own_units_and_stops_at_the_others_range",
+        "an_instance_that_goes_is_forgotten",
+        "what_is_said_survives_the_wire_and_what_is_not_ours_is_ignored",
+        "link_groups_are_saved_beside_the_settings_and_harm_nothing_else",
+        "the_page_is_told_who_is_linked_and_can_link_and_unlink",
+        "instances are told apart, and each stands somewhere to a setting",
+        "any control links to other instances from its menu, and says while it is",
+        "bypass and a whole window link as one, and the window says who with"
+      ]
     }
   ]
 }

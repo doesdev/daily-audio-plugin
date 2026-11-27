@@ -100,6 +100,20 @@ impl Shared {
         }
     }
 
+    /// The group each setting is linked in, for saving.
+    pub fn links(&self) -> Vec<u64> {
+        (0..self.values.len())
+            .map(|i| self.scope.links.group(i))
+            .collect()
+    }
+
+    /// Puts back what was saved.
+    pub fn set_links(&self, groups: &[u64]) {
+        for (index, &group) in groups.iter().enumerate() {
+            self.scope.links.set_group(index, group);
+        }
+    }
+
     /// Whether a setting moved since this was last asked.
     pub fn take_dirty(&self) -> bool {
         self.dirty.swap(false, Ordering::Acquire)

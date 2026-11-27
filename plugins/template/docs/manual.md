@@ -152,3 +152,19 @@ with Output.
 
 **It sounds dull.** Turn Tone up; at its lowest it leaves little above
 200 Hz.
+
+## Linking
+
+Any setting can move with the same setting in other DAP instances,
+whichever plugins they are. Right-click a setting and choose **Link
+with other instances**: every DAP instance open is listed with a box.
+Tick the ones to link; one that has no such setting is dimmed.
+**All** ticks every one that can be, and **None** unlinks. From then
+on, moving the setting in any of them moves it in all, in its own
+units: 6 dB is 6 dB everywhere, and a value past another's range
+stops at its end.
+
+Right-click the power button to link Bypass, so several come on and
+off together. A linked setting has a small link mark by its name.
+Links are saved with your project. Several of one plugin are told
+apart by a number, in the order they were added.

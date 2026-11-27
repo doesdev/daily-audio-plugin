@@ -7,8 +7,8 @@ use crate::strings::copy_wstring;
 use crate::{class_id, transport};
 use kit::{Plugin, Runner, Shared, Spec, state};
 use std::slice;
-use std::sync::Mutex;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
+use std::sync::{Arc, Mutex};
 use vst3::Steinberg::Vst::*;
 use vst3::Steinberg::*;
 use vst3::{Class, ComRef};
@@ -18,7 +18,9 @@ const METER_STEP: f64 = 0.0005;
 
 pub struct Processor<P: Plugin> {
     spec: Spec,
-    shared: Shared,
+    shared: Arc<Shared>,
+    // Stopped, and waited for, when the processor goes.
+    _linking: Option<kit::link::Running>,
     // Made in setupProcessing; `process` try-locks it.
     runner: Mutex<Option<Runner<P>>>,
     // Speaker arrangements in force, input then output.
@@ -92,9 +94,11 @@ fn bus(spec: &Spec, media: MediaTypes, input: bool) -> Option<(i32, &'static str
 impl<P: Plugin> Processor<P> {
     pub fn new() -> Self {
         let spec = Spec::of::<P>();
+        let shared = Arc::new(Shared::new(&spec));
         Self {
             spec,
-            shared: Shared::new(&spec),
+            _linking: kit::link::start(&shared, spec),
+            shared,
             runner: Mutex::new(None),
             arrangement: [
                 AtomicU64::new(speakers(spec.info.audio_in)),
@@ -301,6 +305,7 @@ impl<P: Plugin> IComponentTrait for Processor<P> {
         };
         self.shared.set_all(&values);
         self.shared.set_learnt(&state::learnt(&self.spec, &bytes));
+        self.shared.set_links(&state::linked(&self.spec, &bytes));
         kResultOk
     }
 
@@ -309,14 +314,25 @@ impl<P: Plugin> IComponentTrait for Processor<P> {
             return kInvalidArgument;
         };
 
-        let mut bytes =
-            state::encode_learnt(&self.spec, &self.shared.values(), &self.shared.learnt());
+        let mut bytes = state::encode_linked(
+            &self.spec,
+            &self.shared.values(),
+            &self.shared.learnt(),
+            &self.shared.links(),
+        );
         let mut written = 0;
         unsafe { stream.write(bytes.as_mut_ptr().cast(), bytes.len() as i32, &mut written) }
     }
 }
 
 /// Everything left in `stream`, a chunk at a time.
+///
+/// Hosts disagree about the end of a stream. Some answer a read that
+/// could not be filled with success and a short count; others call
+/// that a failure, though they have handed over what there was. So
+/// what a read returns is kept whatever it answers, and the stream is
+/// over when a read brings nothing or fails. Treating that failure as
+/// "no state" loses a whole project's settings in the second kind.
 ///
 /// # Safety
 /// `stream` must be a live stream.
@@ -326,13 +342,11 @@ pub unsafe fn read_all(stream: &ComRef<'_, IBStream>) -> Result<Vec<u8>, tresult
     loop {
         let mut read = 0;
         let rc = unsafe { stream.read(buf.as_mut_ptr().cast(), buf.len() as i32, &mut read) };
-        if rc != kResultOk {
-            return Err(rc);
-        }
-        if read <= 0 {
+        let got = read.clamp(0, buf.len() as i32) as usize;
+        bytes.extend_from_slice(&buf[..got]);
+        if rc != kResultOk || got == 0 {
             return Ok(bytes);
         }
-        bytes.extend_from_slice(&buf[..read as usize]);
     }
 }
 

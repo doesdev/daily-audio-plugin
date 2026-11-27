@@ -46,6 +46,8 @@ npm run gallery                    # the kit's own pictures, both themes
   is news, and none of the habits listed under "What it avoids".
 - Say what was not verified. Off Windows that is the WebView2 editor
   tests and both validators.
+- The brand is Daily Audio Plugin, DAP for short (`docs/brand.md`).
+  Every plugin's vendor is `kit::VENDOR`.
 - No em or en dashes in any doc.
 
 ## Style

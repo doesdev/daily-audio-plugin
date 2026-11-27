@@ -1162,6 +1162,92 @@ button { cursor: pointer; }
 
 .kit-pad[data-held] i { background: var(--g-touch); }
 
+/* ---- linking */
+
+/* A control linked to another instance says so by its name. */
+.kit-control[data-linked] .kit-title::after {
+  content: '';
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin-left: 6px;
+  vertical-align: -1px;
+  background: currentColor;
+  -webkit-mask: var(--link-mark) center / contain no-repeat;
+  mask: var(--link-mark) center / contain no-repeat;
+}
+
+:root {
+  --link-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M8.6 11.4a2.8 2.8 0 0 0 4 0l2.2-2.2a2.8 2.8 0 0 0-4-4l-.9.9M11.4 8.6a2.8 2.8 0 0 0-4 0l-2.2 2.2a2.8 2.8 0 0 0 4 4l.9-.9'/%3E%3C/svg%3E");
+}
+
+/* A tool or a window's button that is: a dot, as for a moved window. */
+.kit-tool[data-linked] { position: relative; }
+
+.kit-tool[data-linked]::after {
+  content: '';
+  position: absolute;
+  right: 7px;
+  top: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.kit-panel-bar .kit-link-open {
+  flex: none;
+  width: var(--target);
+  height: var(--target);
+  border: 1px solid var(--edge);
+  border-radius: 50%;
+}
+
+.kit-links {
+  flex: 1 1 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 8px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.kit-peer {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  min-width: 0;
+  padding: 0 18px 0 13px;
+  white-space: nowrap;
+}
+
+.kit-check { flex: none; }
+
+.kit-check {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  border: 1px solid currentColor;
+  border-radius: 5px;
+  opacity: 0.7;
+}
+
+.kit-check .kit-icon { width: 14px; height: 14px; visibility: hidden; }
+
+.kit-peer[aria-checked='true'] .kit-check { opacity: 1; }
+.kit-peer[aria-checked='true'] .kit-check .kit-icon { visibility: visible; }
+
+/* Some of what could be linked is: a bar, not a tick. */
+.kit-peer[aria-checked='mixed'] .kit-check {
+  background: linear-gradient(currentColor, currentColor)
+    center / 8px 1.6px no-repeat;
+}
+
+.kit-peer:disabled { opacity: 0.35; }
+
 /* ---- beside the picture, and the solo for mid and side */
 
 .kit-column {
