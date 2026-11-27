@@ -28,6 +28,11 @@ trails are placed by eye where it has them, in its three colours.
 The draft's light version had a pair of chevrons in the P that its
 dark version did not; they are left out until one way is chosen.
 
-The mark is in the README. It is not yet in an editor: where it sits
-there is chosen on the design canvas before it is built, as the rest
-of the look was.
+The mark is in the README and in every editor. There it sits at the
+top left corner of the glass, 128 wide, with the plugin's name
+centred under its letters in purple, at 15 px. On the dark theme it
+breaks past the corner's edge; on the light theme, whose ground is
+pale, it keeps inside the corner, since the part past the edge would
+be cream on grey. The placement was chosen on the design canvas. A
+plugin's one line about itself, which used to sit under its name, is
+now what pointing at the name shows.
