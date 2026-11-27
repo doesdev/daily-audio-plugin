@@ -182,6 +182,7 @@ mod tests {
         meters: &[],
         assets: &[],
         key_in: 0,
+        category: kit::Category::Other,
     };
 
     fn note(pid: i64, scope: &Arc<Scope>) -> (ComWrapper<Note>, vst3::ComPtr<IMessage>) {

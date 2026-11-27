@@ -52,6 +52,11 @@ impl Descriptor {
             info.version,
             info.description,
             "",
+            // What kind it is, in CLAP's own word, if it has one.
+            P::CATEGORY
+                .clap()
+                .filter(|kind| *kind != "stereo")
+                .unwrap_or(""),
         ]
         .into_iter()
         .map(c)
@@ -60,9 +65,16 @@ impl Descriptor {
             Role::Effect => CLAP_PLUGIN_FEATURE_AUDIO_EFFECT,
             Role::Instrument => CLAP_PLUGIN_FEATURE_INSTRUMENT,
         };
+        // The list ends at the first null, so a kind with no word of
+        // its own simply ends it one sooner.
+        let named = match strings[6].is_empty() {
+            true => std::ptr::null(),
+            false => strings[6].as_ptr(),
+        };
         let features: Box<[*const c_char]> = Box::new([
             kind.as_ptr(),
             CLAP_PLUGIN_FEATURE_STEREO.as_ptr(),
+            named,
             std::ptr::null(),
         ]);
         let raw = clap_plugin_descriptor {

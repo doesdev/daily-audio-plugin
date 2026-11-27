@@ -173,6 +173,7 @@ mod tests {
             meters: &[],
             assets: &[],
             key_in: 0,
+            category: crate::Category::Other,
         }
     }
 

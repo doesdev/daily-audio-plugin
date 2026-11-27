@@ -309,6 +309,7 @@ mod tests {
             "import { mount, auto } from './kit/kit.js'\nmount(auto)\n",
         )],
         key_in: 0,
+        category: kit::Category::Other,
     };
 
     type Edits = Rc<RefCell<Vec<(char, u32, f64)>>>;

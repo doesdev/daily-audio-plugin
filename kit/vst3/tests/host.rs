@@ -168,3 +168,22 @@ fn a_sidechain_arrives_on_its_own_input_and_is_silent_when_not_fed() {
     assert_eq!(fed[0], want);
     assert_eq!(fed[1], want);
 }
+
+#[test]
+fn a_plugin_says_what_kind_it_is_in_steinbergs_own_words() {
+    use kit::{Category, Role};
+    let cases = [
+        (Category::Distortion, Role::Effect, "Fx|Distortion"),
+        (Category::Eq, Role::Effect, "Fx|EQ"),
+        (Category::PitchShift, Role::Effect, "Fx|Pitch Shift"),
+        (Category::Synth, Role::Instrument, "Instrument|Synth"),
+        (Category::Drum, Role::Instrument, "Instrument|Drum"),
+        // Unsaid, it is only an effect or an instrument: "Other".
+        (Category::Other, Role::Effect, "Fx"),
+        (Category::Other, Role::Instrument, "Instrument"),
+    ];
+    for (kind, role, want) in cases {
+        assert_eq!(kind.vst3(role), want);
+    }
+    assert!(Category::Synth.plays() && !Category::Delay.plays());
+}

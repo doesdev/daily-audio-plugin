@@ -19,7 +19,7 @@ mod transport;
 pub use controller::{CC_PARAMS, Controller};
 pub use processor::Processor;
 
-use kit::{Plugin, Role, Spec};
+use kit::{Plugin, Spec};
 use std::ffi::c_void;
 use std::marker::PhantomData;
 use strings::copy_cstring;
@@ -47,10 +47,7 @@ impl<P: Plugin> Class for Factory<P> {
 
 // (class id, category, subcategories) for each class, by index.
 fn classes(spec: &Spec) -> [(TUID, &'static str, &'static str); 2] {
-    let sub = match spec.info.role {
-        Role::Instrument => "Instrument",
-        Role::Effect => "Fx",
-    };
+    let sub = spec.category.vst3(spec.info.role);
     [
         (
             class_id(spec.info.vst3_processor),
