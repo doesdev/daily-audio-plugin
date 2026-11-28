@@ -726,6 +726,32 @@
         "a_default_is_kept_where_the_instance_was_told_to_keep_them",
         "what_cannot_be_a_default_is_left_alone"
       ]
+    },
+    {
+      "id": "a-core-read-across",
+      "what": "One sound setting how much of another gets through a shared core: a saturable reactor",
+      "covers": [],
+      "leaders": [
+        {
+          "who": "Moro and McPherson, DAFx-15",
+          "does": "A non-linear inductor as a linear filter whose inductance is worked out again every sample from a saturating curve, driven by the current through that same inductor; hysteresis not modelled; applied to a passive high-pass and a wah",
+          "source": "https://dafx.de/paper-archive/details/SGj2HLfMOvHlajZxdjVo8w"
+        },
+        {
+          "who": "Najnudel, Muller, Helie and Roze, DAFx-20",
+          "does": "A passive, power-balanced model of a ferromagnetic coil with hysteresis, solved by Newton's method each sample, fed by the coil's own current; real-time cost left open; a transformer from two coupled coils named as future work",
+          "source": "https://dafx.de/paper-archive/details/M48r2d8e7djf8l-SffOBVw"
+        }
+      ],
+      "ours": "Transformer::opening reads, after every sample, how open the core is to a second winding: the slope of the very curve the core bends the sound by, where the sound's flux, steel's lag and the grip have put it, at a push of the reader's own. The core keeps count even when it is set to pass the sound untouched. Unlike both papers, what closes the core and what passes through it can be different sounds, and the cost is one curve slope a sample, with no solving. Under them in one respect: the lag is the kit's simple steel lag, not a measured hysteresis loop.",
+      "verdict": "meets",
+      "proof": [
+        "the_slope_is_the_curves_own_slope",
+        "a_low_sound_closes_the_core_sooner_than_a_high_one",
+        "the_core_keeps_count_at_rest_and_the_sound_still_passes_exactly",
+        "steel_closes_sooner_than_nickel_on_a_quieter_sound",
+        "its_reach_grows_with_the_drive_and_the_depth_of_the_note"
+      ]
     }
   ]
 }

@@ -23,7 +23,7 @@ pub use mid_side::{BOTH, MID, MidSide, SIDE, mid_side_gains};
 pub use oversample::{Bend, FLOOR, MOST, Need, Oversampled, dot};
 pub use smooth::Smooth;
 pub use svf::{Svf, SvfOut};
-pub use transformer::{IronShape, PUSH, Transformer, iron_curve};
+pub use transformer::{IronShape, PUSH, Transformer, iron_curve, iron_slope};
 pub use tube::{
     PENTODE, PLAYING_TURNS, RENDERING_TURNS, STRAPPED, TRIODE, Tube, TubeShape, tube_curve,
 };

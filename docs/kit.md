@@ -180,7 +180,10 @@ and the picture can tell when it is held.
   `Tube::next` as `swing`: the window's Bias adds to it. `tubeCurve`
   and `ironCurve` in `kit.js` are the same curves as `tube_curve` and
   `iron_curve`, held together by a test on each side with the same
-  numbers: change one and change the other. A plugin that has any of
+  numbers: change one and change the other. `Transformer::opening`
+  reads the core from a second winding: how much a sound wound
+  beside the one that fills it gets through, which is how one sound
+  can close the core on another (Ironside). A plugin that has any of
   the three says so in `benchmark.json`, as with Mix.
 - `const CATEGORY: kit::Category` says what kind of thing the plugin
   is, which is where a host files it: `Distortion`, `Dynamics`, `Eq`,

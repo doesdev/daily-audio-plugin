@@ -6,6 +6,13 @@ is in that plugin's own `CHANGELOG.md`.
 
 ## 2026-11-28
 
+- New: a transformer's core can be read by a second winding.
+  `Transformer::opening` says how much a small signal wound beside
+  the sound gets through, from nought when the sound has filled the
+  core to one when it is empty, and `iron_slope` is the curve's own
+  slope that it comes from. The core keeps count even when it is set
+  to leave the sound alone. `Transformer::reach` tells `Need` how far
+  up the curve it is.
 - New: `kit_dsp::Oversampled` runs a valve or a core at 2 to 16
   times the rate, late by the same count at every rate, and changes
   rate without a join being heard. `kit_dsp::Need` chooses the rate
