@@ -146,6 +146,6 @@ quality for it, which is not wanted here.
 - These numbers are from one Linux machine. Nothing has been timed on
   Windows or in a host, and a host's own cost for each parameter
   change is not something a test here can see.
-- Oversampling changes the sound (for the better) and adds latency.
-  Whether it is always on, or a Quality setting, and at what default,
-  is the owner's call.
+- Oversampling, quality when rendering, and defaults that reach
+  every instance are queued and set out in `docs/quality.md`, with
+  the decisions that are the owner's.
