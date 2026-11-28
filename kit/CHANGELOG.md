@@ -6,6 +6,10 @@ is in that plugin's own `CHANGELOG.md`.
 
 ## 2026-11-28
 
+- Fixed: an instance that has gone quiet no longer costs more than
+  one that is playing. The runner flushes denormals for each block,
+  and the suite fails a plugin whose tail costs more than its sound.
+  `docs/performance.md` has what was measured and what comes next.
 - Linking lists each instance by the track it is on, as the host
   names it, in VST3 and CLAP.
 

@@ -55,6 +55,11 @@ macro_rules! suite {
         }
 
         #[test]
+        fn a_tail_costs_no_more_than_the_sound() {
+            $crate::checks::a_tail_costs_no_more_than_the_sound::<$plugin>();
+        }
+
+        #[test]
         fn loads_in_every_format() {
             $crate::checks::loads_in_every_format::<$plugin>();
         }

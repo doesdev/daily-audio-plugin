@@ -46,6 +46,8 @@ npm run gallery                    # the kit's own pictures, both themes
   is news, and none of the habits listed under "What it avoids".
 - Say what was not verified. Off Windows that is the WebView2 editor
   tests and both validators.
+- What a plugin costs is measured, not assumed, and speed is never
+  bought with quality (`docs/performance.md`).
 - Every change is written down: a plugin's in its `CHANGELOG.md`
   under the version that ships it, the kit's in `kit/CHANGELOG.md`
   under the day. Say what a person will notice, not what was edited.

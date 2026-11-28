@@ -220,3 +220,53 @@ fn a_plugin_that_does_not_say_its_kind_is_caught() {
 fn an_effect_filed_as_an_instrument_is_caught() {
     checks::spec_is_sound::<Miscast>();
 }
+
+// A plugin whose ringing never stops shrinking, and which turns the
+// runner's flushing off for itself: what every plugin's tail would
+// cost if the runner did not flush.
+#[cfg(target_arch = "x86_64")]
+struct Unflushed {
+    ring: [f32; 64],
+}
+
+#[cfg(target_arch = "x86_64")]
+impl Plugin for Unflushed {
+    const CATEGORY: kit::Category = kit::Category::Tools;
+    const INFO: &'static Info = &info("dev.kit.unflushed", 302);
+    const PARAMS: &'static [Param] = &[GAIN];
+
+    fn new() -> Self {
+        Self { ring: [0.0; 64] }
+    }
+
+    fn prepare(&mut self, _rate: f32, _max_block: usize) {}
+
+    fn process(&mut self, block: &mut Block) {
+        // Both switches off: denormals are worked on in full.
+        let mut csr = 0u32;
+        unsafe {
+            std::arch::asm!("stmxcsr dword ptr [{}]", in(reg) &mut csr, options(nostack));
+            csr &= !0x8040;
+            std::arch::asm!("ldmxcsr dword ptr [{}]", in(reg) &csr, options(nostack));
+        }
+        for ch in 0..block.outputs() {
+            let (input, output) = block.io(ch);
+            for (o, i) in output.iter_mut().zip(input) {
+                // Sixty-four memories, each dying away for ever.
+                let mut sum = 0.0;
+                for held in self.ring.iter_mut() {
+                    *held = *held * 0.97 + *i;
+                    sum += *held;
+                }
+                *o = sum / 64.0;
+            }
+        }
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
+#[test]
+#[should_panic(expected = "silence after a sound costs")]
+fn a_tail_left_to_denormals_is_caught() {
+    checks::a_tail_costs_no_more_than_the_sound::<Unflushed>();
+}

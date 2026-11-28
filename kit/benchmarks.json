@@ -616,6 +616,25 @@
         "an_instance_tells_the_others_which_track_it_is_on",
         "the_track_a_host_names_is_what_other_instances_hear"
       ]
+    },
+    {
+      "id": "quiet-cost",
+      "what": "What an instance costs once it has gone quiet",
+      "covers": [],
+      "leaders": [
+        {
+          "who": "JUCE",
+          "does": "ScopedNoDenormals, which a plugin puts at the top of its process call to have the processor flush denormals for its length",
+          "source": null
+        }
+      ],
+      "ours": "The runner flushes denormals for the length of every block and puts the thread's own setting back after, so no plugin has to remember to, and the suite every plugin runs fails one whose silence after a sound costs more than the sound did. Before, an instrument's tail cost eight times its notes for as long as it was left (docs/performance.md).",
+      "verdict": "meets",
+      "proof": [
+        "denormals_are_zero_while_flushed_and_themselves_again_after",
+        "one_inside_another_leaves_the_outer_in_force",
+        "a_tail_left_to_denormals_is_caught"
+      ]
     }
   ]
 }
