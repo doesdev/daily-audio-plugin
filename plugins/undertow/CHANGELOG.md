@@ -1,5 +1,11 @@
 # Undertow: what changed
 
+## 0.5.5 (2026-11-28)
+
+- Fixed: a linked setting moved straight after it was linked could
+  stay unmoved on the other instance. On Windows, what other
+  instances said could also be read late.
+
 ## 0.5.4 (2026-11-28)
 
 - Fixed: as a VST3 it told the host of its meters every block, which

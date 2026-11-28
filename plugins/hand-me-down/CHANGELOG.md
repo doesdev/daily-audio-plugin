@@ -1,5 +1,11 @@
 # Hand-Me-Down: what changed
 
+## 0.1.3 (2026-11-28)
+
+- Fixed: a linked setting moved straight after it was linked could
+  stay unmoved on the other instance. On Windows, what other
+  instances said could also be read late.
+
 ## 0.1.2 (2026-11-28)
 
 - Fixed: dropouts at small audio buffers. As a VST3 it told the host
