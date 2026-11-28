@@ -13,6 +13,10 @@ is in that plugin's own `CHANGELOG.md`.
   slope that it comes from. The core keeps count even when it is set
   to leave the sound alone. `Transformer::reach` tells `Need` how far
   up the curve it is.
+- Fixed: the transformer window's Size was told to a host as a hair
+  under 60 Hz, so a new instance did not start where it said. It
+  moves in whole hertz now, and every shared setting is held to
+  coming back exactly at its default.
 - New: `kit_dsp::Oversampled` runs a valve or a core at 2 to 16
   times the rate, late by the same count at every rate, and changes
   rate without a join being heard. `kit_dsp::Need` chooses the rate

@@ -314,6 +314,9 @@ pub const fn iron_size(id: u32) -> Param {
         "Hz",
     )
     .skew(2.5)
+    // In whole hertz, so the default a host is told comes back as
+    // itself and not a hair under.
+    .step(1.0)
     .decimals(0)
     .about("How much iron: the note at which a full level fills the core. Lower is bigger")
 }
@@ -570,6 +573,39 @@ mod tests {
     const MIX: Param = range(2, "mix", "Mix", "Out", (0.0, 1.0, 0.5), "");
     const MODE: Param = list(3, "mode", "Mode", "Out", &["Soft", "Hard", "Fold"], 1);
     const BYPASS: Param = toggle(4, "bypass", "Bypass", "Out", false);
+
+    #[test]
+    fn every_shared_setting_comes_back_exactly_at_its_default() {
+        // A host holds a setting as a fraction; what it is told the
+        // default is must read back as the default itself, or a new
+        // instance starts a hair off where it says it is.
+        let shared = [
+            mix(0),
+            level_match(0),
+            balance(0),
+            listen(0),
+            key(0),
+            oversampling(0),
+            render_quality(0),
+            tube_stage(0),
+            tube_bias(0),
+            tube_grid(0),
+            tube_bloom(0),
+            tube_feedback(0),
+            tube_sag(0),
+            tube_glow(0),
+            iron_drive(0),
+            iron_size(0),
+            iron_material(0),
+            iron_source(0),
+            iron_grip(0),
+            iron_top(0),
+            iron_ring(0),
+        ];
+        for p in shared {
+            assert_eq!(p.plain(p.default_norm()), p.default, "{}", p.key);
+        }
+    }
 
     #[test]
     fn plain_and_normalized_round_trip() {
