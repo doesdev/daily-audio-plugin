@@ -274,6 +274,95 @@ pub fn is_within_budget<P: Plugin>() {
     );
 }
 
+/// A reset is over in a fraction of the smallest buffer. A host may
+/// reset a plugin on the audio thread, as when the transport starts,
+/// and whatever that takes comes out of one block: clearing seconds
+/// of memory there is a dropout at a small buffer. What must be
+/// cleared is marked as empty, not emptied.
+pub fn a_reset_fits_in_a_small_buffer<P: Plugin>() {
+    let rate = 96_000.0;
+    // A buffer of 16 at 48 kHz, the smallest in the budget, lasts a
+    // third of a millisecond: a reset may have a quarter of that.
+    let most = std::time::Duration::from_micros(85);
+    let mut runner = Runner::<P>::new(rate, 64);
+    let sound = signals::sung(rate);
+    let mut took: Vec<_> = (0..9)
+        .map(|_| {
+            // Sound first, so there is something to reset.
+            for chunk in sound.chunks(64).take(200) {
+                runner.run(
+                    chunk.len(),
+                    Transport::default(),
+                    |_, s, into| into.copy_from_slice(&chunk[s..s + into.len()]),
+                    |_, _, _| {},
+                    |_| {},
+                );
+            }
+            let at = std::time::Instant::now();
+            runner.reset();
+            at.elapsed()
+        })
+        .collect();
+    took.sort();
+    let middle = took[took.len() / 2];
+    assert!(
+        middle < most,
+        "a reset takes {middle:?}, and a buffer of 16 lasts 333 microseconds"
+    );
+}
+
+/// Silence after a sound costs no more than the sound did. What is
+/// left ringing shrinks toward zero without reaching it, and a
+/// processor left to work on numbers that small slows many times
+/// over: the runner flushes them, and this holds it and the plugin to
+/// that. An instrument is played a note and let go; an effect is fed
+/// the signal and then nothing.
+pub fn a_tail_costs_no_more_than_the_sound<P: Plugin>() {
+    let rate = RATE;
+    let block = 256;
+    let sound = signals::sung(rate);
+    // Long enough for whatever rings to shrink below what a float
+    // holds whole: ten seconds.
+    let silence = vec![0.0; rate as usize * 10];
+    let notes = notes::<P>(rate);
+    let run = |runner: &mut Runner<P>, chunk: &[f32]| {
+        runner.run(
+            chunk.len(),
+            Transport::default(),
+            |_, s, into| into.copy_from_slice(&chunk[s..s + into.len()]),
+            |_, _, _| {},
+            |_| {},
+        );
+    };
+    let played = || {
+        let mut runner = Runner::<P>::new(rate, block);
+        let mut at = 0u32;
+        for chunk in sound.chunks(block) {
+            let here = at..at + chunk.len() as u32;
+            for e in notes.iter().filter(|e| here.contains(&e.offset)) {
+                runner.push(Event {
+                    offset: e.offset - at,
+                    ..*e
+                });
+            }
+            run(&mut runner, chunk);
+            at += chunk.len() as u32;
+        }
+        runner
+    };
+    let loud = cost(rate, block, &sound, || Runner::<P>::new(rate, block), run).mean;
+    let after = cost(rate, block, &silence, played, run).mean;
+    // Three times over, and a floor under it, leave room for a
+    // machine that is busy; denormals cost eight times and more.
+    let most = (loud * 3.0).max(0.002);
+    assert!(
+        after < most,
+        "silence after a sound costs {:.2}% of a core where the sound cost {:.2}%",
+        after * 100.0,
+        loud * 100.0
+    );
+}
+
 /// Loaded through each format's own front door, it describes itself as
 /// its spec does and its state survives a save and a load; and what
 /// comes out of each is what comes out of the plugin itself.

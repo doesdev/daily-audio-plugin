@@ -35,6 +35,9 @@ const SAYS: Duration = Duration::from_millis(1000);
 const KEPT: Duration = Duration::from_millis(3500);
 // How often moves are looked for: a linked control lags by this.
 const TICK: Duration = Duration::from_millis(8);
+// How long something asked of a peer is said again before it is
+// given up.
+const ASKED_FOR: Duration = Duration::from_secs(5);
 
 /// Another instance, as it last described itself.
 #[derive(Debug, Clone, PartialEq)]
@@ -267,6 +270,8 @@ struct Station {
     // and one that came from a peer is not sent back.
     last: Vec<f64>,
     seen: Vec<(u64, Instant)>,
+    // What the editor asked of a peer and has not yet seen done.
+    asked: Vec<(u64, Said, Instant)>,
     said: Instant,
 }
 
@@ -407,37 +412,72 @@ impl Station {
     }
 
     // Does what the editor asked: a peer that joins is sent where the
-    // setting is now, so the two agree from the start.
+    // setting is now, so the two agree from the start. A datagram may
+    // be lost, and a person's tick with it, so what was asked is kept
+    // and said again each time this instance says it is here, until
+    // the peer's own account of itself shows it done or a few seconds
+    // have gone.
     fn ask(&mut self, shared: &Shared, links: &Links) {
-        let asks = match links.asks.lock() {
+        let fresh = match links.asks.lock() {
             Ok(mut asks) => std::mem::take(&mut *asks),
             Err(_) => return,
         };
-        if asks.is_empty() {
+        if fresh.is_empty() {
             return;
         }
         let peers = links.peers();
-        for (uid, said) in asks {
-            let Some(peer) = peers.iter().find(|p| p.uid == uid) else {
-                continue;
-            };
-            self.send(peer.port, &said);
-            let Said::Join { key, group } = said else {
-                continue;
-            };
-            let value = self
-                .index_of(&key)
-                .and_then(|i| Some((i, shared.value(i)?)));
-            if let Some((index, norm)) = value {
-                let now = Said::Set {
-                    group,
-                    key,
-                    plain: self.plain(index, norm),
-                };
-                self.send(peer.port, &now);
-            }
+        let now = Instant::now();
+        for (uid, said) in fresh {
+            self.say(shared, &peers, uid, &said);
+            self.asked.push((uid, said, now));
         }
         self.announce(links);
+    }
+
+    fn say(&self, shared: &Shared, peers: &[Peer], uid: u64, said: &Said) {
+        let Some(peer) = peers.iter().find(|p| p.uid == uid) else {
+            return;
+        };
+        self.send(peer.port, said);
+        let Said::Join { key, group } = said else {
+            return;
+        };
+        let value = self.index_of(key).and_then(|i| Some((i, shared.value(i)?)));
+        if let Some((index, norm)) = value {
+            let now = Said::Set {
+                group: *group,
+                key: key.clone(),
+                plain: self.plain(index, norm),
+            };
+            self.send(peer.port, &now);
+        }
+    }
+
+    // Says again whatever was asked and is not yet so.
+    fn ask_again(&mut self, shared: &Shared, links: &Links) {
+        if self.asked.is_empty() {
+            return;
+        }
+        let peers = links.peers();
+        let done = |uid: u64, said: &Said| {
+            let group_of = |key: &str| {
+                peers
+                    .iter()
+                    .find(|p| p.uid == uid)
+                    .and_then(|p| p.keys.iter().find(|(k, _)| k == key))
+                    .map(|(_, group)| *group)
+            };
+            match said {
+                Said::Join { key, group } => group_of(key) == Some(*group),
+                Said::Leave { key } => group_of(key).is_none_or(|group| group == 0),
+                _ => true,
+            }
+        };
+        self.asked
+            .retain(|(uid, said, at)| at.elapsed() < ASKED_FOR && !done(*uid, said));
+        for (uid, said, _) in &self.asked {
+            self.say(shared, &peers, *uid, said);
+        }
     }
 
     fn forget(&mut self, links: &Links) {
@@ -493,6 +533,7 @@ pub fn start(shared: &Arc<Shared>, spec: Spec) -> Option<Running> {
         socket,
         port,
         seen: Vec::new(),
+        asked: Vec::new(),
         said: Instant::now(),
     };
     let run = move || {
@@ -511,6 +552,7 @@ pub fn start(shared: &Arc<Shared>, spec: Spec) -> Option<Running> {
                 first = false;
                 station.announce(links);
                 station.forget(links);
+                station.ask_again(&shared, links);
             }
             // Waits up to a tick for the first, then takes what is
             // already there.
@@ -609,10 +651,12 @@ mod tests {
         Instance(shared, running)
     }
 
-    // Waits up to three seconds for `done`: the threads are real.
+    // Waits for `done`: the threads are real.
     fn until(done: impl Fn() -> bool) -> bool {
         let from = Instant::now();
-        while from.elapsed() < Duration::from_secs(3) {
+        // Other tests' instances are on the same ports, and a busy
+        // machine drops datagrams: generous, and never the usual case.
+        while from.elapsed() < Duration::from_secs(10) {
             if done() {
                 return true;
             }
@@ -757,15 +801,13 @@ mod tests {
     fn an_instance_that_goes_is_forgotten() {
         let a = instance(&WIDE);
         let la = a.scope();
+        let gone;
         {
             let b = instance(&NARROW);
-            let uid = b.scope().links.uid();
-            assert!(until(|| la.links.peers().iter().any(|p| p.uid == uid)));
+            gone = b.scope().links.uid();
+            assert!(until(|| la.links.peers().iter().any(|p| p.uid == gone)));
         }
-        let from = Instant::now();
-        while from.elapsed() < Duration::from_secs(6) && !la.links.peers().is_empty() {
-            std::thread::sleep(Duration::from_millis(50));
-        }
-        assert!(la.links.peers().is_empty());
+        // That one: other tests' instances come and go beside this.
+        assert!(until(|| !la.links.peers().iter().any(|p| p.uid == gone)));
     }
 }

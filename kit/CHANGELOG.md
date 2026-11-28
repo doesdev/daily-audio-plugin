@@ -6,6 +6,20 @@ is in that plugin's own `CHANGELOG.md`.
 
 ## 2026-11-28
 
+- The proof that a costly tail is caught no longer leans on what a
+  denormal costs the machine it runs on, which on CI's is very
+  little; a second proof shows a plugin never meets one at all.
+- Fixed: dropouts at small buffers. In VST3 every meter that moved
+  was told to the host every block, thousands of times a second at a
+  buffer of 32; meters are now told thirty times a second at most.
+- The suite budgets every plugin at buffers of 16 and 32, and fails
+  one whose reset takes more than a quarter of the smallest.
+- A link that is asked for is asked again until it takes, so a lost
+  message no longer leaves a box unticked.
+- Fixed: an instance that has gone quiet no longer costs more than
+  one that is playing. The runner flushes denormals for each block,
+  and the suite fails a plugin whose tail costs more than its sound.
+  `docs/performance.md` has what was measured and what comes next.
 - Linking lists each instance by the track it is on, as the host
   names it, in VST3 and CLAP.
 

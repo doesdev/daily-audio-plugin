@@ -12,6 +12,7 @@ pub const BRAND: &str = "DAP";
 /// renaming it would strand what people have already saved there.
 pub const HOME: &str = "doesdev";
 
+pub mod denormal;
 mod learn;
 pub mod level;
 pub mod link;

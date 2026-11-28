@@ -220,3 +220,85 @@ fn a_plugin_that_does_not_say_its_kind_is_caught() {
 fn an_effect_filed_as_an_instrument_is_caught() {
     checks::spec_is_sound::<Miscast>();
 }
+
+// A plugin that works harder once the sound has gone than while it
+// played, the way a ringing filter left to denormals does. It does
+// the extra work itself, since what a denormal costs is the
+// processor's business: on some it is eight times, on the machines
+// CI runs on next to nothing, and a check must bite on both.
+struct Restless {
+    held: f32,
+}
+
+impl Plugin for Restless {
+    const CATEGORY: kit::Category = kit::Category::Tools;
+    const INFO: &'static Info = &info("dev.kit.restless", 302);
+    const PARAMS: &'static [Param] = &[GAIN];
+
+    fn new() -> Self {
+        Self { held: 0.0 }
+    }
+
+    fn prepare(&mut self, _rate: f32, _max_block: usize) {}
+
+    fn process(&mut self, block: &mut Block) {
+        for ch in 0..block.outputs() {
+            let (input, output) = block.io(ch);
+            for (o, i) in output.iter_mut().zip(input) {
+                self.held = self.held * 0.97 + *i;
+                let turns = if self.held.abs() < 1e-6 { 400 } else { 20 };
+                let mut sum = 0.0f32;
+                for n in 0..turns {
+                    sum += std::hint::black_box(self.held + n as f32).sin();
+                }
+                *o = self.held + sum * 0.0;
+            }
+        }
+    }
+}
+
+#[test]
+#[should_panic(expected = "silence after a sound costs")]
+fn a_tail_that_costs_more_than_the_sound_is_caught() {
+    checks::a_tail_costs_no_more_than_the_sound::<Restless>();
+}
+
+// The other half: that nothing a plugin does in the runner meets a
+// denormal at all, which no clock is needed to see.
+struct Tiny;
+
+impl Plugin for Tiny {
+    const CATEGORY: kit::Category = kit::Category::Tools;
+    const INFO: &'static Info = &info("dev.kit.tiny", 303);
+    const PARAMS: &'static [Param] = &[GAIN];
+
+    fn new() -> Self {
+        Self
+    }
+
+    fn prepare(&mut self, _rate: f32, _max_block: usize) {}
+
+    fn process(&mut self, block: &mut Block) {
+        // Half the smallest whole float is a denormal, or nothing.
+        let half = std::hint::black_box(f32::MIN_POSITIVE) * std::hint::black_box(0.5);
+        for ch in 0..block.outputs() {
+            let (_, output) = block.io(ch);
+            output.fill(if half == 0.0 { 0.0 } else { 1.0 });
+        }
+    }
+}
+
+#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+#[test]
+fn a_plugin_in_the_runner_never_meets_a_denormal() {
+    let mut runner = kit::Runner::<Tiny>::new(48_000.0, 64);
+    let mut met = 0.0f32;
+    runner.run(
+        64,
+        kit::Transport::default(),
+        |_, _, into| into.fill(0.0),
+        |_, _, out| met = met.max(out.iter().fold(0.0, |a, b| a.max(*b))),
+        |_| {},
+    );
+    assert_eq!(met, 0.0);
+}

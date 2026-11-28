@@ -1,5 +1,14 @@
 # Aftersound: what changed
 
+## 0.2.4 (2026-11-28)
+
+- Fixed: after its notes died away it went on costing about eight
+  times what playing did, for as long as it was left. A quiet
+  instance now costs less than a playing one.
+- Fixed: as a VST3 it told the host of its meters every block, which
+  at small audio buffers is a load on the host and can break up the
+  sound. They are told thirty times a second now.
+
 ## 0.2.3 (2026-11-28)
 
 - When linking, other instances are listed by the track they are on,

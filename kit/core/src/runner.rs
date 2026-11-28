@@ -272,6 +272,9 @@ impl<P: Plugin> Runner<P> {
         mut write: impl FnMut(usize, usize, &[f32]),
         mut send: impl FnMut(Event),
     ) {
+        // For the whole block, and put back when it is done: a tail
+        // dying away must not cost more than the sound did.
+        let _flushed = crate::denormal::Flushed::new();
         self.pending.sort_unstable_by_key(|e| e.offset);
         let mut start = 0;
         let mut transport = transport;

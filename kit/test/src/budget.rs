@@ -13,7 +13,9 @@ pub const MEAN_CEILING: f64 = 0.10;
 pub const WORST_CEILING: f64 = 0.50;
 
 pub const RATES: [f32; 3] = [44_100.0, 48_000.0, 96_000.0];
-pub const BLOCKS: [usize; 2] = [64, 4096];
+/// Down to the smallest buffers a person tracking through a session
+/// runs: that is where a plugin's cost is felt first, as dropouts.
+pub const BLOCKS: [usize; 4] = [16, 32, 64, 4096];
 
 // Timed passes after one warm-up; each block's time is the median.
 const RUNS: usize = 5;

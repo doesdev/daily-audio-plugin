@@ -16,6 +16,13 @@ use vst3::{Class, ComRef};
 // Smallest meter change worth reporting: a tenth of a dB or so.
 const METER_STEP: f64 = 0.0005;
 
+/// How often, at most, a meter is told to the host: an editor draws
+/// no faster. Every one told is a parameter change the host must
+/// queue on the audio thread and carry to another, so a meter that
+/// moves all the time, told every block, is thousands a second at a
+/// small buffer: enough to break up a session's audio, which it did.
+pub const METERS_A_SECOND: f32 = 30.0;
+
 pub struct Processor<P: Plugin> {
     spec: Spec,
     shared: Arc<Shared>,
@@ -29,6 +36,9 @@ pub struct Processor<P: Plugin> {
     key: AtomicU64,
     // Meter values last reported to the host.
     reported: Box<[AtomicU64]>,
+    // Samples between tellings of the meters, and since the last.
+    meter_every: AtomicU32,
+    meter_since: AtomicU32,
     latency: AtomicU32,
     tail: AtomicU32,
 }
@@ -106,6 +116,9 @@ impl<P: Plugin> Processor<P> {
             ],
             key: AtomicU64::new(speakers(spec.key_in)),
             reported: spec.meters.iter().map(|_| AtomicU64::new(0)).collect(),
+            meter_every: AtomicU32::new(1600),
+            // Due at once: the first block tells where the meters are.
+            meter_since: AtomicU32::new(u32::MAX / 2),
             latency: AtomicU32::new(0),
             tail: AtomicU32::new(0),
         }
@@ -145,7 +158,13 @@ impl<P: Plugin> Processor<P> {
     // Sends each meter to the host only when it moved enough to see,
     // and each setting a MIDI controller moved, so the controller and
     // its editor show where it now is.
-    unsafe fn report(&self, changes: *mut IParameterChanges, offset: i32, meters: &[f64]) {
+    unsafe fn report(
+        &self,
+        changes: *mut IParameterChanges,
+        offset: i32,
+        meters: &[f64],
+        frames: u32,
+    ) {
         let Some(changes) = (unsafe { ComRef::from_raw(changes) }) else {
             return;
         };
@@ -164,6 +183,17 @@ impl<P: Plugin> Processor<P> {
             }
         }
 
+        // The meters, no oftener than an editor can show: the time is
+        // counted in samples, so the size of the host's buffer has no
+        // say in it. Once due they stay due until one has moved.
+        let since = self
+            .meter_since
+            .load(Ordering::Relaxed)
+            .saturating_add(frames);
+        self.meter_since.store(since, Ordering::Relaxed);
+        if since < self.meter_every.load(Ordering::Relaxed) {
+            return;
+        }
         for ((slot, row), &value) in self.reported.iter().zip(self.spec.meters).zip(meters) {
             let last = f64::from_bits(slot.load(Ordering::Relaxed));
             if (value - last).abs() < METER_STEP {
@@ -178,6 +208,7 @@ impl<P: Plugin> Processor<P> {
             let mut point = 0;
             if unsafe { queue.addPoint(offset, value, &mut point) } == kResultOk {
                 slot.store(value.to_bits(), Ordering::Relaxed);
+                self.meter_since.store(0, Ordering::Relaxed);
             }
         }
     }
@@ -439,6 +470,8 @@ impl<P: Plugin> IAudioProcessorTrait for Processor<P> {
         let block = setup.maxSamplesPerBlock.max(1) as usize;
         let mut runner = Runner::<P>::new(setup.sampleRate as f32, block);
         runner.watch(self.shared.scope());
+        let every = (setup.sampleRate as f32 / METERS_A_SECOND) as u32;
+        self.meter_every.store(every.max(1), Ordering::Relaxed);
         self.latency.store(runner.latency(), Ordering::Relaxed);
         self.tail.store(runner.tail(), Ordering::Relaxed);
         match self.runner.lock() {
@@ -532,7 +565,7 @@ impl<P: Plugin> IAudioProcessorTrait for Processor<P> {
             self.shared.set_meter(i, value);
         }
         let last = n.saturating_sub(1) as i32;
-        unsafe { self.report(data.outputParameterChanges, last, runner.meters()) };
+        unsafe { self.report(data.outputParameterChanges, last, runner.meters(), n as u32) };
         kResultOk
     }
 
