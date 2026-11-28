@@ -55,6 +55,11 @@ macro_rules! suite {
         }
 
         #[test]
+        fn a_reset_fits_in_a_small_buffer() {
+            $crate::checks::a_reset_fits_in_a_small_buffer::<$plugin>();
+        }
+
+        #[test]
         fn a_tail_costs_no_more_than_the_sound() {
             $crate::checks::a_tail_costs_no_more_than_the_sound::<$plugin>();
         }

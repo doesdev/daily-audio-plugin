@@ -219,3 +219,30 @@ fn the_track_a_host_names_is_what_other_instances_hear() {
     assert!(host.name_track("Kit"));
     assert_eq!(renamed().as_deref(), Some("Kit"));
 }
+
+#[test]
+fn meters_are_told_to_the_host_at_an_editors_pace_whatever_the_buffer() {
+    // A level that never stops moving, at the smallest buffers a
+    // person runs: told every block it would be thousands a second.
+    for block in [16, 32, 64, 1024] {
+        let mut host = Host::load::<Gain>(48_000.0, block);
+        let mut told = 0;
+        let mut last = None;
+        for i in 0..48_000 / block {
+            let level = 0.1 + 0.8 * (i * block) as f32 / 48_000.0;
+            (0..2).for_each(|ch| host.input(ch).fill(level));
+            host.block(block);
+            let now = host.reported();
+            told += now.len();
+            last = now.last().copied().or(last);
+        }
+        assert!(
+            // A large buffer rounds the pace down to whole blocks.
+            (20..=31).contains(&told),
+            "{told} tellings in a second at a buffer of {block}"
+        );
+        // And what was last told is near where the meter ended.
+        let (_, value) = last.expect("told");
+        assert!((value - level::to_fraction(0.9)).abs() < 0.02, "{value}");
+    }
+}

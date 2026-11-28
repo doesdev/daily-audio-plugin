@@ -48,6 +48,48 @@ The suite gained `a_tail_costs_no_more_than_the_sound`, so a plugin
 cannot ship this again, and a test plugin that turns the flushing off
 proves the check catches it.
 
+## What was wrong: dropouts at small buffers
+
+Seen in real sessions by the owner, with Hand-Me-Down the worst. The
+sound itself was never the cost: at a buffer of 16 its middle block
+takes 0.2% of its own length. Two things round the sound were.
+
+**Meters were told to the host every block.** In VST3 a meter reaches
+the editor as a parameter change the host queues on the audio thread
+and carries to another. The kit sent one whenever a meter had moved,
+which for a level is often and for Hand-Me-Down's two, which follow
+a note's age and never rest, is every block. At a buffer of 32 that
+is 1500 blocks a second, so thousands of changes a second through
+the host from one instance. They are now told thirty times a second
+at most, counted in samples, whatever the buffer. CLAP was never
+affected: its meters do not go through the host.
+
+**A reset cleared megabytes on the audio thread.** A host may reset
+a plugin there, as when the transport starts. Hand-Me-Down cleared
+its eight seconds of memory each time:
+
+| | Reset | Against one block |
+| --- | --- | --- |
+| 48 kHz, buffer of 16 | 0.21 ms | 63% |
+| 96 kHz, buffer of 32 | 0.62 ms | 186%: a certain dropout |
+
+It now marks its memory as empty without emptying it.
+
+The suite changed to match where the pressure is:
+
+- `is_within_budget` runs at buffers of 16 and 32 as well as 64 and
+  4096.
+- `a_reset_fits_in_a_small_buffer` gives a reset a quarter of the
+  smallest buffer.
+- A test holds the host to at most about thirty meter changes a
+  second at buffers of 16, 32, 64 and 1024.
+
+Not yet known: whether these two were all of it. They are what
+measuring found and they fit what was seen, but nothing has been
+confirmed in the session where the dropouts were. If they persist,
+the next things to look at are the editor (a web view drawing sixty
+times a second beside the audio) and the linking thread.
+
 ## What made no difference
 
 Tried on all three plugins, each within the noise of the measurement:
@@ -102,7 +144,8 @@ quality for it, which is not wanted here.
 ## Open
 
 - These numbers are from one Linux machine. Nothing has been timed on
-  Windows or in a host.
+  Windows or in a host, and a host's own cost for each parameter
+  change is not something a test here can see.
 - Oversampling changes the sound (for the better) and adds latency.
   Whether it is always on, or a Quality setting, and at what default,
   is the owner's call.

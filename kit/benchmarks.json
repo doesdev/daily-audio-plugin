@@ -633,7 +633,25 @@
       "proof": [
         "denormals_are_zero_while_flushed_and_themselves_again_after",
         "one_inside_another_leaves_the_outer_in_force",
-        "a_tail_left_to_denormals_is_caught"
+        "a_tail_that_costs_more_than_the_sound_is_caught",
+        "a_plugin_in_the_runner_never_meets_a_denormal"
+      ]
+    },
+    {
+      "id": "small-buffers",
+      "what": "Holding up at the smallest audio buffers",
+      "covers": [],
+      "leaders": [
+        {
+          "who": "FabFilter and others whose plugins track through sessions at 32 samples",
+          "does": "Meters and displays are drawn from the plugin's own memory at the screen's pace, with nothing sent through the host per block",
+          "source": null
+        }
+      ],
+      "ours": "Every plugin is budgeted at buffers of 16 and 32 as well as 64 and 4096, a reset must fit in a quarter of the smallest, and a VST3 tells its host of meters thirty times a second at most whatever the buffer, where it had been every block. Under the leaders in one respect: in VST3 the meters still reach the editor through the host at all; next is to hand them to the editor directly, as the sound's picture already is.",
+      "verdict": "meets",
+      "proof": [
+        "meters_are_told_to_the_host_at_an_editors_pace_whatever_the_buffer"
       ]
     }
   ]

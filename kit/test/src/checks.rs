@@ -274,6 +274,43 @@ pub fn is_within_budget<P: Plugin>() {
     );
 }
 
+/// A reset is over in a fraction of the smallest buffer. A host may
+/// reset a plugin on the audio thread, as when the transport starts,
+/// and whatever that takes comes out of one block: clearing seconds
+/// of memory there is a dropout at a small buffer. What must be
+/// cleared is marked as empty, not emptied.
+pub fn a_reset_fits_in_a_small_buffer<P: Plugin>() {
+    let rate = 96_000.0;
+    // A buffer of 16 at 48 kHz, the smallest in the budget, lasts a
+    // third of a millisecond: a reset may have a quarter of that.
+    let most = std::time::Duration::from_micros(85);
+    let mut runner = Runner::<P>::new(rate, 64);
+    let sound = signals::sung(rate);
+    let mut took: Vec<_> = (0..9)
+        .map(|_| {
+            // Sound first, so there is something to reset.
+            for chunk in sound.chunks(64).take(200) {
+                runner.run(
+                    chunk.len(),
+                    Transport::default(),
+                    |_, s, into| into.copy_from_slice(&chunk[s..s + into.len()]),
+                    |_, _, _| {},
+                    |_| {},
+                );
+            }
+            let at = std::time::Instant::now();
+            runner.reset();
+            at.elapsed()
+        })
+        .collect();
+    took.sort();
+    let middle = took[took.len() / 2];
+    assert!(
+        middle < most,
+        "a reset takes {middle:?}, and a buffer of 16 lasts 333 microseconds"
+    );
+}
+
 /// Silence after a sound costs no more than the sound did. What is
 /// left ringing shrinks toward zero without reaching it, and a
 /// processor left to work on numbers that small slows many times
