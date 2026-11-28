@@ -8,6 +8,10 @@ use crate::{params, ports, transport};
 use clap_sys::events::*;
 use clap_sys::ext::latency::{CLAP_EXT_LATENCY, clap_host_latency, clap_plugin_latency};
 use clap_sys::ext::params::{CLAP_EXT_PARAMS, CLAP_PARAM_RESCAN_VALUES, clap_host_params};
+use clap_sys::ext::track_info::{
+    CLAP_EXT_TRACK_INFO, CLAP_EXT_TRACK_INFO_COMPAT, CLAP_TRACK_INFO_HAS_TRACK_NAME,
+    clap_host_track_info, clap_plugin_track_info, clap_track_info,
+};
 use clap_sys::host::clap_host;
 use clap_sys::plugin::{clap_plugin, clap_plugin_descriptor};
 use clap_sys::process::{
@@ -54,6 +58,30 @@ impl Core {
     /// The setting the host knows as `id`.
     pub fn setting(&self, id: u32) -> Option<&'static Param> {
         self.spec.setting_of(id).map(|i| &self.spec.params[i])
+    }
+
+    /// Asks the host which track this is on and passes its name to
+    /// where linking reads it. Main thread only, as the host's side
+    /// of this is; a host that does not say leaves things as they are.
+    pub fn read_track(&self) {
+        let Some((host, ext)) = self
+            .host_extension::<clap_host_track_info>(CLAP_EXT_TRACK_INFO)
+            .or_else(|| self.host_extension(CLAP_EXT_TRACK_INFO_COMPAT))
+        else {
+            return;
+        };
+        let Some(get) = ext.get else {
+            return;
+        };
+        let mut info: clap_track_info = unsafe { std::mem::zeroed() };
+        if !unsafe { get(host, &mut info) } || info.flags & CLAP_TRACK_INFO_HAS_TRACK_NAME == 0 {
+            return;
+        }
+        // Whatever the host wrote, it ends inside the buffer.
+        let last = info.name.len() - 1;
+        info.name[last] = 0;
+        let name = unsafe { CStr::from_ptr(info.name.as_ptr()) };
+        self.shared.scope().links.set_track(&name.to_string_lossy());
     }
 
     fn host_extension<T>(&self, id: &CStr) -> Option<(&clap_host, &T)> {
@@ -157,6 +185,9 @@ unsafe extern "C" fn activate<P: Plugin>(
 
     let mut runner = Runner::<P>::new(rate as f32, (max as usize).max(1));
     runner.watch(this.core.shared.scope());
+    // The host tells of a track's name only when it changes: this is
+    // the first chance, on the main thread, to ask what it is now.
+    this.core.read_track();
     // The latency may change only here; the host hears of it at once.
     let latency = runner.latency();
     unsafe { *this.runner.get() = Some(runner) };
@@ -203,6 +234,10 @@ unsafe extern "C" fn get_extension(_: *const clap_plugin, id: *const c_char) -> 
     params::extension(id)
         .or_else(|| ports::extension(id))
         .or_else(|| (id == CLAP_EXT_LATENCY).then_some(&LATENCY as *const _ as *const c_void))
+        .or_else(|| {
+            (id == CLAP_EXT_TRACK_INFO || id == CLAP_EXT_TRACK_INFO_COMPAT)
+                .then_some(&TRACK as *const _ as *const c_void)
+        })
         .or_else(|| extension_gui(id))
         .unwrap_or(std::ptr::null())
 }
@@ -218,6 +253,17 @@ fn extension_gui(_: &CStr) -> Option<*const c_void> {
 }
 
 static LATENCY: clap_plugin_latency = clap_plugin_latency { get: Some(latency) };
+
+// The host calls this when the plugin's track is renamed or moved.
+static TRACK: clap_plugin_track_info = clap_plugin_track_info {
+    changed: Some(track_changed),
+};
+
+unsafe extern "C" fn track_changed(plugin: *const clap_plugin) {
+    if let Some(core) = unsafe { Core::from(plugin) } {
+        core.read_track();
+    }
+}
 
 unsafe extern "C" fn latency(plugin: *const clap_plugin) -> u32 {
     unsafe { Core::from(plugin) }.map_or(0, |core| core.latency.load(Ordering::Relaxed))

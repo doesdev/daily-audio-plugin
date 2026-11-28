@@ -39,10 +39,41 @@ pub struct Controller {
     // Where each stand-in for a controller was last put: a host may
     // ask for it back.
     ccs: Rc<[Cell<f64>]>,
+    // The track the host says this is on. It may say before the
+    // processor has handed its scope over, so it is kept to pass on.
+    track: RefCell<String>,
 }
 
 impl Class for Controller {
-    type Interfaces = (IEditController, IConnectionPoint, IMidiMapping);
+    type Interfaces = (
+        IEditController,
+        IConnectionPoint,
+        IMidiMapping,
+        ChannelContext::IInfoListener,
+    );
+}
+
+// The host says which channel the plugin sits on, and again whenever
+// that changes: its name is how linking tells instances apart.
+impl ChannelContext::IInfoListenerTrait for Controller {
+    unsafe fn setChannelContextInfos(&self, list: *mut IAttributeList) -> tresult {
+        let Some(list) = (unsafe { ComRef::from_raw(list) }) else {
+            return kInvalidArgument;
+        };
+        let mut name = [0 as TChar; 256];
+        let size = std::mem::size_of_val(&name) as uint32;
+        let got =
+            unsafe { list.getString(ChannelContext::kChannelNameKey, name.as_mut_ptr(), size) };
+        // A change that is not to the name leaves the name as it was.
+        if got == kResultOk {
+            // Whatever the host wrote, it ends inside the buffer.
+            name[255] = 0;
+            let track = unsafe { read_wstring(name.as_ptr()) }.unwrap_or_default();
+            *self.track.borrow_mut() = track;
+            self.tell_track();
+        }
+        kResultOk
+    }
 }
 
 impl IMidiMappingTrait for Controller {
@@ -77,6 +108,7 @@ impl IConnectionPointTrait for Controller {
         match crate::connect::accept(message) {
             Some(scope) => {
                 *self.scope.borrow_mut() = Some(scope);
+                self.tell_track();
                 kResultOk
             }
             None => kResultFalse,
@@ -85,6 +117,15 @@ impl IConnectionPointTrait for Controller {
 }
 
 impl Controller {
+    // Passes the track's name to where linking reads it, once there
+    // is both a name and a scope to put it in.
+    fn tell_track(&self) {
+        let track = self.track.borrow();
+        if let (false, Some(scope)) = (track.is_empty(), self.scope.borrow().as_ref()) {
+            scope.links.set_track(&track);
+        }
+    }
+
     pub fn new(spec: Spec) -> Self {
         let values = spec
             .rows()
@@ -96,6 +137,7 @@ impl Controller {
             handler: Rc::default(),
             scope: Rc::default(),
             ccs: (0..128).map(|_| Cell::new(0.0)).collect(),
+            track: RefCell::default(),
         }
     }
 

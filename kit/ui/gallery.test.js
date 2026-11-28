@@ -888,6 +888,20 @@ test('instances are told apart, and each stands somewhere to a setting', (assert
   assert.deepEqual(linkedTo(links, [drive]).map((peer) => peer.uid), ['1'])
   assert.deepEqual(linkedTo(links, [bypass]), [])
   assert.deepEqual(linkedTo(null, [drive]), [])
+
+  // Where the host names tracks, the track is what tells them apart,
+  // and a number only what the track leaves alike.
+  const tracked = [
+    { name: 'Undertow', track: 'Drum Bus' },
+    { name: 'Undertow', track: 'Bass' },
+    { name: 'Undertow', track: 'Bass' },
+    { name: 'Aftersound', track: '' },
+    { name: 'Undertow' }
+  ]
+  assert.deepEqual(linkNames(tracked).map((peer) => peer.label), [
+    'Drum Bus, Undertow', 'Bass, Undertow 1', 'Bass, Undertow 2',
+    'Aftersound', 'Undertow'
+  ])
 })
 
 test('any control links to other instances from its menu, and says while it is', async (assert) => {

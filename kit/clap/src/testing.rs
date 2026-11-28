@@ -10,12 +10,14 @@ use clap_sys::ext::audio_ports::*;
 use clap_sys::ext::latency::{CLAP_EXT_LATENCY, clap_plugin_latency};
 use clap_sys::ext::params::{CLAP_EXT_PARAMS, clap_param_info, clap_plugin_params};
 use clap_sys::ext::state::{CLAP_EXT_STATE, clap_plugin_state};
+use clap_sys::ext::track_info::*;
 use clap_sys::host::clap_host;
 use clap_sys::plugin::clap_plugin;
 use clap_sys::process::{CLAP_PROCESS_ERROR, clap_process};
 use clap_sys::stream::{clap_istream, clap_ostream};
 use clap_sys::version::CLAP_VERSION;
 use kit::{Event, Plugin, Spec};
+use std::cell::RefCell;
 use std::ffi::{CStr, c_char, c_void};
 
 // An event the host hands in: each starts with its header.
@@ -93,6 +95,36 @@ unsafe extern "C" fn no_extension(_: *const clap_host, _: *const c_char) -> *con
 
 unsafe extern "C" fn nothing(_: *const clap_host) {}
 
+// A host that names the plugin's track: `host_data` is the name.
+static TRACKS: clap_host_track_info = clap_host_track_info {
+    get: Some(track_of),
+};
+
+unsafe extern "C" fn track_of(host: *const clap_host, info: *mut clap_track_info) -> bool {
+    let name = unsafe { ((*host).host_data as *const RefCell<String>).as_ref() };
+    let (Some(name), Some(info)) = (name, unsafe { info.as_mut() }) else {
+        return false;
+    };
+    let name = name.borrow();
+    if name.is_empty() {
+        return false;
+    }
+    info.flags = CLAP_TRACK_INFO_HAS_TRACK_NAME;
+    let room = info.name.len() - 1;
+    for (slot, byte) in info.name.iter_mut().zip(name.bytes().take(room)) {
+        *slot = byte as c_char;
+    }
+    info.name[name.len().min(room)] = 0;
+    true
+}
+
+unsafe extern "C" fn names_tracks(_: *const clap_host, id: *const c_char) -> *const c_void {
+    match unsafe { CStr::from_ptr(id) } == CLAP_EXT_TRACK_INFO {
+        true => &TRACKS as *const _ as *const c_void,
+        false => std::ptr::null(),
+    }
+}
+
 unsafe extern "C" fn write(stream: *const clap_ostream, buffer: *const c_void, size: u64) -> i64 {
     let bytes = unsafe { &mut *((*stream).ctx as *mut Vec<u8>) };
     bytes.extend_from_slice(unsafe { std::slice::from_raw_parts(buffer.cast(), size as usize) });
@@ -147,6 +179,8 @@ pub struct Host {
     lists: Box<Lists>,
     // Kept alive: the plugin holds pointers to both.
     _host: Box<clap_host>,
+    // The track the host says the plugin is on.
+    track: Box<RefCell<String>>,
     _desc: Box<Descriptor>,
 }
 
@@ -161,7 +195,12 @@ impl Host {
     pub fn load_promised<P: Plugin>(rate: f32, promised: usize, block: usize) -> Self {
         let spec = Spec::of::<P>();
         let desc = Box::new(Descriptor::of::<P>());
-        let host = Box::new(no_host());
+        let track = Box::new(RefCell::new(String::new()));
+        let host = Box::new(clap_host {
+            host_data: &*track as *const RefCell<String> as *mut c_void,
+            get_extension: Some(names_tracks),
+            ..no_host()
+        });
         let plugin = create::<P>(desc.raw(), &*host);
         let raw = unsafe { plugin.as_ref() }.expect("a plugin");
         unsafe {
@@ -193,12 +232,20 @@ impl Host {
                 output: Vec::with_capacity(kit::EVENTS),
             }),
             _host: host,
+            track,
             _desc: desc,
         }
     }
 
     fn raw(&self) -> &clap_plugin {
         unsafe { &*self.plugin }
+    }
+
+    /// As a host does when the plugin's track is named or renamed.
+    pub fn name_track(&self, name: &str) {
+        *self.track.borrow_mut() = name.to_string();
+        let ext = self.extension::<clap_plugin_track_info>(CLAP_EXT_TRACK_INFO);
+        unsafe { ext.changed.expect("changed")(self.plugin) };
     }
 
     fn extension<T>(&self, id: &CStr) -> &T {

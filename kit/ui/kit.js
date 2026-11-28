@@ -364,7 +364,8 @@ export const EMPTY = {
   learn: null,
   // Linking, where the host side has it: { me, groups, peers }. This
   // instance's number, the group of each linked setting by its id,
-  // and every other instance as { uid, name, keys: { key: group } }.
+  // and every other instance as { uid, name, track, keys: { key:
+  // group } }, its track being its host's name for where it sits.
   links: null
 }
 
@@ -1776,16 +1777,22 @@ const makePresets = (store, session, plugin, factory) => {
 
 // ---- linking: a setting that moves with the same one elsewhere
 
-// Other instances by the names a person tells them apart by: several
-// of one plugin are numbered in the order they were made.
+// Other instances by the names a person tells them apart by: the
+// track each is on, where its host has said, and then the plugin.
+// Any that would still read alike are numbered in the order they were
+// made: two of one plugin on one track, or in a host that names none.
 export const linkNames = (peers) => {
-  const count = (name) => peers.filter((peer) => peer.name === name).length
+  const plain = (peer) => peer.track
+    ? `${peer.track}, ${peer.name}`
+    : peer.name
+  const count = (name) => peers.filter((peer) => plain(peer) === name).length
   return peers.reduce(({ seen, named }, peer) => {
-    const nth = (seen[peer.name] ?? 0) + 1
-    const name = count(peer.name) > 1 ? `${peer.name} ${nth}` : peer.name
+    const base = plain(peer)
+    const nth = (seen[base] ?? 0) + 1
+    const label = count(base) > 1 ? `${base} ${nth}` : base
     return {
-      seen: { ...seen, [peer.name]: nth },
-      named: [...named, { ...peer, label: name }]
+      seen: { ...seen, [base]: nth },
+      named: [...named, { ...peer, label }]
     }
   }, { seen: {}, named: [] }).named
 }

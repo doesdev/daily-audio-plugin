@@ -211,9 +211,24 @@ export const SCENES = [
         me: '9',
         groups: { 0: '700' },
         peers: [
-          { uid: '1', name: 'Undertow', keys: { drive: '700', bypass: '0' } },
-          { uid: '2', name: 'Undertow', keys: { drive: '0', bypass: '0' } },
-          { uid: '3', name: 'Aftersound', keys: { bypass: '0', mix: '0' } },
+          {
+            uid: '1',
+            name: 'Undertow',
+            track: 'Drum Bus',
+            keys: { drive: '700', bypass: '0' }
+          },
+          {
+            uid: '2',
+            name: 'Undertow',
+            track: 'Bass',
+            keys: { drive: '0', bypass: '0' }
+          },
+          {
+            uid: '3',
+            name: 'Aftersound',
+            track: 'Keys',
+            keys: { bypass: '0', mix: '0' }
+          },
           { uid: '4', name: 'Gallery', keys: { drive: '700' } }
         ]
       }],
