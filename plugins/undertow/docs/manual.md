@@ -246,6 +246,39 @@ beside On. It works on the level before Output, so Output is still
 yours to set on top, and it moves slowly, over a few tenths of a
 second, so it never pumps. It reaches at most 24 dB either way.
 
+### Quality
+
+A valve adds harmonics, and at an ordinary sample rate the highest of
+them have nowhere to go: they fold back down as faint tones that were
+never played. Undertow runs its valve at a higher rate inside, where
+there is room for them, and filters them off before coming back. Two
+settings say how. They are in Settings, the button with two sliders,
+under the line that says they are Undertow's own.
+
+**Oversampling** is the rate while you play: **Auto**, **Off**, or 2,
+4, 8 or 16 times. Leave it at Auto. It listens to how hard the valve
+is driven and how bright the sound is, and spends only what would be
+heard: a bass costs no more than with it off, and a bright sound
+driven hard gets 8 or 16 times. You will not hear it change.
+
+**When rendering** is what an export to a file gets. **Best** is 16
+times with finer filters and a more exact valve, whatever it costs,
+since nobody is waiting on it in time. **As playing** uses the
+Oversampling setting, for when a render must be what you heard, and
+the rest are a rate by hand.
+
+**Keep as default** makes the two, as they stand, where every new
+Undertow starts, and sets every Undertow open in the project to
+match: **For Undertow**. **For every DAP plugin** does the same for
+all of ours that have these settings. A project saved earlier keeps
+what it was saved with.
+
+![Quality, in Settings](images/quality.png)
+
+Undertow comes out a little late for this: 39 samples while playing
+and 65 when rendering, which is under a thousandth and a half of a
+second. It tells your host, which lines the other tracks up with it.
+
 ## Troubleshooting
 
 **Nothing changes.** Undertow only works on a stereo sound: a mono

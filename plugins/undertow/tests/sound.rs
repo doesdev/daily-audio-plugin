@@ -26,16 +26,30 @@ fn stereo(mid: &[f32], side: &[f32]) -> Vec<Vec<f32>> {
 }
 
 // The middle and the side of what came out, once the settings have
-// been eased to and the filters have settled.
+// been eased to and the filters have settled, lined up with what
+// went in.
 fn settled(runner: &mut Runner<Undertow>, input: &[Vec<f32>]) -> (Vec<f32>, Vec<f32>) {
     let lead: Vec<Vec<f32>> = input
         .iter()
         .map(|ch| (0..SECOND / 2).map(|i| ch[i % ch.len()]).collect())
         .collect();
     runner.render(&lead, lead[0].len(), 256);
-    let out = runner.render(input, input[0].len(), 256);
-    let mid = out[0].iter().zip(&out[1]).map(|(l, r)| (l + r) / 2.0);
-    let side = out[0].iter().zip(&out[1]).map(|(l, r)| (l - r) / 2.0);
+    // What comes out is late by what the plugin says, so it is run
+    // that much longer and lined up with what went in.
+    let late = runner.latency() as usize;
+    let longer: Vec<Vec<f32>> = input
+        .iter()
+        .map(|ch| {
+            ch.iter()
+                .chain(ch.iter().cycle().take(late))
+                .copied()
+                .collect()
+        })
+        .collect();
+    let out = runner.render(&longer, longer[0].len(), 256);
+    let (left, right) = (&out[0][late..], &out[1][late..]);
+    let mid = left.iter().zip(right).map(|(l, r)| (l + r) / 2.0);
+    let side = left.iter().zip(right).map(|(l, r)| (l - r) / 2.0);
     (mid.collect(), side.collect())
 }
 
@@ -109,20 +123,79 @@ fn a_mono_sound_comes_out_exactly_as_it_went_in() {
     let voice = signals::sung(RATE);
     let mut runner = with(&[(PUSH, 100.0), (DRIVE, 24.0)]);
     let input = vec![voice.clone(), voice.clone()];
-    let lead = vec![vec![0.0; SECOND / 2]; 2];
-    runner.render(&lead, lead[0].len(), 256);
-    let out = runner.render(&input, voice.len(), 256);
+    let (mid, side) = settled(&mut runner, &input);
 
+    // Alike on both sides, it is all middle and no side.
     assert!(
-        worst(&out[0], &voice) < 1e-6,
-        "left off by {}",
-        worst(&out[0], &voice)
+        worst(&mid, &voice) < 1e-6,
+        "the middle off by {}",
+        worst(&mid, &voice)
     );
     assert!(
-        worst(&out[1], &voice) < 1e-6,
-        "right off by {}",
-        worst(&out[1], &voice)
+        worst(&side, &vec![0.0; side.len()]) < 1e-6,
+        "a side appeared: {}",
+        worst(&side, &vec![0.0; side.len()])
     );
+}
+
+#[test]
+fn it_says_how_late_it_is_and_is_later_when_rendering() {
+    // At no mix what comes out is what went in, as late as it says:
+    // `settled` lines the two up by that and nothing else.
+    let voice = signals::sung(RATE);
+    let side: Vec<f32> = (0..voice.len())
+        .map(|i| 0.2 * (i as f32 * 0.11).sin())
+        .collect();
+    let input = stereo(&voice, &side);
+    let mut lates = Vec::new();
+    for rendering in [false, true] {
+        let mut runner = with(&[(MIX, 0.0), (DRIVE, 24.0)]);
+        runner.set_rendering(rendering);
+        let late = runner.latency();
+        let (mid, _) = settled(&mut runner, &input);
+        assert!(late > 0, "rendering {rendering}");
+        assert!(
+            worst(&mid, &voice) < 1e-5,
+            "rendering {rendering}: off by {}",
+            worst(&mid, &voice)
+        );
+        lates.push(late);
+    }
+    assert!(lates[1] > lates[0], "{lates:?}");
+}
+
+#[test]
+fn rendering_at_best_leaves_less_folded_than_the_plain_rate() {
+    use undertow::{OVERSAMPLING, RENDER};
+    // A side of 9025 Hz driven hard: its harmonics fold at the plain
+    // rate to tones that are none of its own. The middle is silent,
+    // so nothing leans and the valve alone is heard.
+    let side: Vec<f32> = (0..SECOND)
+        .map(|i| (std::f64::consts::TAU * 9025.0 * i as f64 / RATE as f64).sin() as f32 * 0.5)
+        .collect();
+    let input = stereo(&vec![0.0; SECOND], &side);
+    let strays = |rendering: bool, playing: f64, render: f64| {
+        let mut runner = with(&[
+            (STEER, 0.0),
+            (DRIVE, 24.0),
+            (MIX, 100.0),
+            (OVERSAMPLING, playing),
+            (RENDER, render),
+        ]);
+        runner.set_rendering(rendering);
+        let (_, out) = settled(&mut runner, &input);
+        // The fifth harmonic, at 45125 Hz, lands on 2875 Hz.
+        let (re, im) = at(&out[SECOND / 2..], 48_000.0 - 9025.0 * 5.0);
+        re.hypot(im)
+    };
+    let (off, auto, best) = (
+        strays(false, 1.0, 0.0),
+        strays(false, 0.0, 0.0),
+        strays(true, 1.0, 0.0),
+    );
+    assert!(off > 1e-4, "nothing folded with oversampling off: {off}");
+    assert!(auto < off / 100.0, "auto left {auto} of {off}");
+    assert!(best < off / 100.0, "best left {best} of {off}");
 }
 
 #[test]
@@ -264,7 +337,14 @@ fn a_moved_setting_is_eased_not_jumped() {
     settled(&mut runner, &input);
     runner.params[PUSH] = Undertow::PARAMS[PUSH].normalized(100.0);
     runner.params[OUTPUT] = Undertow::PARAMS[OUTPUT].normalized(-24.0);
-    let out = runner.render(&input, 4800, 64).remove(0);
+    // Carried on from where `settled` stopped, so the only thing that
+    // moves is the settings.
+    let late = runner.latency() as usize;
+    let onward: Vec<Vec<f32>> = input
+        .iter()
+        .map(|ch| ch.iter().cycle().skip(late).take(4800).copied().collect())
+        .collect();
+    let out = runner.render(&onward, 4800, 64).remove(0);
     let step = out
         .windows(2)
         .map(|w| (w[0] - w[1]).abs())

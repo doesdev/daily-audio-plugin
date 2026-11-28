@@ -4,8 +4,11 @@
 //! off again after it, so a mono sound comes out as it went in.
 
 use kit::level::{db_to_gain, peak, to_fraction};
-use kit::{Asset, Block, Info, Param, Plugin, Role, list, meter, range};
-use kit_dsp::{Match, MidSide, Smooth, Svf, Tube, TubeShape};
+use kit::{Asset, Block, Info, Param, Plugin, Rate, Role, list, meter, quality, range};
+use kit_dsp::{
+    Delay, Match, MidSide, Need, Oversampled, PLAYING_TURNS, RENDERING_TURNS, Smooth, Svf, Tube,
+    TubeShape,
+};
 
 // Indexes into PARAMS, for `Block`.
 pub const PUSH: usize = 0;
@@ -26,6 +29,8 @@ pub const KEY: usize = 14;
 pub const TUBE_STAGE: usize = 15;
 pub const TUBE_BLOOM: usize = 16;
 pub const TUBE_FEEDBACK: usize = 17;
+pub const OVERSAMPLING: usize = 18;
+pub const RENDER: usize = 19;
 // Indexes into METERS.
 pub const INPUT: usize = 0;
 pub const LEVEL: usize = 1;
@@ -72,7 +77,13 @@ pub struct Undertow {
     matcher: Match,
     // The valve itself, as the tube window sets it, and which of the
     // middle and the sides is heard.
-    tube: Tube,
+    // It runs at whatever rate keeps what it adds from folding back
+    // (`docs/quality.md`), and comes out late by a fixed count, so
+    // everything it is mixed with waits that long too.
+    tube: Oversampled<Tube>,
+    need: Need,
+    rendering: bool,
+    waiting: [Delay; 3],
     halves: MidSide,
     output: Smooth,
     lean: f32,
@@ -141,6 +152,8 @@ impl Plugin for Undertow {
         kit::tube_stage(19),
         kit::tube_bloom(20),
         kit::tube_feedback(21),
+        kit::oversampling(22),
+        kit::render_quality(23),
     ];
 
     // A sidechain: another track can do the pushing.
@@ -168,12 +181,23 @@ impl Plugin for Undertow {
             drive: Smooth::new(1.0, EASE_MS, rate),
             mix: Smooth::new(0.0, EASE_MS, rate),
             matcher: Match::new(rate),
-            tube: Tube::new(rate),
+            tube: Oversampled::new(rate, false, Tube::new(rate)),
+            need: Need::new(rate),
+            rendering: false,
+            waiting: std::array::from_fn(|_| Delay::new(1)),
             halves: MidSide::new(rate),
             output: Smooth::new(1.0, EASE_MS, rate),
             lean: 0.0,
             lean_fall: 0.0,
         }
+    }
+
+    fn rendering(&mut self, on: bool) {
+        self.rendering = on;
+    }
+
+    fn latency(&self) -> u32 {
+        self.tube.delay() as u32
     }
 
     fn prepare(&mut self, rate: f32, _max_block: usize) {
@@ -184,7 +208,10 @@ impl Plugin for Undertow {
         self.drive = Smooth::new(db_to_gain(at(DRIVE)), EASE_MS, rate);
         self.mix = Smooth::new(at(MIX) / 100.0, EASE_MS, rate);
         self.matcher = Match::new(rate);
-        self.tube = Tube::new(rate);
+        self.tube = Oversampled::new(rate, self.rendering, Tube::new(rate));
+        self.need = Need::new(rate);
+        let late = self.tube.delay() + 1;
+        self.waiting = std::array::from_fn(|_| Delay::new(late));
         self.halves = MidSide::new(rate);
         self.output = Smooth::new(db_to_gain(at(OUTPUT)), EASE_MS, rate);
         self.lean = 0.0;
@@ -194,6 +221,9 @@ impl Plugin for Undertow {
     fn reset(&mut self) {
         self.low.reset();
         self.lean = 0.0;
+        self.tube.reset(Tube::reset);
+        self.need.reset();
+        self.waiting.iter_mut().for_each(Delay::reset);
     }
 
     fn process(&mut self, block: &mut Block) {
@@ -209,7 +239,16 @@ impl Plugin for Undertow {
         let keyed = block.on(KEY);
         // The valve is refined once a block: these are set and left,
         // not ridden.
-        self.tube.set(TubeShape {
+        let quality = quality(
+            block.choice(OVERSAMPLING),
+            block.choice(RENDER),
+            self.rendering,
+        );
+        let turns = match quality.best {
+            true => RENDERING_TURNS,
+            false => PLAYING_TURNS,
+        };
+        let shape = TubeShape {
             stage: block.choice(TUBE_STAGE),
             bloom: block.value(TUBE_BLOOM) / 100.0,
             feedback: block.value(TUBE_FEEDBACK) / 100.0,
@@ -217,7 +256,12 @@ impl Plugin for Undertow {
             grid: block.value(TUBE_GRID) / 100.0,
             sag: block.value(TUBE_SAG) / 100.0,
             glow: block.value(TUBE_GLOW) / 100.0,
+        };
+        self.tube.each(|tube| {
+            tube.set(shape);
+            tube.turns(turns);
         });
+        let late = (self.tube.delay() + 1) as f32;
         // The filter's corner moves once a block: it shapes the bias,
         // never the sound directly, so a step in it is not heard.
         self.low.set(follow, 0.707);
@@ -245,7 +289,28 @@ impl Plugin for Undertow {
             // envelope of it: up and down push opposite ways.
             let bias = self.low.next(pusher).low * push;
             // With the tube window at rest this is `leaned` exactly.
-            let wet = self.tube.next(carried * drive, bias) / drive;
+            let driven = carried * drive;
+            let rate = match quality.rate {
+                Rate::Fixed(log2) => log2,
+                Rate::Auto => {
+                    let reach = self.tube.inner().reach(driven, bias);
+                    self.need.next(driven, reach)
+                }
+            };
+            let bent = self
+                .tube
+                .next(driven, bias, rate, |tube, x, swing| tube.next(x, swing));
+            // The valve's sound comes out late, so what it is mixed
+            // with, and the drive it is scaled back by, wait for it.
+            let [left_was, right_was, drive_was] = &mut self.waiting;
+            left_was.write(left);
+            right_was.write(right);
+            drive_was.write(drive);
+            let (left, right) = (left_was.read(late), right_was.read(late));
+            let drive = drive_was.read(late).max(1e-6);
+            let (mid, side) = ((left + right) * 0.5, (left - right) * 0.5);
+            let (passed, carried) = if mid_leans { (mid, side) } else { (side, mid) };
+            let wet = bent / drive;
             let carried = carried + (wet - carried) * mix;
 
             self.lean = (self.lean - self.lean_fall).max(bias.abs() / REACH);

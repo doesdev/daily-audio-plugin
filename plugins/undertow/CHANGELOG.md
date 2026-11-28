@@ -1,5 +1,20 @@
 # Undertow: what changed
 
+## 0.6.0 (2026-11-28)
+
+- New: the valve runs at up to 16 times the sample rate, so the
+  harmonics it adds no longer fold back as tones that were never
+  played. Left at Auto it picks the rate from the sound: a bass, or
+  anything gently driven, costs what it did before, and a bright
+  sound driven hard gets what it needs.
+- New: Oversampling and When rendering, in Settings. A render to a
+  file starts at Best: the highest rate and the finest of everything.
+  Keep as default sets every open instance to match and is where new
+  ones start, for Undertow or for every DAP plugin.
+- Undertow is now 39 samples late (65 when rendering), which it
+  tells the host, so tracks stay lined up. The dry sound and bypass
+  wait as long.
+
 ## 0.5.5 (2026-11-28)
 
 - Fixed: a linked setting moved straight after it was linked could
