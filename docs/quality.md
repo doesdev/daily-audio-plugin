@@ -1,19 +1,20 @@
 # Quality: oversampling, rendering, and defaults
 
-Queued by the owner on 2026-11-28, to start once performance is
-settled. Nothing here is built. This is what was asked for, how it is
-meant to be done, and what has to be decided or found out first.
+Asked for by the owner on 2026-11-28 and built the same day. This is
+what there is, why it is the way it is, and where it is under.
 
 ## What was asked for
 
-1. **Oversampling that looks after itself.** State of the art, not
-   seen by the person using the plugin, and spent only where it
-   makes the sound better.
+1. **Oversampling that looks after itself**: not seen by the person
+   using the plugin, and spent only where it makes the sound better.
 2. **Oversampling by hand**, set apart for playing and for rendering.
 3. **Quality at any cost when rendering**, as an option.
 4. **Any of these choices kept as the default**: for every instance
    of that plugin in the session, for that plugin from now on, and
    the same again for every DAP plugin.
+
+The owner's two decisions: playing starts at Auto, and rendering
+starts at Best.
 
 ## Why oversample at all
 
@@ -21,104 +22,105 @@ A valve or a transformer bends the sound. Bending makes harmonics,
 and those above half the sample rate fold back down as tones that
 were never played. Running the bend at several times the rate,
 between two steep filters, puts the fold out of hearing. The cost is
-processor time, a little delay, and whatever the filters themselves
-do to the top of the band.
+processor time and a little delay.
 
-## The parts
+## What a person sees
 
-### 1. The oversampler (kit/dsp)
+Two settings, in the Settings panel of any plugin that bends the
+sound, under a line that says they are that plugin's own and saved
+with the project:
 
-- Rates of 2, 4, 8 and 16, made of half-band stages, so each
-  doubling is one cheap filter.
-- Two kinds of filter. One with next to no delay, for playing. One
-  that keeps every frequency in step (linear phase), steeper, for
-  rendering.
-- The filter sums are laid out eight abreast and compiled twice
-  (`docs/performance.md`), with a test that both give the same
-  numbers.
-- The delay it adds is told to the host, so tracks stay lined up.
+- **Oversampling**, while playing: Auto, Off, 2x, 4x, 8x, 16x.
+- **When rendering**, to a file: Best, As playing, Off, 2x to 16x.
+- **Keep as default**: For this plugin, or For every DAP plugin.
+  Pressing one does two things at once. Every instance open now that
+  it reaches is set to match, and every instance made from now on
+  starts there. A project saved before keeps what it was saved with.
 
-### 2. Looking after itself ("Auto")
+## How it works
 
-The rate a block needs depends on two things the plugin already
-knows: how hard the bend is being driven, and how much of the sound
-sits high up. A quiet bass through a gentle valve folds nothing
-audible at one times; a bright cymbal driven hard needs eight.
+### The oversampler (`kit_dsp::Oversampled`)
 
-- Each block, estimate the loudest folded tone from the drive and
-  the top of the sound, and pick the lowest rate that keeps it under
-  a floor well below hearing. The floor is a number in the kit with
-  a test, not a taste.
-- Changing rate must not be heard and must not move the sound in
-  time: the delay told to the host stays fixed whatever rate is
-  running, and one rate fades into the next.
-- Where a bend has no memory, antiderivative anti-aliasing can do
-  part of the job for almost nothing. The kit's valve and
-  transformer both have memory, so this is for simpler shapers.
-- Proof: a swept sine through each tone at each drive, with the
-  folded tones measured against the floor, and the cost beside it.
+- Rates of 2, 4, 8 and 16, each doubling one half-band filter. Every
+  other tap of a half-band is nought, so a doubling costs one sum on
+  the way up and one on the way down.
+- Two sets of filters. When playing, they hold what they stop 80 dB
+  down and the sound is 39 samples late. When rendering they hold
+  it 130 dB down and it is 65 samples late.
+- **The delay is the same whole number of samples at every rate**,
+  Off included. A plugin tells its host that number once for playing
+  and once for rendering, and moving between rates never moves the
+  sound in time. Everything the bend is mixed with waits as long.
+- **Changing rate is not heard.** The new rate runs beside the old
+  until its filters are full, then the two are crossed over 32
+  samples.
+- A second signal that steers the bend (Undertow's bias) is carried
+  up to the high rate and held back to meet the sound there.
 
-### 3. By hand
+### Auto (`kit_dsp::Need`)
 
-One setting with two values, playing and rendering: Auto, Off, 2,
-4, 8, 16. A host says when it is rendering (VST3's offline process
-mode, CLAP's render extension); the kit reads neither yet.
+A curve as smooth as a valve's makes harmonics that fall away by a
+steady ratio from each to the next, and the ratio depends on how far
+up the curve the sound reaches: gently driven each is a small part
+of the last, driven hard they barely fall. The first harmonic that
+can fold into hearing is the one that reaches past the running rate
+less 20 kHz. So from two things the plugin already knows, how far up
+the curve the sound reaches and how fast the sound going in moves,
+the lowest rate that keeps what folds 100 dB down can be worked out,
+sixteen samples at a time. That floor is `kit_dsp::FLOOR`.
 
-### 4. Quality at any cost, rendering only
+- A bass driven hard runs at the plain rate: its harmonics run out
+  long before they reach the fold. So does anything barely driven.
+- A bright sound driven hard goes to 8 or 16.
+- A rate is taken up at once and let go a step at a time, a quarter
+  of a second after it stops being needed.
+- A triode has a corner where it cuts off, and a sound that reaches
+  near it is given the most there is.
 
-One switch. When the host renders: the highest rate, the linear
-phase filters, and the tightest settings of whatever else a plugin
-solves by steps (the valve's feedback is solved by Newton's method,
-a few turns when playing). Two things to be plain about in the
-editor: a render then differs slightly from what was heard while
-mixing, and the delay differs between the two, which the host has to
-be told as it changes.
+### Rendering
 
-### 5. Defaults, at four reaches
+A host says when it is rendering to a file: VST3 in its process
+setup, CLAP through its render extension. The kit reads both and
+tells the plugin (`Plugin::rendering`) before it asks how late the
+plugin is, so the lateness told is the lateness for rendering.
 
-| Reach | Kept in |
-| --- | --- |
-| This instance | Its saved state, as now |
-| Every instance of this plugin in the session | Told across by linking, which exists |
-| This plugin from now on | A file in the DAP data folder, one a plugin |
-| Every DAP plugin, now and from now on | One file in the same folder |
+At **Best** a render gets 16 times the rate, the steeper filters,
+and the finest of whatever else a plugin solves by steps: a valve's
+feedback is found in 8 turns of Newton's method, not 3.
 
-An instance either follows the default or holds a choice of its own.
-The nearest wins: its own choice, then the plugin's default, then
-DAP's, then what the kit ships. A project saved with a choice keeps
-it; a project saved following the default hears the default change.
-That last point is a decision, below.
+### Defaults (`kit::defaults`, and linking's `take`)
 
-Reading a file is never done on the audio thread: defaults are read
-when an instance is made and when another instance says they
-changed.
+Two small files beside the presets, one for the plugin and one for
+every DAP plugin: a setting's key and its value on each line. A new
+instance reads them when it is made, the plugin's own after the one
+for all. Saying a default for all takes that setting out of every
+plugin's own file, so the last thing said is what holds. Instances
+open now are told over the same loopback channel linking uses.
 
-## To find out first
+## Where it is under
 
-- What the leaders ship, written into `kit/benchmarks.json` with
-  sources: which offer a separate rendering setting, which choose a
-  rate by themselves and on what grounds, what filters they use and
-  what delay they add. No "meets" until the swept sine says so.
-- What a change of delay costs in each host when rendering starts.
-
-## To decide (the owner's)
-
-1. What playing defaults to. Proposed: Auto.
-2. What rendering defaults to. Proposed: the same as playing, with
-   quality at any cost off until chosen, so a render is what was
-   heard unless asked otherwise.
-3. Whether a saved project that follows the default should change
-   when the default does. Proposed: yes, and the editor says so
-   where the default is set.
-4. Whether Auto may add delay. Proposed: a small fixed one, the same
-   at every rate, so nothing ever shifts.
-
-## Order of work
-
-1. The oversampler, both filters, vectorised, with its measurements.
-2. Rendering known to the kit in VST3 and CLAP.
-3. The setting by hand, in the tube and transformer windows' shell.
-4. Auto, with its proof.
-5. Quality at any cost.
-6. Defaults at the four reaches, and their place in the editor,
-   decided on the design canvas before it is built.
+- **No setting has next to no delay.** The leaders' "zero latency"
+  modes use filters that are not the same shape either side of the
+  middle; the kit's are, so even Off is 39 samples late. Next: a
+  minimum-phase set for playing.
+- **A sudden brightening is caught a moment late.** Auto takes up a
+  rate at once, but the new rate's filters take about two
+  milliseconds to fill and cross in, and until then the old rate is
+  heard. A render
+  at Best is not affected. Next: look ahead by that much.
+- **The top of the band at 44.1 kHz.** The filters leave everything
+  up to 0.417 of the sample rate alone: 20 kHz at 48 kHz, 18.4 kHz
+  at 44.1 kHz. Above that they start to fall, and what folds lands
+  there too, out of hearing.
+- **A hard grid, lifted and driven at the very top of the band**
+  still leaves 80 dB down at 16 times, not 100: the curve has a join
+  in it there that no rate here cures.
+- **A render at Best is not sample for sample what was heard.** It
+  is the same sound with less folded into it, and the editor's row
+  says "Best". As playing is there for whoever wants the two alike.
+- **Only Undertow uses it so far**: it is the one plugin with a
+  valve. The transformer can be run through it and has a test, and
+  no plugin has one yet.
+- Not verified: any of this in a real host. That a host re-reads the
+  lateness when it starts a render is the format's rule, and is what
+  the kit's own test hosts do.

@@ -8,6 +8,9 @@ use crate::{params, ports, transport};
 use clap_sys::events::*;
 use clap_sys::ext::latency::{CLAP_EXT_LATENCY, clap_host_latency, clap_plugin_latency};
 use clap_sys::ext::params::{CLAP_EXT_PARAMS, CLAP_PARAM_RESCAN_VALUES, clap_host_params};
+use clap_sys::ext::render::{
+    CLAP_EXT_RENDER, CLAP_RENDER_OFFLINE, clap_plugin_render, clap_plugin_render_mode,
+};
 use clap_sys::ext::track_info::{
     CLAP_EXT_TRACK_INFO, CLAP_EXT_TRACK_INFO_COMPAT, CLAP_TRACK_INFO_HAS_TRACK_NAME,
     clap_host_track_info, clap_plugin_track_info, clap_track_info,
@@ -21,7 +24,7 @@ use kit::{BEGIN, END, Event, Param, Plugin, Runner, SET, Shared, Spec};
 use std::cell::UnsafeCell;
 use std::ffi::{CStr, c_char, c_void};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
 #[repr(C)]
 pub struct Core {
@@ -34,6 +37,10 @@ pub struct Core {
     _linking: Option<kit::link::Running>,
     // The latency activate last told the host of.
     latency: AtomicU32,
+    // Whether the host last said it is rendering to a file.
+    rendering: AtomicBool,
+    // Between activate and deactivate.
+    active: AtomicBool,
     #[cfg(windows)]
     pub gui: std::cell::RefCell<Option<crate::gui::Gui>>,
 }
@@ -126,6 +133,13 @@ pub fn create<P: Plugin>(
 ) -> *const clap_plugin {
     let spec = Spec::of::<P>();
     let shared = Arc::new(Shared::new(&spec));
+    // A new instance starts from whatever a person has kept as
+    // their default, and can keep one in the same place.
+    let defaults = kit::defaults::dir();
+    if let Some(dir) = &defaults {
+        kit::defaults::apply(dir, &shared, &spec);
+    }
+    shared.scope().links.keep_in(defaults);
     let instance = Box::new(Instance::<P> {
         core: Core {
             raw: clap_plugin {
@@ -147,6 +161,8 @@ pub fn create<P: Plugin>(
             _linking: kit::link::start(&shared, spec),
             shared,
             latency: AtomicU32::new(0),
+            rendering: AtomicBool::new(false),
+            active: AtomicBool::new(false),
             #[cfg(windows)]
             gui: std::cell::RefCell::new(None),
         },
@@ -184,6 +200,7 @@ unsafe extern "C" fn activate<P: Plugin>(
     };
 
     let mut runner = Runner::<P>::new(rate as f32, (max as usize).max(1));
+    runner.set_rendering(this.core.rendering.load(Ordering::Acquire));
     runner.watch(this.core.shared.scope());
     // The host tells of a track's name only when it changes: this is
     // the first chance, on the main thread, to ask what it is now.
@@ -191,6 +208,7 @@ unsafe extern "C" fn activate<P: Plugin>(
     // The latency may change only here; the host hears of it at once.
     let latency = runner.latency();
     unsafe { *this.runner.get() = Some(runner) };
+    this.core.active.store(true, Ordering::Release);
     let was = this.core.latency.swap(latency, Ordering::AcqRel);
     if was != latency
         && let Some((host, ext)) = this
@@ -205,6 +223,7 @@ unsafe extern "C" fn activate<P: Plugin>(
 
 unsafe extern "C" fn deactivate<P: Plugin>(plugin: *const clap_plugin) {
     if let Some(this) = unsafe { Instance::<P>::from(plugin) } {
+        this.core.active.store(false, Ordering::Release);
         unsafe { *this.runner.get() = None };
     }
 }
@@ -234,6 +253,7 @@ unsafe extern "C" fn get_extension(_: *const clap_plugin, id: *const c_char) -> 
     params::extension(id)
         .or_else(|| ports::extension(id))
         .or_else(|| (id == CLAP_EXT_LATENCY).then_some(&LATENCY as *const _ as *const c_void))
+        .or_else(|| (id == CLAP_EXT_RENDER).then_some(&RENDER as *const _ as *const c_void))
         .or_else(|| {
             (id == CLAP_EXT_TRACK_INFO || id == CLAP_EXT_TRACK_INFO_COMPAT)
                 .then_some(&TRACK as *const _ as *const c_void)
@@ -253,6 +273,35 @@ fn extension_gui(_: &CStr) -> Option<*const c_void> {
 }
 
 static LATENCY: clap_plugin_latency = clap_plugin_latency { get: Some(latency) };
+
+// The host says here whether it is rendering to a file.
+static RENDER: clap_plugin_render = clap_plugin_render {
+    has_hard_realtime_requirement: Some(needs_real_time),
+    set: Some(set_render),
+};
+
+unsafe extern "C" fn needs_real_time(_: *const clap_plugin) -> bool {
+    false
+}
+
+// A plugin may be later when rendering, and lateness may only change
+// while it is not running, so one that is running asks to be started
+// again: the new mode is taken up in `activate`.
+unsafe extern "C" fn set_render(plugin: *const clap_plugin, mode: clap_plugin_render_mode) -> bool {
+    let Some(core) = (unsafe { Core::from(plugin) }) else {
+        return false;
+    };
+    let on = mode == CLAP_RENDER_OFFLINE;
+    let was = core.rendering.swap(on, Ordering::AcqRel);
+    if was != on
+        && core.active.load(Ordering::Acquire)
+        && let Some(host) = unsafe { core.host.as_ref() }
+        && let Some(restart) = host.request_restart
+    {
+        unsafe { restart(host) };
+    }
+    true
+}
 
 // The host calls this when the plugin's track is renamed or moved.
 static TRACK: clap_plugin_track_info = clap_plugin_track_info {

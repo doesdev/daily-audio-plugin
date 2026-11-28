@@ -128,6 +128,8 @@ pub struct Tube {
     // The Miller effect's one pole, if this stage has one.
     top: f32,
     top_pole: Option<f32>,
+    // How many times the feedback's answer is looked for again.
+    turns: u8,
 }
 
 /// How far the supply can droop: at full sag and full load, to a half.
@@ -136,6 +138,10 @@ const DROOP: f32 = 0.5;
 const LIFT: f32 = 3.0;
 /// How far up its curve a grid starts to draw current.
 const CONDUCTS: f32 = 0.5;
+/// How many times the feedback's answer is looked for again when
+/// playing, and when rendering, where time is not short.
+pub const PLAYING_TURNS: u8 = 3;
+pub const RENDERING_TURNS: u8 = 8;
 /// How much of itself a fully unbypassed cathode feeds back: 12 dB.
 const LOOP: f32 = 3.0;
 
@@ -156,9 +162,46 @@ impl Tube {
             last: 0.0,
             top: 0.0,
             top_pole: None,
+            turns: PLAYING_TURNS,
         };
         made.set(TubeShape::default());
         made
+    }
+
+    /// How closely the feedback's answer is found: `PLAYING_TURNS`
+    /// unless told otherwise.
+    pub fn turns(&mut self, turns: u8) {
+        self.turns = turns.max(1);
+    }
+
+    /// How far up the curve a sample `x` reaches with the resting
+    /// point moved by `swing`, as `Need` wants it: the lift, the
+    /// feedback's make-up and the bias all carry it further, and a
+    /// hardened grid brings the ceiling nearer. A triode has a corner
+    /// where it cuts off, and near that nothing is smooth, which
+    /// this says with infinity.
+    #[inline]
+    pub fn reach(&self, x: f32, swing: f32) -> f32 {
+        let TubeShape {
+            stage,
+            bias,
+            grid,
+            feedback,
+            glow,
+            ..
+        } = self.shape;
+        let far = x.abs() * (1.0 + glow * LIFT) * (1.0 + feedback * LOOP)
+            + (bias + swing).abs()
+            + self.shift;
+        let far = far / (1.0 - grid / 3.0);
+        // A grid that has started to harden joins two curves, and
+        // the join is not as smooth as either.
+        let far = if grid > 0.0 { far * 2.0 } else { far };
+        match cutoff(stage) {
+            Some(off) if far > 0.6 * off => f32::INFINITY,
+            Some(off) => far / (1.0 - far / off),
+            None => far,
+        }
     }
 
     pub fn reset(&mut self) {
@@ -205,7 +248,7 @@ impl Tube {
         let back = feedback * LOOP;
         let given = a * (1.0 + back) + rest;
         let mut y = self.last;
-        for _ in 0..3 {
+        for _ in 0..self.turns {
             let at = given - back * y;
             let here = tube_curve(at, grid, stage);
             let slope = (tube_curve(at + 1e-3, grid, stage) - here) * 1e3;
@@ -264,6 +307,16 @@ impl Tube {
             }
             None => out,
         }
+    }
+}
+
+impl crate::Bend for Tube {
+    fn retune(&mut self, rate: f32) {
+        self.rate = rate;
+        self.load_pole = pole(120.0, rate);
+        self.glow_pole = (-std::f32::consts::TAU * 2000.0 / rate).exp();
+        self.charge = 1.0 - pole(2.0, rate);
+        self.set(self.shape);
     }
 }
 

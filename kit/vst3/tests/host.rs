@@ -9,7 +9,7 @@ const INVERT: usize = 1;
 
 // Adds whatever is on its sidechain, so a test can see it arrive.
 // Scales what it hears, passes each note through, meters its output.
-struct Gain;
+struct Gain(bool);
 
 impl Plugin for Gain {
     const INFO: &'static Info = &Info {
@@ -37,10 +37,19 @@ impl Plugin for Gain {
     const KEY_IN: u32 = 2;
 
     fn new() -> Self {
-        Self
+        Self(false)
     }
 
     fn prepare(&mut self, _rate: f32, _max_block: usize) {}
+
+    // Later when rendering, as a plugin with finer filters would be.
+    fn rendering(&mut self, on: bool) {
+        self.0 = on;
+    }
+
+    fn latency(&self) -> u32 {
+        if self.0 { 5 } else { 0 }
+    }
 
     fn process(&mut self, block: &mut Block) {
         let sign = if block.on(INVERT) { -1.0 } else { 1.0 };
@@ -245,4 +254,14 @@ fn meters_are_told_to_the_host_at_an_editors_pace_whatever_the_buffer() {
         let (_, value) = last.expect("told");
         assert!((value - level::to_fraction(0.9)).abs() < 0.02, "{value}");
     }
+}
+
+#[test]
+fn a_host_about_to_render_is_told_how_late_the_plugin_is_then() {
+    let mut host = Host::load::<Gain>(48_000.0, 64);
+    assert_eq!(host.latency(), 0);
+    host.offline(true);
+    assert_eq!(host.latency(), 5);
+    host.offline(false);
+    assert_eq!(host.latency(), 0);
 }

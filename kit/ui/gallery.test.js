@@ -212,6 +212,45 @@ test('a digit starts a value with no click first, and Delete is the default', as
   })
 })
 
+test('quality is the plugin\'s own, and can be kept as the default', async (assert) => {
+  const pick = (row, name) => ({
+    sel: `[data-setting="${row}"] .kit-option`, text: name
+  })
+  const pressed = (row) => `[...document.querySelectorAll(
+    '[data-setting="${row}"] .kit-option[aria-pressed="true"]')]
+    .map((b) => b.textContent)`
+  await onGallery('main', [['click', '.kit-settings']], async (tab) => {
+    assert.deepEqual(await tab.evaluate(pressed('oversampling')), ['Auto'])
+    assert.deepEqual(await tab.evaluate(pressed('when-rendering')), ['Best'])
+    assert.deepEqual(await tab.evaluate(pressed('keep-as-default')), [])
+
+    // A setting like any other: the host is told, and can undo it.
+    await click(tab, pick('oversampling', '4x'))
+    assert.deepEqual(await tab.evaluate(pressed('oversampling')), ['4x'])
+    assert.deepEqual((await posted(tab)).map((m) => [m.type, m.id]),
+      [['begin', 40], ['set', 40], ['end', 40]])
+
+    // Kept for every plugin of ours: both settings, as they stand.
+    await click(tab, pick('keep-as-default', 'For every DAP plugin'))
+    assert.deepEqual((await posted(tab)).slice(3), [
+      { type: 'default', id: 40, reach: 'all', plain: 3 },
+      { type: 'default', id: 41, reach: 'all', plain: 0 }
+    ])
+    assert.deepEqual(await tab.evaluate(pressed('keep-as-default')),
+      ['For every DAP plugin'])
+
+    // Moved again, they are no longer what was kept.
+    await click(tab, pick('when-rendering', 'As playing'))
+    assert.deepEqual(await tab.evaluate(pressed('keep-as-default')), [])
+    await click(tab, pick('keep-as-default', 'For Gallery'))
+    assert.deepEqual((await posted(tab)).slice(-2), [
+      { type: 'default', id: 40, reach: 'plugin', plain: 3 },
+      { type: 'default', id: 41, reach: 'plugin', plain: 1 }
+    ])
+    assert.deepEqual(await tab.evaluate(spills), [])
+  })
+})
+
 test('settings are chosen in a panel and kept for every editor', async (assert) => {
   const pick = (row, name) => ({
     sel: `[data-setting="${row}"] .kit-option`, text: name

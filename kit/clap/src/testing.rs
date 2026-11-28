@@ -182,6 +182,8 @@ pub struct Host {
     // The track the host says the plugin is on.
     track: Box<RefCell<String>>,
     _desc: Box<Descriptor>,
+    rate: f32,
+    promised: usize,
 }
 
 impl Host {
@@ -234,11 +236,39 @@ impl Host {
             _host: host,
             track,
             _desc: desc,
+            rate,
+            promised,
         }
     }
 
     fn raw(&self) -> &clap_plugin {
         unsafe { &*self.plugin }
+    }
+
+    /// As a host does before it renders to a file, or goes back to
+    /// playing: stops, says which, and starts again.
+    pub fn offline(&mut self, on: bool) {
+        let render = self.extension::<clap_sys::ext::render::clap_plugin_render>(
+            clap_sys::ext::render::CLAP_EXT_RENDER,
+        );
+        let mode = match on {
+            true => clap_sys::ext::render::CLAP_RENDER_OFFLINE,
+            false => clap_sys::ext::render::CLAP_RENDER_REALTIME,
+        };
+        let set = render.set.expect("set");
+        let raw = self.raw();
+        unsafe {
+            raw.stop_processing.expect("stop")(self.plugin);
+            raw.deactivate.expect("deactivate")(self.plugin);
+            assert!(set(self.plugin, mode));
+            assert!(raw.activate.expect("activate")(
+                self.plugin,
+                self.rate as f64,
+                1,
+                self.promised as u32
+            ));
+            assert!(raw.start_processing.expect("start")(self.plugin));
+        }
     }
 
     /// As a host does when the plugin's track is named or renamed.

@@ -653,6 +653,79 @@
       "proof": [
         "meters_are_told_to_the_host_at_an_editors_pace_whatever_the_buffer"
       ]
+    },
+    {
+      "id": "oversampling",
+      "what": "Running a bend above the sample rate, by hand, for playing and for rendering apart",
+      "covers": [],
+      "leaders": [
+        {
+          "who": "oeksound Soothe 2",
+          "does": "A different oversampling rate for real-time work and for offline rendering, as its users describe it",
+          "source": "https://prod.fabfilter.com/forum/add-comment/7311"
+        },
+        {
+          "who": "FabFilter (Saturn 2, Pro-L 2 and the rest)",
+          "does": "Oversampling by hand, with no separate setting for rendering as of January 2022, by FabFilter's own word on its forum",
+          "source": "https://prod.fabfilter.com/forum/add-comment?id=6873"
+        },
+        {
+          "who": "Voxengo",
+          "does": "An Auto oversampling setting that switches to a chosen rate when the host renders offline",
+          "source": "https://www.kvraudio.com/forum/viewtopic.php?p=8398813"
+        }
+      ],
+      "ours": "Off and 2 to 16 times while playing, and a setting of its own for rendering that starts at Best: 16 times, filters 130 dB down, and a valve's feedback solved in 8 turns for 3. The delay is one whole number at every rate, told to the host for playing and for rendering, and a change of rate is crossed over without a join. Under the leaders in one respect: none of the rates has next to no delay, where a leader's zero-latency mode has; next is a minimum-phase set of filters for playing.",
+      "verdict": "meets",
+      "proof": [
+        "every_rate_is_late_by_the_same_whole_number_of_samples",
+        "changing_rate_is_not_heard",
+        "what_folds_at_the_plain_rate_is_gone_at_a_higher_one",
+        "a_second_signal_arrives_with_the_sound",
+        "a_host_about_to_render_is_told_how_late_the_plugin_is_then",
+        "bypassed_a_late_plugin_gives_the_sound_as_late_as_it_said"
+      ]
+    },
+    {
+      "id": "oversampling-auto",
+      "what": "Choosing the rate from the sound, so it is spent only where it is heard",
+      "covers": [],
+      "leaders": [
+        {
+          "who": "Voxengo",
+          "does": "Auto means the plain rate while playing and a fixed higher one when rendering: chosen by what the host is doing, not by the sound",
+          "source": "https://www.kvraudio.com/forum/viewtopic.php?p=8398813"
+        }
+      ],
+      "ours": "From how far up the curve the sound reaches and how fast it moves, the lowest rate that keeps what folds 100 dB down, thought about again every sixteen samples; no leader was found that chooses by the sound. Under in one respect: a sudden brightening runs at the old rate for the two milliseconds the new one's filters take to fill and cross in; next is to look ahead by that much.",
+      "verdict": "meets",
+      "proof": [
+        "the_rate_chosen_keeps_what_folds_under_the_floor",
+        "the_rate_chosen_for_a_valve_keeps_what_folds_under_the_floor",
+        "nothing_is_spent_where_it_adds_nothing",
+        "a_rate_is_taken_up_at_once_and_let_go_slowly",
+        "a_corner_in_reach_asks_for_the_most"
+      ]
+    },
+    {
+      "id": "quality-defaults",
+      "what": "Keeping a quality choice as the default, for instances open now and those yet to be made",
+      "covers": [],
+      "leaders": [
+        {
+          "who": "oeksound Soothe 2",
+          "does": "An option to apply the setting to all instances, as its users describe it",
+          "source": "https://prod.fabfilter.com/forum/add-comment?id=3504"
+        }
+      ],
+      "ours": "One press keeps both quality settings as where new instances start and sets every open instance to match, for this plugin or for every DAP plugin; a project saved before keeps what it was saved with.",
+      "verdict": "meets",
+      "proof": [
+        "a_new_instance_starts_from_what_was_kept_and_the_last_said_holds",
+        "a_default_set_reaches_the_instances_it_is_for_and_no_others",
+        "a_default_is_kept_where_the_instance_was_told_to_keep_them",
+        "what_cannot_be_a_default_is_left_alone"
+      ]
     }
   ]
 }

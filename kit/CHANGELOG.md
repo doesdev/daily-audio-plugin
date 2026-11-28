@@ -6,6 +6,21 @@ is in that plugin's own `CHANGELOG.md`.
 
 ## 2026-11-28
 
+- New: `kit_dsp::Oversampled` runs a valve or a core at 2 to 16
+  times the rate, late by the same count at every rate, and changes
+  rate without a join being heard. `kit_dsp::Need` chooses the rate
+  from the sound: none for a bass or anything gently driven, the
+  most for a bright sound driven hard (`docs/quality.md`).
+- New: `kit::oversampling` and `kit::render_quality`, two settings
+  for any plugin that bends the sound, shown in the Settings panel
+  with a row that keeps them as the default for that plugin or for
+  every DAP plugin, in instances open now and those yet to be made.
+- New: a plugin is told when its host is rendering to a file
+  (`Plugin::rendering`), in VST3 and CLAP, and may be later then.
+- Bypassing a plugin that is late now gives the sound as late as the
+  plugin said, so a host making up for the lateness stays in step.
+- `Tube` and `Transformer` can be told a new rate and keep what they
+  remember; `Tube::reach` says how far up its curve a sample goes.
 - Fixed: a linked setting moved in the moment after it was linked
   could be told to no one and the two left apart. A peer is sent
   where the setting is as soon as it shows it has joined.

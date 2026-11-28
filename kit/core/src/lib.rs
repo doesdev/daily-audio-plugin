@@ -12,6 +12,7 @@ pub const BRAND: &str = "DAP";
 /// renaming it would strand what people have already saved there.
 pub const HOME: &str = "doesdev";
 
+pub mod defaults;
 pub mod denormal;
 mod learn;
 pub mod level;
@@ -26,9 +27,10 @@ pub mod state;
 pub use learn::{LEARNABLE, Learn};
 pub use link::{Links, Peer};
 pub use param::{
-    BYPASS, Kind, MATCH, MIX, Param, balance, bypass, iron_drive, iron_grip, iron_material,
-    iron_ring, iron_size, iron_source, iron_top, key, level_match, list, listen, meter, mix, range,
-    toggle, tube_bias, tube_bloom, tube_feedback, tube_glow, tube_grid, tube_sag, tube_stage,
+    BYPASS, Kind, MATCH, MIX, Param, Quality, Rate, balance, bypass, iron_drive, iron_grip,
+    iron_material, iron_ring, iron_size, iron_source, iron_top, key, level_match, list, listen,
+    meter, mix, oversampling, quality, range, render_quality, toggle, tube_bias, tube_bloom,
+    tube_feedback, tube_glow, tube_grid, tube_sag, tube_stage,
 };
 pub use plugin::{Asset, Category, Info, Plugin, Role, Spec};
 pub use runner::{Block, EVENTS, Event, Runner, Transport, source};

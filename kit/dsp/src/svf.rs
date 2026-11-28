@@ -41,6 +41,12 @@ impl Svf {
         self.k = 1.0 / q.max(0.05);
     }
 
+    /// Tells it a new rate. What it holds is kept; `set` it again
+    /// for the cutoff to be right there.
+    pub fn retune(&mut self, rate: f32) {
+        self.rate = rate;
+    }
+
     pub fn reset(&mut self) {
         self.ic1 = 0.0;
         self.ic2 = 0.0;

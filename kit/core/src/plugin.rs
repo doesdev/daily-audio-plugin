@@ -156,6 +156,10 @@ pub trait Plugin: Send + 'static {
     /// whenever the rate or the largest block changes.
     fn prepare(&mut self, rate: f32, max_block: usize);
 
+    /// Whether the host is rendering to a file, not playing. Called
+    /// off the audio thread, and `prepare` is called again after it,
+    /// so a plugin may be later, and cost more, when rendering.
+    fn rendering(&mut self, _on: bool) {}
     /// Forget what has been heard: the transport jumped or stopped.
     fn reset(&mut self) {}
 

@@ -116,4 +116,7 @@ and [Panoramic](https://panoramalabs.com.au/panoramic/)
   where Saturn has six; no bands of its own at all; A and B and the
   undo history are forgotten when the editor closes. It does not show
   the sides' own signal live: the kit sends the editor one channel,
-  which here is the middle.
+  which here is the middle. Its oversampling has no setting with
+  next to no delay: it is 39 samples late even switched off, where
+  Saturn's is not late at all without its high quality mode on
+  (`docs/quality.md` has what is next).

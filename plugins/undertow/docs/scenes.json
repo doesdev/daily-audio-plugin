@@ -167,5 +167,23 @@
       "lean": 0.55,
       "swing": 0.2
     }
+  },
+  {
+    "name": "quality",
+    "values": {
+      "input": 0.8,
+      "level": 0.79,
+      "lean": 0.42,
+      "swing": 0.16
+    },
+    "steps": [
+      [
+        "click",
+        ".kit-settings"
+      ],
+      [
+        "away"
+      ]
+    ]
   }
 ]
