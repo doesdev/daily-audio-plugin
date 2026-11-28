@@ -2,8 +2,10 @@
 
 ## 0.1.2 (2026-11-28)
 
-- No change to what it costs: it had no such tail. Built on the kit
-  that now guards every plugin against one.
+- Fixed: dropouts at small audio buffers. As a VST3 it told the host
+  of its meters every block, thousands of times a second at a buffer
+  of 32, and it cleared eight seconds of memory on the audio thread
+  whenever the host reset it, as when the transport starts.
 
 ## 0.1.1 (2026-11-28)
 

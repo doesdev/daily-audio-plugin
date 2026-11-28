@@ -239,6 +239,9 @@ impl Plugin for HandMeDown {
         self.rate = rate;
         let room = (MEMORY_S * rate) as usize + 1;
         self.ring = [vec![0.0; room], vec![0.0; room]];
+        // Written through once, here and not while playing: memory
+        // only asked for is not there until it is first touched.
+        self.ring.iter_mut().for_each(|r| r.fill(0.0));
         self.fast = Follower::new(0.1, 8.0, rate);
         self.slow = Follower::new(15.0, 150.0, rate);
         self.hit_gain = Smooth::new(db_to_gain(at(HIT_GAIN)), EASE_MS, rate);
@@ -251,7 +254,9 @@ impl Plugin for HandMeDown {
     }
 
     fn reset(&mut self) {
-        self.ring.iter_mut().for_each(|r| r.fill(0.0));
+        // The memory is not cleared: that is megabytes, and a host may
+        // reset on the audio thread. With no note remembered nothing
+        // reads behind this moment, so what is there is never heard.
         self.now = 0;
         self.starts = [0; STARTS];
         self.notes = 0;

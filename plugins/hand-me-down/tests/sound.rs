@@ -343,3 +343,28 @@ fn a_moved_level_is_eased_not_jumped() {
     assert!(step < 0.01, "the biggest step between samples was {step}");
     assert!(out[4799] < 0.05, "and it got there: {}", out[4799]);
 }
+
+#[test]
+fn nothing_from_before_a_reset_is_handed_down_after_it() {
+    use kit::Runner;
+    let rate = 48_000.0;
+    // Hits a quarter of a second apart, each a burst that dies away.
+    let hits = |level: f32| -> Vec<f32> {
+        (0..rate as usize * 2)
+            .map(|i| {
+                let t = (i % 12_000) as f32 / rate;
+                level * (-t * 30.0).exp() * (t * 2000.0).sin()
+            })
+            .collect()
+    };
+    let mut runner = Runner::<hand_me_down::HandMeDown>::new(rate, 256);
+    let loud = hits(0.9);
+    runner.render(&[loud.clone(), loud], rate as usize * 2, 256);
+    // The memory is full of loud bodies. After a reset, quiet hits
+    // must be handed only each other's.
+    runner.reset();
+    let quiet = hits(0.01);
+    let out = runner.render(&[quiet.clone(), quiet], rate as usize * 2, 256);
+    let peak = out[0].iter().fold(0.0f32, |m, v| m.max(v.abs()));
+    assert!(peak < 0.05, "something loud came back: {peak}");
+}

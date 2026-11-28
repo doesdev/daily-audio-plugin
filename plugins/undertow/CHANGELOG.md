@@ -2,8 +2,9 @@
 
 ## 0.5.4 (2026-11-28)
 
-- No change to what it costs: it had no such tail. Built on the kit
-  that now guards every plugin against one.
+- Fixed: as a VST3 it told the host of its meters every block, which
+  at small audio buffers is a load on the host and can break up the
+  sound. They are told thirty times a second now.
 
 ## 0.5.3 (2026-11-28)
 
