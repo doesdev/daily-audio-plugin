@@ -17,6 +17,11 @@ is in that plugin's own `CHANGELOG.md`.
   under 60 Hz, so a new instance did not start where it said. It
   moves in whole hertz now, and every shared setting is held to
   coming back exactly at its default.
+- Fixed: a setting that moves in tenths was told to a CLAP host as
+  stepped, which in CLAP means whole numbers only, so a host could
+  round it and clap-validator refused one whose ends are not whole.
+  Only lists and ranges of whole numbers are stepped now. No released
+  plugin had such a setting.
 - New: `kit_dsp::Oversampled` runs a valve or a core at 2 to 16
   times the rate, late by the same count at every rate, and changes
   rate without a join being heard. `kit_dsp::Need` chooses the rate
