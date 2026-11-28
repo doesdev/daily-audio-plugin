@@ -62,7 +62,9 @@ pub fn live(spec: Spec, link: ScopeLink) -> Feed {
 /// none stops the waiting, and `forget` frees a setting from its
 /// controller. `tie` links a setting with the same one of the
 /// instance `peer`; `untie` takes that peer's out of the group, or
-/// with no peer this instance's own.
+/// with no peer this instance's own. `default` makes `plain` where a
+/// setting starts from now on, for this plugin or, with `reach` as
+/// `all`, for every DAP plugin.
 pub fn learner(spec: Spec, link: ScopeLink) -> Hear {
     Box::new(move |text| {
         let Ok(msg) = serde_json::from_str::<serde_json::Value>(text) else {
@@ -93,7 +95,15 @@ pub fn learner(spec: Spec, link: ScopeLink) -> Hear {
                     scope.links.untie(index, key.unwrap_or(""), peer);
                 }
             }
-            (Some("learn" | "forget" | "tie" | "untie"), _, _) => {}
+            (Some("default"), Some(scope), Some(_)) => {
+                let plain = msg.get("plain").and_then(|p| p.as_f64());
+                let all = msg.get("reach").and_then(|r| r.as_str()) == Some("all");
+                let plugin = (!all).then_some(spec.info.name);
+                if let (Some(plain), Some(key)) = (plain, key) {
+                    scope.links.make_default(plugin, key, plain);
+                }
+            }
+            (Some("learn" | "forget" | "tie" | "untie" | "default"), _, _) => {}
             _ => return false,
         }
         true
@@ -267,6 +277,10 @@ mod tests {
         assert!(hear(r#"{"type":"untie","id":4}"#));
         assert_eq!(scope.links.group(0), 0);
         assert_eq!(told().expect("told")["groups"], serde_json::json!({}));
+        // A default is taken as said; with nowhere to keep it, as here,
+        // nothing is written.
+        assert!(hear(r#"{"type":"default","id":4,"reach":"all","plain":1}"#));
+        assert!(hear(r#"{"type":"default","id":4}"#));
         // A peer given as anything but its number in text links nothing.
         assert!(hear(r#"{"type":"tie","id":4,"peer":7}"#));
         assert!(hear(r#"{"type":"untie","id":4,"peer":7}"#));

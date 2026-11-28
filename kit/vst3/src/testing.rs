@@ -215,6 +215,8 @@ pub struct Host {
     notes_in: (ComWrapper<Notes>, ComPtr<IEventList>),
     notes_out: (ComWrapper<Notes>, ComPtr<IEventList>),
     context: ProcessContext,
+    rate: f32,
+    promised: usize,
 }
 
 fn create<I: Interface>(factory: &ComPtr<IPluginFactory>, class: [u32; 4]) -> ComPtr<I> {
@@ -382,6 +384,8 @@ impl Host {
             notes_in: notes(),
             notes_out: notes(),
             context,
+            rate,
+            promised,
         }
     }
 
@@ -511,6 +515,28 @@ impl Host {
         let mirrored =
             unsafe { self.controller.setComponentState(stream(bytes).as_ptr()) } == kResultOk;
         loaded && mirrored
+    }
+
+    /// As a host does before it renders to a file, or goes back to
+    /// playing: stops, says which, and starts again.
+    pub fn offline(&mut self, on: bool) {
+        let mode = match on {
+            true => ProcessModes_::kOffline,
+            false => ProcessModes_::kRealtime,
+        };
+        let mut setup = ProcessSetup {
+            processMode: mode as i32,
+            symbolicSampleSize: SymbolicSampleSizes_::kSample32 as i32,
+            maxSamplesPerBlock: self.promised as i32,
+            sampleRate: self.rate as f64,
+        };
+        unsafe {
+            assert_eq!(self.proc.setProcessing(0), kResultOk);
+            assert_eq!(self.component.setActive(0), kResultOk);
+            assert_eq!(self.proc.setupProcessing(&mut setup), kResultOk);
+            assert_eq!(self.component.setActive(1), kResultOk);
+            assert_eq!(self.proc.setProcessing(1), kResultOk);
+        }
     }
 
     pub fn latency(&self) -> u32 {

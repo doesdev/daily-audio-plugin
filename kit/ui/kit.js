@@ -1549,9 +1549,11 @@ export const foot = (ui, ...children) => {
 // a plugin's page should show what the plugin does.
 export const auto = (ui) => {
   const handles = Object.values(ui.p)
-  // The bypass and level matching have their place in the header.
+  // The bypass and level matching have their place in the header,
+  // and quality its place among the settings.
+  const elsewhere = ['bypass', 'match', ...QUALITY]
   const lists = handles.filter((handle) =>
-    handle.row.kind === 'list' && !['bypass', 'match'].includes(handle.row.key))
+    handle.row.kind === 'list' && !elsewhere.includes(handle.row.key))
   // A valve's and a transformer's own settings live in their windows.
   const windowed = (handle) => Object.values(TONES)
     .some((tone) => handle.row.key.startsWith(tone.prefix))
@@ -2045,9 +2047,50 @@ const presetPill = (ui) => {
   return button
 }
 
-// Settings: kept for every plugin of ours, not saved with a song.
+// Quality (`docs/quality.md`): how many times the rate a plugin that
+// bends the sound runs at, while playing and when a host renders to a
+// file. These two are the plugin's own settings, saved with the
+// project like any other. The row under them keeps where they stand
+// as where every new instance starts, and sets every instance open
+// now to match: for this plugin, or for every plugin of ours.
+const QUALITY = ['oversampling', 'render']
+const QUALITY_NOTES = { oversampling: 'While playing', render: 'To a file' }
+
+const qualityRows = (ui, kept) => {
+  const handles = QUALITY.map((key) => ui.p[key]).filter(Boolean)
+  if (!handles.length) return []
+  const stands = () => handles.map((handle) => handle.plain).join()
+  const reaches = { plugin: `For ${ui.name}`, all: 'For every DAP plugin' }
+  const keep = (reach) => {
+    handles.forEach((handle) => post({
+      type: 'default', id: handle.row.id, reach, plain: handle.plain
+    }))
+    kept.reach = reach
+    kept.at = stands()
+  }
+  const choose = (handle) => [
+    handle.row.title, QUALITY_NOTES[handle.row.key], handle.row.choices,
+    handle.row.choices[handle.plain],
+    (pick) => handle.set(normOf(handle.row, handle.row.choices.indexOf(pick)))
+  ]
+  // The first of them says whose these are: the rows above are for
+  // every plugin, and these are this one's.
+  const [first, ...rest] = handles.map(choose)
+  return [
+    [...first, `${ui.name}, saved with the project`],
+    ...rest,
+    ['Keep as default', 'New and open instances',
+      Object.values(reaches),
+      kept.at === stands() ? reaches[kept.reach] : null,
+      (pick) => keep(pick === reaches.all ? 'all' : 'plugin')]
+  ]
+}
+
+// Settings: kept for every plugin of ours, not saved with a song,
+// but for a plugin's quality, which is the plugin's own.
 const settingsPanel = (ui) => () => {
   const body = h('div.kit-prefs')
+  const kept = { reach: null, at: null }
   const saved = () => {
     try { return window.localStorage.getItem(THEME_KEY) } catch { return null }
   }
@@ -2067,18 +2110,24 @@ const settingsPanel = (ui) => () => {
     ['Meter fall', 'How fast a bar comes down', PREFS.fall, prefs.fall,
       (pick) => setPref('fall', pick)],
     ['Fine drag', 'Hold Shift, or always', PREFS.fine, prefs.fine,
-      (pick) => setPref('fine', pick)]
+      (pick) => setPref('fine', pick)],
+    ...qualityRows(ui, kept)
   ]
-  const draw = () => body.replaceChildren(...rows().map(
-    ([name, note, options, now, pick]) => h('div.kit-prefs-row', {
-      'data-setting': name.toLowerCase().replace(' ', '-')
+  const draw = () => body.replaceChildren(...rows().flatMap(
+    ([name, note, options, now, pick, head]) => [
+      head ? h('div.kit-prefs-head', {}, head) : null,
+      row(name, note, options, now, pick)
+    ].filter(Boolean)))
+  const row = (name, note, options, now, pick) =>
+    h('div.kit-prefs-row', {
+      'data-setting': name.toLowerCase().replaceAll(' ', '-')
     },
     h('span.kit-prefs-name', {}, name, h('small', {}, note)),
     h('div.kit-options', { role: 'group', 'aria-label': name },
       options.map((option) => pill(option, option === now, () => {
         pick(option)
         draw()
-      }))))))
+      }))))
   draw()
   return [
     h('div.kit-panel-bar', {},

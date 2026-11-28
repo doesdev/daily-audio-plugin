@@ -167,6 +167,9 @@ and the picture can tell when it is held.
   pills, and `column(...)` stacks them over the `readouts`.
 - `kit_dsp::Tube` is the one valve and `kit_dsp::Transformer` the
   one transformer; `docs/tone.md` says what each lever stands for.
+  Either is run through `kit_dsp::Oversampled`, with the settings
+  `kit::oversampling` and `kit::render_quality` read by
+  `kit::quality`, as `docs/quality.md` sets out and Undertow shows.
   Give the plugin `kit::tube_stage`, `tube_bias`, `tube_grid`,
   `tube_bloom`, `tube_feedback`, `tube_sag` and `tube_glow` (or
   `kit::iron_drive`, `iron_size`, `iron_material`, `iron_source`,

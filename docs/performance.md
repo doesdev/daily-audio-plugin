@@ -106,19 +106,48 @@ can start sample n + 1, and there is nothing for a wider instruction
 to do side by side. Vectorising code like that is effort for no
 gain, and at 0.2% there is little left to gain.
 
+## What oversampling costs
+
+Built on 2026-11-28 (`docs/quality.md`). One valve, mono, at 48 kHz,
+as a share of one core:
+
+| Rate | Filters alone | With the valve |
+| --- | --- | --- |
+| 1 | 0.01% | 0.20% |
+| 2 | 0.11% | 0.45% |
+| 4 | 0.25% | 0.92% |
+| 8 | 0.49% | 1.85% |
+| 16 | 1.00% | 3.72% |
+
+The steeper filters for rendering cost within a tenth of these. The
+valve is three quarters of the cost at every rate: it is a `tanh`
+for every sample, and a faster stand-in for `tanh` is a trade of
+quality for speed that is not made here. Auto is what keeps the cost
+down: a bass, or anything gently driven, runs at the plain rate.
+
+Two things were measured on the way:
+
+- **A second build for AVX2 was no faster.** The filter sums were
+  laid out eight abreast, compiled once for any x86-64 and once for
+  AVX2, and chosen by asking the processor. A sum of 56 took 8.6 ns
+  the plain way and 9.2 ns the wide way, and the filters as a whole
+  were the same to within the noise. The plain build already does
+  them four at a time, and at these lengths the adding up at the end
+  is what takes the time. The second build was taken out.
+- **Doing the sum before the write halved the filters.** Each sum
+  reads eight samples at once, the last of them the one just written,
+  and a processor cannot read across a sample it has not finished
+  writing: it waits. Summing over the sample about to be replaced and
+  putting the difference right afterwards took the filters at 16
+  times from 1.8% to 1.0%.
+
 ## Where vectors will pay, and what comes next
 
 Vector instructions do many of the same thing at once. Two kinds of
 work in an audio plugin have that shape, and the kit has neither yet:
 
-1. **Oversampling filters.** The tube and the transformer bend the
-   sound, which makes harmonics above half the sample rate, which
-   fold back as tones that were never played. The cure is to run the
-   bend at two, four or eight times the rate, between two steep
-   filters. Those filters are long sums of products, exactly what
-   AVX2 does eight at a time. This is the one place where quality
-   and speed are the same job: the budget above is what pays for it,
-   and vectors are what keep it cheap.
+1. **Oversampling filters.** Built, and measured above: the plain
+   build's four at a time is all these short sums can use.
 2. **Voices.** An instrument's notes are the same sum done once a
    note. Aftersound's strings could run four or eight notes abreast.
 
@@ -146,6 +175,4 @@ quality for it, which is not wanted here.
 - These numbers are from one Linux machine. Nothing has been timed on
   Windows or in a host, and a host's own cost for each parameter
   change is not something a test here can see.
-- Oversampling, quality when rendering, and defaults that reach
-  every instance are queued and set out in `docs/quality.md`, with
-  the decisions that are the owner's.
+- Oversampling's own open ends are in `docs/quality.md`.

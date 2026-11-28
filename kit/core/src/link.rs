@@ -20,6 +20,7 @@ use crate::{BEGIN, END, SET, Shared};
 use crate::{Kind, Spec};
 use std::io::ErrorKind;
 use std::net::{Ipv4Addr, SocketAddrV4, UdpSocket};
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, Weak};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -72,6 +73,14 @@ pub enum Said {
     Leave {
         key: String,
     },
+    /// Put your `key` at `plain`, if you are the plugin called
+    /// `plugin`, or whoever you are if that is empty: a default
+    /// being set for a session's worth of instances at once.
+    Take {
+        plugin: String,
+        key: String,
+        plain: f64,
+    },
 }
 
 pub fn encode(said: &Said) -> String {
@@ -92,6 +101,10 @@ pub fn encode(said: &Said) -> String {
         Said::Set { group, key, plain } => format!("{MAGIC}\tset\t{group}\t{key}\t{plain}"),
         Said::Join { key, group } => format!("{MAGIC}\tjoin\t{key}\t{group}"),
         Said::Leave { key } => format!("{MAGIC}\tleave\t{key}"),
+        Said::Take { plugin, key, plain } => {
+            let plugin = plugin.replace(['\t', '\n'], " ");
+            format!("{MAGIC}\ttake\t{plugin}\t{key}\t{plain}")
+        }
     }
 }
 
@@ -130,6 +143,11 @@ pub fn decode(text: &str) -> Option<Said> {
         "leave" => Said::Leave {
             key: parts.next()?.to_string(),
         },
+        "take" => Said::Take {
+            plugin: parts.next()?.to_string(),
+            key: parts.next()?.to_string(),
+            plain: parts.next()?.parse().ok()?,
+        },
         _ => return None,
     };
     Some(said)
@@ -144,6 +162,10 @@ pub struct Links {
     peers: Mutex<Vec<Peer>>,
     track: Mutex<String>,
     asks: Mutex<Vec<(u64, Said)>>,
+    // What is to be said to every instance, and where defaults are
+    // kept on this machine, if the instance was told.
+    tells: Mutex<Vec<Said>>,
+    kept: Mutex<Option<PathBuf>>,
 }
 
 impl Default for Links {
@@ -155,6 +177,8 @@ impl Default for Links {
             peers: Mutex::default(),
             track: Mutex::default(),
             asks: Mutex::default(),
+            tells: Mutex::default(),
+            kept: Mutex::default(),
         }
     }
 }
@@ -259,6 +283,33 @@ impl Links {
             asks.push((peer, said));
         }
     }
+
+    /// Where defaults are kept on this machine. Until this is said
+    /// none are written, which is how a test leaves the machine as it
+    /// found it.
+    pub fn keep_in(&self, dir: Option<PathBuf>) {
+        if let Ok(mut kept) = self.kept.lock() {
+            *kept = dir;
+        }
+    }
+
+    /// From the editor: `plain` is where setting `key` is to start
+    /// from now on, for the plugin called `plugin` or, with `None`,
+    /// for every DAP plugin. It is kept for instances yet to be made
+    /// and told to those already here. Reads and writes a file, so
+    /// never on the audio thread. `false` if it could not be kept.
+    pub fn make_default(&self, plugin: Option<&str>, key: &str, plain: f64) -> bool {
+        let dir = self.kept.lock().ok().and_then(|kept| kept.clone());
+        let kept = dir.is_none_or(|dir| crate::defaults::keep(&dir, plugin, key, plain).is_ok());
+        if let Ok(mut tells) = self.tells.lock() {
+            tells.push(Said::Take {
+                plugin: plugin.unwrap_or("").to_string(),
+                key: key.to_string(),
+                plain,
+            });
+        }
+        kept
+    }
 }
 
 // The thread's own view of one instance.
@@ -273,6 +324,9 @@ struct Station {
     seen: Vec<(u64, Instant)>,
     // What the editor asked of a peer and has not yet seen done.
     asked: Vec<(u64, Said, Instant)>,
+    // What was told to everyone, to be told once more in case a
+    // datagram went astray.
+    told: Vec<Said>,
     said: Instant,
 }
 
@@ -379,6 +433,23 @@ impl Station {
                     self.announce(links);
                 }
             }
+            Said::Take { plugin, key, plain } => {
+                let meant = plugin.is_empty() || plugin == self.spec.info.name;
+                let Some(index) = self.index_of(&key).filter(|_| meant) else {
+                    return;
+                };
+                let param = &self.spec.params[index];
+                if param.is_bypass() || !linkable(&param.kind) {
+                    return;
+                }
+                let norm = param.normalized(plain);
+                if (norm - self.last[index]).abs() < 1e-9 {
+                    return;
+                }
+                self.last[index] = norm;
+                shared.set(index, norm);
+                shared.edit(index, BEGIN | SET | END);
+            }
         }
     }
 
@@ -410,6 +481,27 @@ impl Station {
             .iter()
             .filter(|p| p.keys.iter().any(|(k, g)| k == key && *g == group))
             .for_each(|p| self.send(p.port, &said));
+    }
+
+    // Says to every instance what the editor wanted said to all, and
+    // says it once more a second on.
+    fn broadcast(&mut self, links: &Links, again: bool) {
+        let fresh = match links.tells.lock() {
+            Ok(mut tells) => std::mem::take(&mut *tells),
+            Err(_) => return,
+        };
+        let repeat = match again {
+            true => std::mem::take(&mut self.told),
+            false => Vec::new(),
+        };
+        if fresh.is_empty() && repeat.is_empty() {
+            return;
+        }
+        let peers = links.peers();
+        for said in repeat.iter().chain(&fresh) {
+            peers.iter().for_each(|p| self.send(p.port, said));
+        }
+        self.told.extend(fresh);
     }
 
     // Does what the editor asked: a peer that joins is sent where the
@@ -569,6 +661,7 @@ pub fn start(shared: &Arc<Shared>, spec: Spec) -> Option<Running> {
         port,
         seen: Vec::new(),
         asked: Vec::new(),
+        told: Vec::new(),
         said: Instant::now(),
     };
     let run = move || {
@@ -588,6 +681,7 @@ pub fn start(shared: &Arc<Shared>, spec: Spec) -> Option<Running> {
                 station.announce(links);
                 station.forget(links);
                 station.ask_again(&shared, links);
+                station.broadcast(links, true);
             }
             // Waits up to a tick for the first, then takes what is
             // already there.
@@ -622,6 +716,7 @@ pub fn start(shared: &Arc<Shared>, spec: Spec) -> Option<Running> {
                 let _ = station.socket.set_nonblocking(false);
             }
             station.ask(&shared, links);
+            station.broadcast(links, false);
             station.settle(&shared, links);
             station.tell(&shared, links);
         }
@@ -874,6 +969,51 @@ mod tests {
             assert!(crossed, "lost on go {go}");
         }
         assert!(late <= 10, "{late} of 60 moves were late");
+    }
+
+    #[test]
+    fn a_default_set_reaches_the_instances_it_is_for_and_no_others() {
+        use crate::{bypass, oversampling};
+        const HAS: &[Param] = &[bypass(1), oversampling(2)];
+        let named = |name: &'static str| {
+            let info: &'static Info = Box::leak(Box::new(Info { name, ..INFO }));
+            let spec = Spec { info, ..spec(HAS) };
+            let shared = Arc::new(Shared::new(&spec));
+            let running = start(&shared, spec).expect("a port");
+            (shared, running)
+        };
+        let ((a, _ra), (same, _rs), (other, _ro)) = (named("One"), named("One"), named("Two"));
+        let la = a.scope();
+        assert!(until(|| la.links.peers().len() >= 2));
+        let choice = |shared: &Shared| HAS[1].index(shared.value(1).unwrap());
+
+        // For the plugin called One: the other One, not Two.
+        assert!(la.links.make_default(Some("One"), "oversampling", 3.0));
+        assert!(until(|| choice(&same) == 3));
+        std::thread::sleep(Duration::from_millis(100));
+        assert_eq!(choice(&other), 0);
+
+        // For every plugin: both. A bypass is no one's default.
+        assert!(la.links.make_default(None, "oversampling", 5.0));
+        assert!(la.links.make_default(None, "bypass", 1.0));
+        assert!(until(|| choice(&same) == 5 && choice(&other) == 5));
+        std::thread::sleep(Duration::from_millis(100));
+        assert_eq!((same.value(0), other.value(0)), (Some(0.0), Some(0.0)));
+    }
+
+    #[test]
+    fn a_default_is_kept_where_the_instance_was_told_to_keep_them() {
+        let dir = std::env::temp_dir().join(format!("dap-link-defaults-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let links = Links::default();
+        // Not told where: nothing is written anywhere.
+        assert!(links.make_default(None, "oversampling", 2.0));
+        assert!(!dir.exists());
+        links.keep_in(Some(dir.clone()));
+        assert!(links.make_default(Some("One"), "oversampling", 2.0));
+        let kept = std::fs::read_to_string(dir.join("One.txt")).unwrap();
+        assert_eq!(kept, "oversampling\t2\n");
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

@@ -105,6 +105,13 @@ impl<P: Plugin> Processor<P> {
     pub fn new() -> Self {
         let spec = Spec::of::<P>();
         let shared = Arc::new(Shared::new(&spec));
+        // A new instance starts from whatever a person has kept as
+        // their default, and can keep one in the same place.
+        let defaults = kit::defaults::dir();
+        if let Some(dir) = &defaults {
+            kit::defaults::apply(dir, &shared, &spec);
+        }
+        shared.scope().links.keep_in(defaults);
         Self {
             spec,
             _linking: kit::link::start(&shared, spec),
@@ -469,6 +476,9 @@ impl<P: Plugin> IAudioProcessorTrait for Processor<P> {
 
         let block = setup.maxSamplesPerBlock.max(1) as usize;
         let mut runner = Runner::<P>::new(setup.sampleRate as f32, block);
+        // A host says here whether it is rendering to a file, before
+        // it asks how late the plugin is.
+        runner.set_rendering(setup.processMode == ProcessModes_::kOffline as i32);
         runner.watch(self.shared.scope());
         let every = (setup.sampleRate as f32 / METERS_A_SECOND) as u32;
         self.meter_every.store(every.max(1), Ordering::Relaxed);

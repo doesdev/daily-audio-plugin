@@ -216,6 +216,18 @@ impl Transformer {
     }
 }
 
+impl crate::Bend for Transformer {
+    fn retune(&mut self, rate: f32) {
+        // The flux is counted in the same units at any rate, so what
+        // it holds carries over as it is.
+        self.rate = rate;
+        self.leak = (-std::f32::consts::TAU * 1.5 / rate).exp();
+        self.filled_pole = pole(30.0, rate);
+        self.top.retune(rate);
+        self.set(self.shape);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

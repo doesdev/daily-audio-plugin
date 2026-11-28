@@ -39,6 +39,10 @@ npm run gallery                    # the kit's own pictures, both themes
   balance; one that models a valve or a transformer uses the kit's,
   with its shared window (`docs/tone.md` is why its levers are what
   they are). None of these is written twice.
+- A plugin that bends the sound runs the bend through the kit's
+  oversampler and ships the kit's two quality settings
+  (`docs/quality.md`). The delay it adds is told to the host, and
+  whatever the bend is mixed with waits as long.
 - An editor is built round a picture only that plugin has, and says
   in `NOVELTY.md` where it is under the bar.
 - An editor follows `docs/design.md`: mostly one tone with depth,

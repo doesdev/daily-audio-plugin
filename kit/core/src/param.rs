@@ -187,6 +187,68 @@ pub const fn key(id: u32) -> Param {
         .about("Follows the track routed to the sidechain in place of its own sound")
 }
 
+/// For a plugin that bends the sound (`docs/quality.md`): how many
+/// times the sample rate the bend runs at while playing, and what
+/// happens when the host renders to a file. `quality` reads the two.
+pub const fn oversampling(id: u32) -> Param {
+    list(
+        id,
+        "oversampling",
+        "Oversampling",
+        "Quality",
+        &["Auto", "Off", "2x", "4x", "8x", "16x"],
+        0,
+    )
+    .about("How many times the rate the bend runs at while playing. Auto spends it only where it would be heard")
+}
+
+pub const fn render_quality(id: u32) -> Param {
+    list(
+        id,
+        "render",
+        "When rendering",
+        "Quality",
+        &["Best", "As playing", "Off", "2x", "4x", "8x", "16x"],
+        0,
+    )
+    .about("What a render to a file gets. Best is the highest rate and the finest of everything, whatever it costs")
+}
+
+/// The rate a bend should run at.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Rate {
+    /// Whatever the sound needs.
+    Auto,
+    /// This many doublings, 0 for none.
+    Fixed(usize),
+}
+
+/// What the two quality settings come to at this moment.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Quality {
+    pub rate: Rate,
+    /// Rendering at Best: the finest of everything else as well.
+    pub best: bool,
+}
+
+/// Reads `oversampling` and `render_quality`, as choices, for a host
+/// that is `rendering` or not.
+pub const fn quality(playing: usize, render: usize, rendering: bool) -> Quality {
+    let played = match playing {
+        0 => Rate::Auto,
+        n => Rate::Fixed(n - 1),
+    };
+    let rate = match (rendering, render) {
+        (false, _) | (true, 1) => played,
+        (true, 0) => Rate::Fixed(4),
+        (true, n) => Rate::Fixed(n - 2),
+    };
+    Quality {
+        rate,
+        best: rendering && render == 0,
+    }
+}
+
 /// The valve's own settings, for any effect that models one: they
 /// live in the tube window, and `kit_dsp::Tube` is the valve. Each
 /// rests where the valve is a plain curve.

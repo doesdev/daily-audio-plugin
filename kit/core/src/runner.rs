@@ -166,6 +166,11 @@ pub struct Runner<P: Plugin> {
     fade: f32,
     /// Where the sound is copied for an editor to draw, if anywhere.
     scope: Option<Arc<Scope>>,
+    /// The sound that came in, kept as long as the plugin is late, so
+    /// that what is faded to in bypass lines up with what it made.
+    lag: Vec<Vec<f32>>,
+    lag_at: usize,
+    rendering: bool,
 }
 
 /// Which of a test's channels feeds channel `ch` of a plugin whose own
@@ -207,7 +212,58 @@ impl<P: Plugin> Runner<P> {
             dry: 0.0,
             fade: 1.0 / (BYPASS_FADE_SECONDS * rate).max(1.0),
             scope: None,
+            lag: Vec::new(),
+            lag_at: 0,
+            rendering: false,
         }
+        .lagged()
+    }
+
+    // Room for the input to wait as long as the plugin is late.
+    fn lagged(mut self) -> Self {
+        self.keep_lag();
+        self
+    }
+
+    fn keep_lag(&mut self) {
+        let late = self.plugin.latency() as usize;
+        self.lag = self.ins.iter().map(|_| vec![0.0; late]).collect();
+        self.lag_at = 0;
+    }
+
+    /// Tells the plugin the host is rendering to a file, or playing
+    /// again, and prepares it afresh. Allocates, so never on the
+    /// audio thread.
+    pub fn set_rendering(&mut self, on: bool) {
+        if on == self.rendering {
+            return;
+        }
+        self.rendering = on;
+        self.plugin.rendering(on);
+        self.plugin.prepare(self.rate, self.max);
+        self.keep_lag();
+    }
+
+    pub fn rendering(&self) -> bool {
+        self.rendering
+    }
+
+    // Swaps the block that came in for the one that came in as long
+    // ago as the plugin is late.
+    fn hold_back(&mut self, n: usize) {
+        let late = self.lag.first().map_or(0, Vec::len);
+        if late == 0 {
+            return;
+        }
+        let from = self.lag_at;
+        for (ring, buf) in self.lag.iter_mut().zip(self.ins.iter_mut()) {
+            let mut at = from;
+            for sample in buf[..n].iter_mut() {
+                std::mem::swap(&mut ring[at], sample);
+                at = if at + 1 == late { 0 } else { at + 1 };
+            }
+        }
+        self.lag_at = (from + n) % late;
     }
 
     /// Has every block copied to `scope`, in and out, as it is heard:
@@ -316,6 +372,7 @@ impl<P: Plugin> Runner<P> {
                 rate: self.rate,
             });
 
+            self.hold_back(n);
             self.fade_to_dry(n);
             self.show(n);
             for (ch, buf) in self.outs.iter().enumerate() {
@@ -337,8 +394,9 @@ impl<P: Plugin> Runner<P> {
     /// far into bypass it is. The plugin runs all the while, so its
     /// tails and smoothers are where they should be when it comes back.
     /// An instrument, with nothing coming in, fades to silence. The dry
-    /// sound is not delayed, so a plugin with latency will not line up
-    /// with it during the fade.
+    /// sound has been held back as long as the plugin is late, so the
+    /// two line up, and a host making up for the lateness is right in
+    /// bypass too.
     fn fade_to_dry(&mut self, n: usize) {
         let Some(index) = self.bypass else {
             return;
@@ -542,6 +600,70 @@ mod tests {
                 .map(|w| (w[1] - w[0]).abs())
                 .fold(0.0, f32::max);
             assert!(step <= 1.0 / fade as f32 + 1e-6, "{name} steps by {step}");
+        }
+    }
+
+    // Late by seven samples when playing and nineteen when rendering,
+    // and silent, so whatever is heard in bypass is the runner's.
+    struct Late(bool);
+
+    impl Plugin for Late {
+        const INFO: &'static Info = Double::INFO;
+        const PARAMS: &'static [Param] = &[crate::bypass(0)];
+
+        fn new() -> Self {
+            Self(false)
+        }
+
+        fn prepare(&mut self, _rate: f32, _max_block: usize) {}
+
+        fn rendering(&mut self, on: bool) {
+            self.0 = on;
+        }
+
+        fn latency(&self) -> u32 {
+            if self.0 { 19 } else { 7 }
+        }
+
+        fn process(&mut self, _block: &mut Block) {}
+    }
+
+    #[test]
+    fn bypassed_a_late_plugin_gives_the_sound_as_late_as_it_said() {
+        let ramp = vec![(1..=600).map(|i| i as f32).collect::<Vec<f32>>()];
+        for (rendering, late) in [(false, 7), (true, 19)] {
+            let mut runner = Runner::<Late>::new(48_000.0, 64);
+            runner.set_rendering(rendering);
+            assert_eq!(runner.latency(), late);
+            runner.params[0] = 1.0;
+            // Blocks that do not divide the lateness, on purpose.
+            let out = runner.render(&ramp, 600, 50);
+            for i in 520..600 {
+                assert_eq!(out[0][i], ramp[0][i - late as usize], "sample {i}");
+            }
+        }
+    }
+
+    #[test]
+    fn the_two_quality_settings_come_to_a_rate() {
+        use crate::{Quality, Rate, quality};
+        let cases = [
+            // playing, render, rendering, rate, best
+            (0, 0, false, Rate::Auto, false),
+            (1, 0, false, Rate::Fixed(0), false),
+            (5, 0, false, Rate::Fixed(4), false),
+            (0, 0, true, Rate::Fixed(4), true),
+            (0, 1, true, Rate::Auto, false),
+            (3, 1, true, Rate::Fixed(2), false),
+            (0, 2, true, Rate::Fixed(0), false),
+            (0, 6, true, Rate::Fixed(4), false),
+        ];
+        for (playing, render, rendering, rate, best) in cases {
+            assert_eq!(
+                quality(playing, render, rendering),
+                Quality { rate, best },
+                "{playing} {render} {rendering}"
+            );
         }
     }
 

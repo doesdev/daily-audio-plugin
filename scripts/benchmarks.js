@@ -149,7 +149,8 @@ const RUST = [
   'kit/dsp/src/level_match.rs', 'kit/dsp/src/mid_side.rs',
   'kit/dsp/src/tube.rs', 'kit/dsp/src/transformer.rs',
   'kit/core/src/link.rs', 'kit/core/src/denormal.rs',
-  'kit/test/tests/teeth.rs'
+  'kit/test/tests/teeth.rs', 'kit/dsp/src/oversample.rs',
+  'kit/core/src/defaults.rs'
 ]
 
 export const allProblems = () => {
