@@ -1,5 +1,11 @@
 # Aftersound: what changed
 
+## 0.2.5 (2026-11-28)
+
+- Fixed: a linked setting moved straight after it was linked could
+  stay unmoved on the other instance. On Windows, what other
+  instances said could also be read late.
+
 ## 0.2.4 (2026-11-28)
 
 - Fixed: after its notes died away it went on costing about eight

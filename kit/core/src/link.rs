@@ -18,6 +18,7 @@
 
 use crate::{BEGIN, END, SET, Shared};
 use crate::{Kind, Spec};
+use std::io::ErrorKind;
 use std::net::{Ipv4Addr, SocketAddrV4, UdpSocket};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, Weak};
@@ -453,30 +454,64 @@ impl Station {
         }
     }
 
+    // Whether a peer's own account of itself shows what was asked.
+    fn done(peers: &[Peer], uid: u64, said: &Said) -> bool {
+        let group_of = |key: &str| {
+            peers
+                .iter()
+                .find(|p| p.uid == uid)
+                .and_then(|p| p.keys.iter().find(|(k, _)| k == key))
+                .map(|(_, group)| *group)
+        };
+        match said {
+            Said::Join { key, group } => group_of(key) == Some(*group),
+            Said::Leave { key } => group_of(key).is_none_or(|group| group == 0),
+            _ => true,
+        }
+    }
+
     // Says again whatever was asked and is not yet so.
     fn ask_again(&mut self, shared: &Shared, links: &Links) {
         if self.asked.is_empty() {
             return;
         }
         let peers = links.peers();
-        let done = |uid: u64, said: &Said| {
-            let group_of = |key: &str| {
-                peers
-                    .iter()
-                    .find(|p| p.uid == uid)
-                    .and_then(|p| p.keys.iter().find(|(k, _)| k == key))
-                    .map(|(_, group)| *group)
-            };
-            match said {
-                Said::Join { key, group } => group_of(key) == Some(*group),
-                Said::Leave { key } => group_of(key).is_none_or(|group| group == 0),
-                _ => true,
-            }
-        };
-        self.asked
-            .retain(|(uid, said, at)| at.elapsed() < ASKED_FOR && !done(*uid, said));
+        self.asked.retain(|(_, _, at)| at.elapsed() < ASKED_FOR);
         for (uid, said, _) in &self.asked {
             self.say(shared, &peers, *uid, said);
+        }
+    }
+
+    // Lets go of what a peer now shows done. A peer that has just
+    // joined is sent where the setting is at this moment: it may have
+    // moved between the asking and the joining, and a move made while
+    // this instance did not yet know the peer was in the group was
+    // told to no one.
+    fn settle(&mut self, shared: &Shared, links: &Links) {
+        if self.asked.is_empty() {
+            return;
+        }
+        let peers = links.peers();
+        let (done, waiting): (Vec<_>, Vec<_>) = std::mem::take(&mut self.asked)
+            .into_iter()
+            .partition(|(uid, said, _)| Self::done(&peers, *uid, said));
+        self.asked = waiting;
+        for (uid, said, _) in done {
+            let Said::Join { key, group } = said else {
+                continue;
+            };
+            let value = self
+                .index_of(&key)
+                .and_then(|i| Some((i, shared.value(i)?)));
+            let port = peers.iter().find(|p| p.uid == uid).map(|p| p.port);
+            if let (Some((index, norm)), Some(port)) = (value, port) {
+                let now = Said::Set {
+                    group,
+                    key,
+                    plain: self.plain(index, norm),
+                };
+                self.send(port, &now);
+            }
         }
     }
 
@@ -557,7 +592,22 @@ pub fn start(shared: &Arc<Shared>, spec: Spec) -> Option<Running> {
             // Waits up to a tick for the first, then takes what is
             // already there.
             let mut waited = false;
-            while let Ok((n, from)) = station.socket.recv_from(&mut buf) {
+            let mut refused = 0;
+            loop {
+                let (n, from) = match station.socket.recv_from(&mut buf) {
+                    Ok(got) => got,
+                    // Windows answers a datagram sent to a port no one
+                    // holds by failing a later read here, once for
+                    // each, and saying it is here to sixty-three
+                    // ports leaves that many waiting in front of what
+                    // the peers said. They are stepped over, not
+                    // taken for an empty queue.
+                    Err(e) if e.kind() == ErrorKind::ConnectionReset && refused < 256 => {
+                        refused += 1;
+                        continue;
+                    }
+                    Err(_) => break,
+                };
                 let ours = from.ip().is_loopback();
                 let said = std::str::from_utf8(&buf[..n]).ok().and_then(decode);
                 if let (true, Some(said)) = (ours, said) {
@@ -572,6 +622,7 @@ pub fn start(shared: &Arc<Shared>, spec: Spec) -> Option<Running> {
                 let _ = station.socket.set_nonblocking(false);
             }
             station.ask(&shared, links);
+            station.settle(&shared, links);
             station.tell(&shared, links);
         }
     };
@@ -774,6 +825,55 @@ mod tests {
         // 18 dB is more than there is there.
         a.set(0, 0.75);
         assert!(until(|| b.value(1) == Some(1.0)));
+    }
+
+    #[test]
+    fn a_move_made_in_the_moment_after_linking_is_not_lost() {
+        // The asking instance is kept busy with datagrams that mean
+        // nothing, as Windows keeps it busy with refusals, so that it
+        // looks for moves many times before the peer's word that it
+        // has joined arrives. Sixty goes, each waiting a different
+        // while before the move.
+        // None may be lost, and few may be late: a late one was
+        // saved by the asking being said again a second on, which is
+        // there for a datagram that went astray, not for this.
+        let mut late = 0;
+        for go in 0..60u64 {
+            let (a, b) = (instance(&WIDE), instance(&NARROW));
+            let (la, lb) = (a.scope(), b.scope());
+            let (a_uid, b_uid) = (la.links.uid(), lb.links.uid());
+            assert!(until(|| la.links.peers().iter().any(|p| p.uid == b_uid)));
+            assert!(until(|| lb.links.peers().iter().any(|p| p.uid == a_uid)));
+            let port = lb
+                .links
+                .peers()
+                .iter()
+                .find(|p| p.uid == a_uid)
+                .unwrap()
+                .port;
+            let stop = Arc::new(AtomicBool::new(false));
+            let stopped = stop.clone();
+            let noise = std::thread::spawn(move || {
+                let socket = UdpSocket::bind(to(0)).unwrap();
+                while !stopped.load(Ordering::Relaxed) {
+                    let _ = socket.send_to(b"noise", to(port));
+                    std::thread::yield_now();
+                }
+            });
+            la.links.tie(0, "drive", b_uid);
+            let asked = Instant::now();
+            while asked.elapsed() < Duration::from_micros(go * 4) {
+                std::hint::spin_loop();
+            }
+            a.set(0, 0.25);
+            let moved = Instant::now();
+            let crossed = until(|| b.value(1) == Some(0.5));
+            late += usize::from(moved.elapsed() > Duration::from_millis(500));
+            stop.store(true, Ordering::Relaxed);
+            noise.join().unwrap();
+            assert!(crossed, "lost on go {go}");
+        }
+        assert!(late <= 10, "{late} of 60 moves were late");
     }
 
     #[test]

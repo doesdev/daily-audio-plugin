@@ -1,6 +1,6 @@
 [package]
 name = "hand-me-down"
-version = "0.1.2"
+version = "0.1.3"
 description = "Each note keeps its own hit, then plays the body an earlier note left"
 edition.workspace = true
 license.workspace = true
