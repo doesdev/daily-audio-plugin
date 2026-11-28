@@ -1,0 +1,58 @@
+{
+  "plugin": "ironside",
+  "kind": "Stereo processing with a transformer's colour: one half of the image shaping the other",
+  "leaders": [
+    {
+      "who": "FabFilter Saturn 2",
+      "does": "28 distortion styles in up to 6 bands, mid/side processing, a 50-slot modulation matrix with envelope followers, a real-time analyzer under its band display, live modulation visualization, undo, redo and A/B, interface sizes and full screen, curated factory presets",
+      "source": "https://www.fabfilter.com/products/saturn-2-multiband-distortion-saturation-plug-in"
+    },
+    {
+      "who": "Goodhertz Midside",
+      "does": "Mid and side gain and tilt, width with shuffler modes, Mono Below with bass makeup into the middle, a live goniometer and meters in its sliders; Shift and Ctrl for coarse and fine, Alt-click for the default, typed values, A/B with copy across, a window size kept for every instance, light and dark, about 26 factory presets in a drawer; no undo named",
+      "source": "https://manuals.goodhertz.com/midside"
+    },
+    {
+      "who": "RJ Studios SideMinder ME2",
+      "does": "Stereo width set dynamically, like a limiter, in up to three bands with a release from slow to fast, a Bass Mono below 30 to 300 Hz, and a stereo sidechain that sets the width in complementary response to another track's",
+      "source": "https://www.kvraudio.com/news/rj-studios-releases-sideminder-me2-with-fit-it-in-the-mix-widthwise-sidechain-input-52452"
+    }
+  ],
+  "points": {
+    "picture": {
+      "verdict": "exceeds",
+      "note": "The sides' own low corner as a response curve: dashed where it sits with the core empty, solid where the middle has pushed it now, the span the bass has taken struck through in columns, and the core's curve beside it showing how far up the middle has filled it. Saturn draws its bands over a spectrum and Midside a goniometer; neither shows one half of the image steering the other, which is the whole of Ironside. Under in one respect: the opening and shutting at each swing of the bass is faster than the meters the page is sent, so it is heard and not seen."
+    },
+    "precision": {
+      "verdict": "meets",
+      "note": "Every setting is a kit value: drag with fine, wheel and arrows, a default one double-click away, typed values with units. Midside has coarse and fine modifiers, Alt-click for the default and typed values; the kit has all of these but a coarse drag."
+    },
+    "compare": {
+      "verdict": "meets",
+      "note": "Undo, redo and A/B from the kit, as Saturn has. Midside has A/B and copy across but names no undo. Both are forgotten when the editor closes, the kit's gap."
+    },
+    "explains": {
+      "verdict": "meets",
+      "note": "Every setting has an about, shown at the foot of the sheet as the pointer moves, and help adds its range. Midside sends a person to its manual from a right-click; Saturn has help hints."
+    },
+    "fits": {
+      "verdict": "meets",
+      "note": "Scales whole to any window and has three densities. Midside keeps one window size for all its instances; Saturn also has full screen, which the kit leaves to the host's window."
+    },
+    "character": {
+      "verdict": "meets",
+      "note": "The house look; the corner and the span it has climbed turn purple while Fill, Corner, Ceiling or Recover is held, and the core's curve while the window's Iron or Size is."
+    },
+    "presets": {
+      "verdict": "under",
+      "note": "Four of its own, and a person's are files to copy and share. Midside has about 26 and Saturn a curated library; four is enough to show what Ironside is for. Next: more once a person has listened and said which uses they reach for."
+    }
+  },
+  "tools": {
+    "mix": true,
+    "match": true,
+    "mid_side": true,
+    "tube": "Its colour is a transformer's core; there is no valve in it",
+    "transformer": true
+  }
+}

@@ -9,21 +9,13 @@ made (to the ledger) or dropped (to Dropped, below, with why).
 
 Nothing that survived its search yet. The run of 2026-11-25 looked for
 eight and made one (Undertow); the rest are under Dropped. The run of
-2026-11-26 made the first of the ideas below (Aftersound), and the
-run of 2026-11-27 the next (Hand-Me-Down). Ideas not yet searched, to
-start from:
+2026-11-26 made the first of the ideas below (Aftersound), the run
+of 2026-11-27 the next (Hand-Me-Down), and the run of 2026-11-28 the
+last that had been searched (Ironside).
 
-- Mid and side wound on one shared transformer core, so the middle's
-  bass saturates the core the sides pass through. Searched on
-  2026-11-25 and not found built: AnyTesla and RSL Dual Core
-  Saturator keep a core per channel or per band. US 12,425,770 B1
-  ("Magnetic audio distortion device", Walters, granted 2025-09-23)
-  was read later: every claim needs a physical amplified network with
-  a real magnetic core, a series resistance and an integrator (the
-  method claim starts by providing that system), so a model in
-  software is outside it. Close to Undertow in what it does to the
-  sides; worth making when its difference (flux memory, hysteresis,
-  the low end thinning) can be heard against Undertow's demos.
+Nothing else that has been searched is waiting. The run of
+2026-11-28 made the shared core (Ironside) as a saturable reactor;
+the literal version is under Dropped.
 
 A few directions the kit can already carry, to think from rather than
 to build as written:
@@ -123,3 +115,4 @@ what kinds of idea they rated: it is the best guide to the next one.
 | A delay whose repeats turn through the stereo field, an angle each time | Stereo rotation in a delay's feedback exists (Spiral Delay, Fractal's circular delay, inDelay) | https://www.musehub.com/plugin/spiral-delay |
 | Saturation of the body of a sound only, the hit kept clean | Transient-split saturation exists (Audio Assault TransFreak, Saturator Pro) | https://producerstack.com/products/saturator-pro-max-for-live |
 | Pan a mono line by its own detected pitch, like a piano's spread | Melda's modulators have a pitch mode that can drive pan; frequency panners exist | https://www.meldaproduction.com/tutorials/modulators-pitch-mode |
+| Mid and side wound on one core with both windings carrying their sound into one flux | Mid plus side is left and mid less side is right, so it comes to one core on each of left and right, which every stereo transformer emulation does. Made instead as a saturable reactor, one winding steering what the other gets through (Ironside) | plugins/ironside/NOVELTY.md |
