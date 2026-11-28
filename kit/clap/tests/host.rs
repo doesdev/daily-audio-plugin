@@ -159,3 +159,35 @@ fn a_sidechain_arrives_on_its_own_input_and_is_silent_when_not_fed() {
     assert_eq!(fed[0], want);
     assert_eq!(fed[1], want);
 }
+
+// Another instance on the machine, listening: what it hears of this
+// one's track is what a person linking would be shown.
+fn heard_track(of: &str) -> impl Fn() -> Option<String> {
+    use std::sync::Arc;
+    let spec = kit::Spec::of::<Gain>();
+    let shared = Arc::new(kit::Shared::new(&spec));
+    let running = kit::link::start(&shared, spec);
+    assert!(running.is_some(), "a port to link on");
+    let of = of.to_string();
+    move || {
+        let _held = &running;
+        (0..600).find_map(|_| {
+            std::thread::sleep(std::time::Duration::from_millis(5));
+            let peers = shared.scope().links.peers();
+            peers.into_iter().find(|p| p.track == of).map(|p| p.track)
+        })
+    }
+}
+
+#[test]
+fn the_track_a_host_names_is_what_other_instances_hear() {
+    let host = Host::load::<Gain>(48_000.0, 64);
+    let first = heard_track("Drum Bus");
+    let renamed = heard_track("Kit");
+
+    host.name_track("Drum Bus");
+    assert_eq!(first().as_deref(), Some("Drum Bus"));
+    // And when the track is renamed.
+    host.name_track("Kit");
+    assert_eq!(renamed().as_deref(), Some("Kit"));
+}

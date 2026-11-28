@@ -7,6 +7,7 @@ use crate::{Factory, class_id};
 use kit::{Event as Midi, Plugin, Spec};
 use std::cell::{Cell, RefCell};
 use std::ffi::c_void;
+use vst3::Steinberg::Vst::ChannelContext::IInfoListenerTrait;
 use vst3::Steinberg::Vst::*;
 use vst3::Steinberg::*;
 use vst3::{Class, ComPtr, ComWrapper, Interface};
@@ -227,7 +228,86 @@ fn create<I: Interface>(factory: &ComPtr<IPluginFactory>, class: [u32; 4]) -> Co
     unknown.cast::<I>().expect("the interface")
 }
 
+// A channel's attributes as a host hands them over: its name, and
+// nothing else asked for.
+struct Channel(Vec<TChar>);
+
+impl Class for Channel {
+    type Interfaces = (IAttributeList,);
+}
+
+impl IAttributeListTrait for Channel {
+    unsafe fn setInt(&self, _id: IAttributeList_::AttrID, _value: int64) -> tresult {
+        kResultFalse
+    }
+
+    unsafe fn getInt(&self, _id: IAttributeList_::AttrID, _value: *mut int64) -> tresult {
+        kResultFalse
+    }
+
+    unsafe fn setFloat(&self, _id: IAttributeList_::AttrID, _value: f64) -> tresult {
+        kResultFalse
+    }
+
+    unsafe fn getFloat(&self, _id: IAttributeList_::AttrID, _value: *mut f64) -> tresult {
+        kResultFalse
+    }
+
+    unsafe fn setString(&self, _id: IAttributeList_::AttrID, _string: *const TChar) -> tresult {
+        kResultFalse
+    }
+
+    unsafe fn getString(
+        &self,
+        id: IAttributeList_::AttrID,
+        string: *mut TChar,
+        size: uint32,
+    ) -> tresult {
+        let asked = unsafe { std::ffi::CStr::from_ptr(id) };
+        let name = unsafe { std::ffi::CStr::from_ptr(ChannelContext::kChannelNameKey) };
+        let room = size as usize / size_of::<TChar>();
+        if asked != name || string.is_null() || room == 0 {
+            return kResultFalse;
+        }
+        let take = self.0.len().min(room - 1);
+        unsafe {
+            std::ptr::copy_nonoverlapping(self.0.as_ptr(), string, take);
+            *string.add(take) = 0;
+        }
+        kResultOk
+    }
+
+    unsafe fn setBinary(
+        &self,
+        _id: IAttributeList_::AttrID,
+        _data: *const c_void,
+        _size: uint32,
+    ) -> tresult {
+        kResultFalse
+    }
+
+    unsafe fn getBinary(
+        &self,
+        _id: IAttributeList_::AttrID,
+        _data: *mut *const c_void,
+        _size: *mut uint32,
+    ) -> tresult {
+        kResultFalse
+    }
+}
+
 impl Host {
+    /// As a host does when the plugin's channel is named or renamed.
+    /// Whether the plugin listens for it at all.
+    pub fn name_track(&self, name: &str) -> bool {
+        let Some(listener) = self.controller.cast::<ChannelContext::IInfoListener>() else {
+            return false;
+        };
+        let channel = ComWrapper::new(Channel(name.encode_utf16().collect()));
+        let list = channel.to_com_ptr::<IAttributeList>().expect("a list");
+        unsafe { listener.setChannelContextInfos(list.as_ptr()) == kResultOk }
+    }
+
     /// Loads plugin `P` at `rate`, promised blocks of at most `block`.
     pub fn load<P: Plugin>(rate: f32, block: usize) -> Self {
         Self::load_promised::<P>(rate, block, block)
@@ -253,6 +333,15 @@ impl Host {
         unsafe {
             assert_eq!(component.initialize(std::ptr::null_mut()), kResultOk);
             assert_eq!(controller.initialize(std::ptr::null_mut()), kResultOk);
+            // As a host does: each half is introduced to the other.
+            let ends = (
+                component.cast::<IConnectionPoint>(),
+                controller.cast::<IConnectionPoint>(),
+            );
+            if let (Some(from), Some(to)) = ends {
+                assert_eq!(from.connect(to.as_ptr()), kResultOk);
+                assert_eq!(to.connect(from.as_ptr()), kResultOk);
+            }
             assert_eq!(proc.setupProcessing(&mut setup), kResultOk);
             assert_eq!(component.setActive(1), kResultOk);
             assert_eq!(proc.setProcessing(1), kResultOk);

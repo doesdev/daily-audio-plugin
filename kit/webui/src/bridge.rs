@@ -175,7 +175,12 @@ pub fn links(spec: &Spec, links: &kit::Links) -> String {
                 .into_iter()
                 .map(|(key, group)| (key, json!(group.to_string())))
                 .collect();
-            json!({ "uid": peer.uid.to_string(), "name": peer.name, "keys": keys })
+            json!({
+                "uid": peer.uid.to_string(),
+                "name": peer.name,
+                "track": peer.track,
+                "keys": keys,
+            })
         })
         .collect();
     json!({

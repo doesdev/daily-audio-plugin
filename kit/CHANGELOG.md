@@ -4,6 +4,11 @@ What changed in the kit every plugin is built on, for whoever writes
 one. An entry a day, newest first. What a person using a plugin sees
 is in that plugin's own `CHANGELOG.md`.
 
+## 2026-11-28
+
+- Linking lists each instance by the track it is on, as the host
+  names it, in VST3 and CLAP.
+
 ## 2026-11-27
 
 - Changelogs: one for the kit and one for each plugin, checked, and

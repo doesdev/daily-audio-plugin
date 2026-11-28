@@ -42,6 +42,9 @@ pub struct Peer {
     pub uid: u64,
     pub name: String,
     pub port: u16,
+    /// The track it is on, as its host names it: empty if the host
+    /// has not said.
+    pub track: String,
     /// Each setting it has, by key, and the group that is in.
     pub keys: Vec<(String, u64)>,
 }
@@ -71,12 +74,15 @@ pub fn encode(said: &Said) -> String {
     match said {
         Said::Here(peer) => {
             let keys: Vec<String> = peer.keys.iter().map(|(k, g)| format!("{k}={g}")).collect();
+            // The track comes last: an instance from before tracks
+            // were told reads the rest and stops.
             format!(
-                "{MAGIC}\there\t{}\t{}\t{}\t{}",
+                "{MAGIC}\there\t{}\t{}\t{}\t{}\t{}",
                 peer.uid,
                 peer.port,
                 peer.name.replace(['\t', '\n'], " "),
-                keys.join(",")
+                keys.join(","),
+                peer.track.replace(['\t', '\n'], " ")
             )
         }
         Said::Set { group, key, plain } => format!("{MAGIC}\tset\t{group}\t{key}\t{plain}"),
@@ -105,6 +111,8 @@ pub fn decode(text: &str) -> Option<Said> {
                     Some((key.to_string(), group.parse().ok()?))
                 })
                 .collect::<Option<_>>()?,
+            // And one from before them says nothing of its track.
+            track: parts.next().unwrap_or("").to_string(),
         }),
         "set" => Said::Set {
             group: parts.next()?.parse().ok()?,
@@ -130,6 +138,7 @@ pub struct Links {
     uid: AtomicU64,
     version: AtomicU64,
     peers: Mutex<Vec<Peer>>,
+    track: Mutex<String>,
     asks: Mutex<Vec<(u64, Said)>>,
 }
 
@@ -140,6 +149,7 @@ impl Default for Links {
             uid: AtomicU64::new(0),
             version: AtomicU64::new(0),
             peers: Mutex::default(),
+            track: Mutex::default(),
             asks: Mutex::default(),
         }
     }
@@ -183,6 +193,24 @@ impl Links {
             slot.store(group, Ordering::Relaxed);
             self.changed();
         }
+    }
+
+    /// The track this instance is on, as the host names it. The
+    /// format's wrapper sets it when the host says; others hear of it
+    /// the next time this instance says it is here.
+    pub fn set_track(&self, name: &str) {
+        let name = name.trim();
+        if let Ok(mut track) = self.track.lock()
+            && *track != name
+        {
+            *track = name.to_string();
+            drop(track);
+            self.changed();
+        }
+    }
+
+    pub fn track(&self) -> String {
+        self.track.lock().map(|t| t.clone()).unwrap_or_default()
     }
 
     /// Every other instance heard from lately.
@@ -257,6 +285,7 @@ impl Station {
             uid: links.uid(),
             name: self.spec.info.name.to_string(),
             port: self.port,
+            track: links.track(),
             keys: self
                 .spec
                 .params
@@ -599,12 +628,14 @@ mod tests {
                 uid: 77,
                 name: "Under tow".into(),
                 port: 47_311,
+                track: "Drum Bus".into(),
                 keys: vec![("drive".into(), 0), ("bypass".into(), 901)],
             }),
             Said::Here(Peer {
                 uid: 1,
                 name: "Bare".into(),
                 port: 1,
+                track: String::new(),
                 keys: vec![],
             }),
             Said::Set {
@@ -632,6 +663,18 @@ mod tests {
         ] {
             assert_eq!(decode(junk), None, "{junk:?}");
         }
+        // An instance from before tracks were told is still heard.
+        let old = decode("DAP1\there\t5\t6\tOld\tmix=0").expect("heard");
+        assert_eq!(
+            old,
+            Said::Here(Peer {
+                uid: 5,
+                name: "Old".into(),
+                port: 6,
+                track: String::new(),
+                keys: vec![("mix".into(), 0)],
+            })
+        );
     }
 
     #[test]
@@ -687,6 +730,27 @@ mod tests {
         // 18 dB is more than there is there.
         a.set(0, 0.75);
         assert!(until(|| b.value(1) == Some(1.0)));
+    }
+
+    #[test]
+    fn an_instance_tells_the_others_which_track_it_is_on() {
+        let (a, b) = (instance(&WIDE), instance(&NARROW));
+        let (la, lb) = (a.scope(), b.scope());
+        let b_uid = lb.links.uid();
+        lb.links.set_track("  Drum Bus ");
+        let heard = || {
+            la.links
+                .peers()
+                .into_iter()
+                .find(|p| p.uid == b_uid)
+                .map(|p| p.track)
+        };
+        assert!(until(|| heard().as_deref() == Some("Drum Bus")));
+        // And when the track is renamed.
+        let version = la.links.version();
+        lb.links.set_track("Kit");
+        assert!(until(|| heard().as_deref() == Some("Kit")));
+        assert!(la.links.version() > version);
     }
 
     #[test]
