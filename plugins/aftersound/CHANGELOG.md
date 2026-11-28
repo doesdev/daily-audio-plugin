@@ -1,5 +1,11 @@
 # Aftersound: what changed
 
+## 0.2.4 (2026-11-28)
+
+- Fixed: after its notes died away it went on costing about eight
+  times what playing did, for as long as it was left. A quiet
+  instance now costs less than a playing one.
+
 ## 0.2.3 (2026-11-28)
 
 - When linking, other instances are listed by the track they are on,

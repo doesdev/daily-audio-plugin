@@ -1,6 +1,6 @@
 [package]
 name = "undertow"
-version = "0.5.3"
+version = "0.5.4"
 description = "The middle's low end biases the sides' valve, sample by sample"
 edition.workspace = true
 license.workspace = true

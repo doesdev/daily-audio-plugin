@@ -1,5 +1,10 @@
 # Hand-Me-Down: what changed
 
+## 0.1.2 (2026-11-28)
+
+- No change to what it costs: it had no such tail. Built on the kit
+  that now guards every plugin against one.
+
 ## 0.1.1 (2026-11-28)
 
 - When linking, other instances are listed by the track they are on,

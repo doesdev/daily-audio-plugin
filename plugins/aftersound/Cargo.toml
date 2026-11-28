@@ -1,6 +1,6 @@
 [package]
 name = "aftersound"
-version = "0.2.3"
+version = "0.2.4"
 description = "Two coupled strings a note, one in each channel: the prompt sound in the middle, the aftersound in the sides"
 edition.workspace = true
 license.workspace = true

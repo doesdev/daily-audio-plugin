@@ -1,5 +1,10 @@
 # Undertow: what changed
 
+## 0.5.4 (2026-11-28)
+
+- No change to what it costs: it had no such tail. Built on the kit
+  that now guards every plugin against one.
+
 ## 0.5.3 (2026-11-28)
 
 - When linking, other instances are listed by the track they are on,
