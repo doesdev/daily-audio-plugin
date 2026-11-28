@@ -1,5 +1,10 @@
 # Aftersound: what changed
 
+## 0.2.3 (2026-11-28)
+
+- When linking, other instances are listed by the track they are on,
+  as in "Drum Bus, Undertow", where the host tells a plugin its track.
+
 ## 0.2.2 (2026-11-27)
 
 - The DAP mark is at the top left of the editor, with the name under

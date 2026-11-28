@@ -248,5 +248,7 @@ stops at its end.
 
 Right-click the power button to link Bypass, so several come on and
 off together. A linked setting has a small link mark by its name.
-Links are saved with your project. Several of one plugin are told
-apart by a number, in the order they were added.
+Links are saved with your project. Each instance is listed by the
+track it is on and then its plugin, as in "Drum Bus, Undertow". Where
+a host does not tell a plugin its track, or two would read alike,
+they are numbered in the order they were added.
