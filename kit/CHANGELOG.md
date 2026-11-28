@@ -6,6 +6,13 @@ is in that plugin's own `CHANGELOG.md`.
 
 ## 2026-11-28
 
+- Fixed: a linked setting moved in the moment after it was linked
+  could be told to no one and the two left apart. A peer is sent
+  where the setting is as soon as it shows it has joined.
+- Fixed, on Windows: saying "here" to ports no one holds left a
+  refusal for each in front of what peers had said, and reading
+  stopped at the first. They are stepped over. This is what made the
+  linking tests fail now and then in CI.
 - The proof that a costly tail is caught no longer leans on what a
   denormal costs the machine it runs on, which on CI's is very
   little; a second proof shows a plugin never meets one at all.
