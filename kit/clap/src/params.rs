@@ -8,11 +8,19 @@ use clap_sys::ext::state::{CLAP_EXT_STATE, clap_plugin_state};
 use clap_sys::id::clap_id;
 use clap_sys::plugin::clap_plugin;
 use clap_sys::stream::{clap_istream, clap_ostream};
-use kit::{Param, state};
+use kit::{Kind, Param, state};
 use std::ffi::{CStr, c_char, c_void};
 
 fn flags(p: &Param) -> clap_param_info_flags {
-    let stepped = if p.steps() > 0 {
+    // Stepped, to CLAP, means whole numbers only. A range that moves in
+    // tenths still has steps, but a host told it is stepped would round
+    // it, and clap-validator refuses one whose ends are not whole.
+    let whole = match p.kind {
+        Kind::List(_) => true,
+        Kind::Range { lo, step, .. } => step > 0.0 && lo.fract() == 0.0 && step.fract() == 0.0,
+        Kind::Level | Kind::Fraction => false,
+    };
+    let stepped = if p.steps() > 0 && whole {
         CLAP_PARAM_IS_STEPPED
     } else {
         0
@@ -214,4 +222,24 @@ pub fn extension(id: &CStr) -> Option<*const c_void> {
         return Some(&STATE_EXT as *const _ as *const c_void);
     }
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use kit::{list, range};
+
+    #[test]
+    fn only_a_setting_of_whole_numbers_is_told_to_a_host_as_stepped() {
+        let stepped = |p: Param| flags(&p) & CLAP_PARAM_IS_STEPPED != 0;
+        let span = (0.0, 10.0, 1.0);
+        assert!(stepped(range(0, "a", "A", "G", span, "").step(1.0)));
+        assert!(stepped(list(1, "b", "B", "G", &["One", "Two"], 0)));
+        assert!(!stepped(range(2, "c", "C", "G", span, "")));
+        // In tenths, or from an end that is not whole: steps, but not
+        // whole numbers, so not stepped as CLAP means it.
+        assert!(!stepped(range(3, "d", "D", "G", span, "").step(0.1)));
+        let off = (0.2, 5.0, 1.2);
+        assert!(!stepped(range(4, "e", "E", "G", off, "").step(1.0)));
+    }
 }

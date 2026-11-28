@@ -6,6 +6,22 @@ is in that plugin's own `CHANGELOG.md`.
 
 ## 2026-11-28
 
+- New: a transformer's core can be read by a second winding.
+  `Transformer::opening` says how much a small signal wound beside
+  the sound gets through, from nought when the sound has filled the
+  core to one when it is empty, and `iron_slope` is the curve's own
+  slope that it comes from. The core keeps count even when it is set
+  to leave the sound alone. `Transformer::reach` tells `Need` how far
+  up the curve it is.
+- Fixed: the transformer window's Size was told to a host as a hair
+  under 60 Hz, so a new instance did not start where it said. It
+  moves in whole hertz now, and every shared setting is held to
+  coming back exactly at its default.
+- Fixed: a setting that moves in tenths was told to a CLAP host as
+  stepped, which in CLAP means whole numbers only, so a host could
+  round it and clap-validator refused one whose ends are not whole.
+  Only lists and ranges of whole numbers are stepped now. No released
+  plugin had such a setting.
 - New: `kit_dsp::Oversampled` runs a valve or a core at 2 to 16
   times the rate, late by the same count at every rate, and changes
   rate without a join being heard. `kit_dsp::Need` chooses the rate

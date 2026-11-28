@@ -21,8 +21,12 @@ On the machine the daily run uses (a 2.3 GHz Xeon, two cores), on
 | Undertow | 0.21% | 0.38% |
 | Aftersound | 0.12% | 0.21% |
 | Hand-Me-Down | 0.13% | 0.22% |
+| Ironside | 0.35% | 0.65% |
 
-A core runs four to five hundred of any of them. The ceiling in the
+A core runs four to five hundred of any of the first three, and
+nearly three hundred of Ironside, which runs its core twice (once
+heard on the middle, once read by the sides) and works its choke's
+corner out again every sample. The ceiling in the
 suite is 10%, so a plugin has room to be fifty times dearer than
 these, which matters below.
 

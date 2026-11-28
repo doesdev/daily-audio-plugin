@@ -73,6 +73,25 @@ pub fn iron_curve(x: f32, push: f32, iron: f32) -> f32 {
     (nickel + (u.tanh() - nickel) * iron) / push
 }
 
+/// The slope of `iron_curve` at `x`: how much a small signal wound on
+/// the same core gets through where the flux stands. One where the
+/// core is empty or there is no push, falling toward nought as it
+/// fills: nickel holds near one and drops at its knee, steel falls
+/// away sooner and more gently.
+#[inline]
+pub fn iron_slope(x: f32, push: f32, iron: f32) -> f32 {
+    if push < 1e-4 {
+        return 1.0;
+    }
+    let u = x * push;
+    let u4 = u * u * u * u;
+    // The nickel curve is u over the fourth root of 1 + u^4, whose
+    // slope comes to that root's fifth power, under one.
+    let nickel = 1.0 / ((1.0 + u4).sqrt().sqrt() * (1.0 + u4));
+    let t = u.tanh();
+    nickel + (1.0 - t * t - nickel) * iron
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct Transformer {
     shape: IronShape,
@@ -86,6 +105,10 @@ pub struct Transformer {
     filled_pole: f32,
     // Where the core's own magnetisation has got to, lagging the flux.
     lag: f32,
+    // Where the core stood at the last sample: the flux as the core
+    // felt it, steel's lag and all, and the grip's standing lean.
+    felt: f32,
+    lean: f32,
     // The bend at the last sample, to turn the bend back into sound.
     bent: f32,
     // What the source's resistance holds back of the lows.
@@ -116,6 +139,8 @@ impl Transformer {
             filled: 0.0,
             filled_pole: pole(30.0, rate),
             lag: 0.0,
+            felt: 0.0,
+            lean: 0.0,
             bent: 0.0,
             held: 0.0,
             corner: 0.0,
@@ -128,6 +153,7 @@ impl Transformer {
 
     pub fn reset(&mut self) {
         (self.flux, self.filled, self.lag) = (0.0, 0.0, 0.0);
+        (self.felt, self.lean) = (0.0, 0.0);
         (self.bent, self.held) = (0.0, 0.0);
         self.top.reset();
     }
@@ -177,6 +203,12 @@ impl Transformer {
             ..
         } = self.shape;
         if drive <= 0.0 && iron <= 0.0 && source <= 0.0 && grip <= 0.0 && top <= 0.0 {
+            // At rest the sound passes as it is, but the core still
+            // keeps count, so what is wound beside it can read how
+            // full it is (`opening`). Nickel has no lag and nothing
+            // grips it.
+            self.flux = self.flux * self.leak + x * self.scale;
+            (self.lag, self.felt, self.lean) = (self.flux, self.flux, 0.0);
             return x;
         }
         // The source and the gap hold back the lows. A core's
@@ -203,6 +235,7 @@ impl Transformer {
         // Grip: the core already leans one way before the sound comes.
         // What the lean alone gives is taken off: silence stays silent.
         let lean = grip * STANDING / push.max(1.0);
+        (self.felt, self.lean) = (felt, lean);
         let bent = iron_curve(felt + lean, push, iron) - iron_curve(lean, push, iron) - flux;
         // Only the bend is turned back into sound and added, so what
         // the core leaves alone comes out exactly as it went in. The
@@ -213,6 +246,26 @@ impl Transformer {
             return out;
         }
         out + (self.top.next(out).low - out) * self.top_mix
+    }
+
+    /// How open the core is, after the last sample, to a second
+    /// winding on it pushed by `push` (Drive times `PUSH`, or a push
+    /// of its own): the slope of the core's curve where the sound's
+    /// flux, steel's lag and the grip have put it. One with the core
+    /// empty, toward nought as the sound fills it, so a low sound
+    /// closes it sooner than a high one at the same level. This is a
+    /// saturable reactor: one winding's sound sets how much another
+    /// gets through.
+    #[inline]
+    pub fn opening(&self, push: f32) -> f32 {
+        iron_slope(self.felt + self.lean, push, self.shape.iron)
+    }
+
+    /// How far up its curve the core stood at the last sample, on the
+    /// curve's own scale, for `Need`.
+    #[inline]
+    pub fn reach(&self) -> f32 {
+        (self.felt.abs() + self.lean) * self.shape.drive * PUSH
     }
 }
 
@@ -388,5 +441,101 @@ mod tests {
             ring: 1.0,
         };
         assert!(run(shape, 0.0, 100.0).iter().all(|y| y.abs() < 1e-9));
+    }
+
+    #[test]
+    fn the_slope_is_the_curves_own_slope() {
+        // Checked against the curve itself, a step either side.
+        let cases = [
+            (0.0, 4.0, 0.0),
+            (0.1, 4.0, 0.0),
+            (0.3, 4.0, 0.0),
+            (-0.5, 4.0, 1.0),
+            (0.2, 2.0, 0.5),
+            (0.9, 16.0, 0.25),
+        ];
+        for (x, push, iron) in cases {
+            let h = 1e-3;
+            let near = (iron_curve(x + h, push, iron) - iron_curve(x - h, push, iron)) / (2.0 * h);
+            let got = iron_slope(x, push, iron);
+            assert!((got - near).abs() < 2e-3, "{x} {push} {iron}: {got} {near}");
+        }
+        assert_eq!(iron_slope(0.7, 0.0, 1.0), 1.0);
+        assert!((iron_slope(0.0, 4.0, 1.0) - 1.0).abs() < 1e-6);
+    }
+
+    // The least the core was open over the last half second of `hz`
+    // at `level`, read by a winding pushed by `push`.
+    fn least_open(shape: IronShape, level: f32, hz: f32, push: f32) -> f32 {
+        let mut iron = Transformer::new(RATE);
+        iron.set(shape);
+        (0..48_000)
+            .map(|i| {
+                iron.next(level * (std::f32::consts::TAU * hz * i as f32 / RATE).sin());
+                iron.opening(push)
+            })
+            .skip(24_000)
+            .fold(1.0, f32::min)
+    }
+
+    #[test]
+    fn a_low_sound_closes_the_core_sooner_than_a_high_one() {
+        let at_rest = IronShape::default();
+        // Silence leaves it open.
+        assert!((least_open(at_rest, 0.0, 60.0, PUSH) - 1.0).abs() < 1e-6);
+        // A full bass at the core's size closes it almost shut; the
+        // same level three octaves up barely touches it.
+        let low = least_open(at_rest, 1.0, 60.0, PUSH);
+        let high = least_open(at_rest, 1.0, 480.0, PUSH);
+        assert!(low < 0.05, "{low}");
+        assert!(high > 0.9, "{high}");
+        // And with no push on the second winding nothing is felt.
+        assert_eq!(least_open(at_rest, 1.0, 60.0, 0.0), 1.0);
+    }
+
+    #[test]
+    fn the_core_keeps_count_at_rest_and_the_sound_still_passes_exactly() {
+        let mut iron = Transformer::new(RATE);
+        let mut least = 1.0f32;
+        for i in 0..4800 {
+            let x = 0.8 * (std::f32::consts::TAU * 40.0 * i as f32 / RATE).sin();
+            assert_eq!(iron.next(x), x);
+            least = least.min(iron.opening(PUSH));
+        }
+        assert!(least < 0.2, "{least}");
+        iron.reset();
+        assert_eq!(iron.opening(PUSH), 1.0);
+    }
+
+    #[test]
+    fn steel_closes_sooner_than_nickel_on_a_quieter_sound() {
+        let steel = IronShape {
+            iron: 1.0,
+            ..IronShape::default()
+        };
+        let nickel = least_open(IronShape::default(), 0.1, 60.0, PUSH);
+        let steel = least_open(steel, 0.1, 60.0, PUSH);
+        assert!(nickel > 0.95, "{nickel}");
+        assert!(steel < nickel - 0.05, "{steel}");
+    }
+
+    #[test]
+    fn its_reach_grows_with_the_drive_and_the_depth_of_the_note() {
+        let reach = |drive: f32, hz: f32| {
+            let mut iron = Transformer::new(RATE);
+            iron.set(IronShape {
+                drive,
+                ..IronShape::default()
+            });
+            (0..24_000)
+                .map(|i| {
+                    iron.next(0.5 * (std::f32::consts::TAU * hz * i as f32 / RATE).sin());
+                    iron.reach()
+                })
+                .fold(0.0, f32::max)
+        };
+        assert_eq!(reach(0.0, 60.0), 0.0);
+        assert!(reach(1.0, 60.0) > reach(0.5, 60.0) * 1.5);
+        assert!(reach(1.0, 60.0) > reach(1.0, 240.0) * 3.0);
     }
 }

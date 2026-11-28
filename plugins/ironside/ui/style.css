@@ -1,0 +1,6 @@
+/* Ironside's own look, over the kit's. Seven settings sit in one row
+   rather than the kit's four: the four that set the core and the
+   sides' corner, then the way out. */
+.kit-values {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}

@@ -1,0 +1,140 @@
+[
+  {
+    "name": "editor",
+    "values": {
+      "input": 0.82,
+      "level": 0.8,
+      "full": 0.86
+    }
+  },
+  {
+    "name": "light",
+    "theme": "light",
+    "values": {
+      "input": 0.82,
+      "level": 0.8,
+      "full": 0.86
+    }
+  },
+  {
+    "name": "empty",
+    "values": {
+      "input": 0.5,
+      "level": 0.5,
+      "full": 0.0
+    }
+  },
+  {
+    "name": "steel",
+    "theme": "light",
+    "values": {
+      "fill": 70,
+      "ceiling": 3,
+      "iron_material": 100,
+      "input": 0.85,
+      "level": 0.82,
+      "full": 0.97
+    }
+  },
+  {
+    "name": "held",
+    "values": {
+      "input": 0.82,
+      "level": 0.8,
+      "full": 0.9
+    },
+    "steps": [
+      [
+        "press",
+        "[data-key=\"corner\"] .kit-scrub",
+        40
+      ]
+    ]
+  },
+  {
+    "name": "held-light",
+    "theme": "light",
+    "values": {
+      "input": 0.82,
+      "level": 0.8,
+      "full": 0.7
+    },
+    "steps": [
+      [
+        "press",
+        "[data-key=\"fill\"] .kit-scrub",
+        30
+      ]
+    ]
+  },
+  {
+    "name": "dense",
+    "theme": "light",
+    "values": {
+      "input": 0.82,
+      "level": 0.8,
+      "full": 0.6
+    },
+    "steps": [
+      [
+        "click",
+        ".kit-density"
+      ],
+      [
+        "click",
+        ".kit-density"
+      ],
+      [
+        "away"
+      ]
+    ]
+  },
+  {
+    "name": "transformer",
+    "values": {
+      "input": 0.8,
+      "level": 0.79,
+      "full": 0.8
+    },
+    "steps": [
+      [
+        "click",
+        ".kit-open-transformer"
+      ],
+      [
+        "click",
+        ".kit-character"
+      ],
+      [
+        "click",
+        {
+          "sel": ".kit-pop button",
+          "text": "Ouncer, O-12 kind"
+        }
+      ],
+      [
+        "away"
+      ]
+    ]
+  },
+  {
+    "name": "sidechain",
+    "values": {
+      "key": "On",
+      "input": 0.8,
+      "level": 0.79,
+      "full": 0.75
+    }
+  },
+  {
+    "name": "sides",
+    "theme": "light",
+    "values": {
+      "input": 0.8,
+      "level": 0.79,
+      "full": 0.5,
+      "listen": "Side",
+      "balance": 40
+    }
+  }
+]
